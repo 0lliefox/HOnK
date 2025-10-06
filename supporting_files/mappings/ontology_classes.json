@@ -1,0 +1,472 @@
+{
+  "MetaGrammaticalFunction": {
+    "properties": [],
+    "classes": {
+      "GrammaticalFunction": {
+        "properties": [],
+        "classes": {
+          "Adjective": {
+            "properties": [
+              "comparative",
+              "superlative"
+            ],
+            "classes": {
+              "ComparativeOnlyAdjective": {},
+              "CompoundAdjective": {
+                "PleonasticCompoundedAdjective": {}
+              },
+              "ParasyntheticAdjective": {},
+              "IrregularAdjective": {
+                "SuppletiveAdjective": {},
+                "PostmodifierAdjective": {},
+                "CollateralAdjective": {}
+              },
+              "NormalizedAdjective": {},
+              "PossessionalAdjective": {},
+              "RelationalAdjective": {},
+              "UncomparableAdjective": {},
+              "ParticipleAdjective": {
+                "PresentParticipleAdjective": {},
+                "PastParticipleAdjective": {}
+              }
+            }
+          },
+          "Adverb": {
+            "properties": [
+              "comparative",
+              "superlative"
+            ],
+            "classes": {
+              "ActRelatedAdverb": {},
+              "AspectAdverb": {},
+              "ConjunctiveAdverb": {
+                "SubsequenceAdverb": {}
+              },
+              "DegreeAdverb": {},
+              "DemonstrativeAdverb": {},
+              "FocusAdverb": {},
+              "IrregularAdverb": {
+                "SuppletiveAdverb": {}
+              },
+              "InterrogativeAdverb": {},
+              "LocationAdverb": {
+                "MovementAdverb": {},
+                "PositionAdverb": {}
+              },
+              "MannerAdverb": {},
+              "PronominalAdverb": {},
+              "RelativeAdverb": {},
+              "SentenceAdverb": {
+                "ModalAdverb": {},
+                "DomainAdverb": {},
+                "EvaluativeAdverb": {},
+                "SpeechActAdverb": {}
+              },
+              "TimeAdverb": {
+                "DurationAdverb": {},
+                "FrequencyAdverb": {},
+                "PointInTimeAdverb": {}
+              },
+              "UncomparableAdverb": {}
+            }
+          },
+          "Conjunction": {
+            "properties": [],
+            "classes": {
+              "CoordinatingConjunction": {},
+              "SubordinatingConjunction": {}
+            }
+          },
+          "Concept": {
+            "properties": [],
+            "classes": {
+              "AbstractEntity": {}
+            }
+          },
+          "Character": {
+            "properties": [],
+            "classes": {
+              "Symbol": {
+              }
+            }
+          },
+          "Contraction": {
+            "properties": [],
+            "classes": {}
+          },
+          "Determiner": {
+            "properties": [],
+            "classes": {
+              "Article": {},
+              "Number": {
+                "CardinalNumber": {},
+                "OrdinalNumber": {}
+              },
+              "CompoundDeterminer": {},
+              "DemonstrativeDeterminer": {},
+              "InterrogativeDeterminer": {},
+              "PossessiveDeterminer": {},
+              "RelativeDeterminer": {}
+            }
+          },
+          "Interjection": {
+            "properties": [],
+            "classes": {
+              "AnimalCommand": {},
+              "DiminutiveInterjection": {}
+            }
+          },
+          "Measure": {
+            "properties": [],
+            "classes": {
+              "UnitOfMeasure": {}
+            }
+          },
+          "Morpheme": {
+            "properties": [
+              "prefix, suffix"
+            ],
+            "classes": {
+              "Affix": {},
+              "Circumfix": {},
+              "Clitic": {},
+              "CombiningForm": {},
+              "Infix": {},
+              "Interfix": {},
+              "Prefix": {},
+              "Suffix": {}
+            }
+          },
+          "MultiwordTerm": {
+            "properties": [],
+            "classes": {
+              "Idiom": {
+                "RhetoricalQuestion": {},
+                "Snowclone": {}
+              },
+              "Phrase": {
+                "AdverbialPhrase": {},
+                "AdverbAdjectivePhrase": {},
+                "AlliterativePhrase": {
+                  "AlliterativeCompound": {}
+                },
+                "Predicate": {},
+                "NonConstituent": {
+                  "Coordinate": {}
+                },
+                "PhrasalPreposition": {},
+                "PhrasalVerb": {},
+                "Phrasebook": {
+                  "Communication": {},
+                  "Emergency": {},
+                  "Ethnicity": {},
+                  "Family": {},
+                  "FoodAndDrink": {},
+                  "Greeting": {},
+                  "Health": {},
+                  "Love": {},
+                  "Religion": {},
+                  "Sex": {},
+                  "Time": {},
+                  "Travel": {},
+                  "Weather": {}
+                },
+                "PrepositionalPhrase": {},
+                "Proverb": {},
+                "RhymingPhrase": {
+                  "RhymingCompound": {}
+                },
+                "SubordinateClause": {}
+              }
+            }
+          },
+          "Noun": {
+            "properties": [
+              "singular",
+              "plural",
+              "irregularPlural"
+            ],
+            "classes": {
+              "AgentNoun": {},
+              "CollectiveNoun": {},
+              "CompoundNoun": {},
+              "CountableNoun": {},
+              "DiminutiveNoun": {
+                "FemaleGivenName": {},
+                "MaleGivenName": {},
+                "UnisexGivenName": {}
+              },
+              "IndeclinableNoun": {},
+              "IrregularNoun": {
+                "SuppletiveNoun": {}
+              },
+              "NormalizedAdjective": {},
+              "GenderedConcept": {
+                "FemaleEquivalentNoun": {},
+                "MaleEquivalentNoun": {},
+                "UnisexEquivalentNoun": {}
+              },
+              "PluraliaTantum": {},
+              "ProperNoun": {
+                "DiminutiveProperNoun": {},
+                "Name": {
+                  "AnimalName": {},
+                  "Exonym": {},
+                  "GivenName": {
+                    "FemaleGivenName": {},
+                    "MaleGivenName": {},
+                    "UnisexGivenName": {}
+                  },
+                  "Patronymic": {},
+                  "ForeignPersonalName": {},
+                  "Surname": {
+                    "FemaleSurname": {},
+                    "MaleSurname": {}
+                  }
+                }
+              },
+              "SingulariaTantum": {},
+              "UnattestedPlural": {},
+              "UncountableNoun": {},
+              "UnknownOrUncertainPlural": {},
+              "VerbalNoun": {},
+              "TypedNoun": {
+                "BeginningNoun": {},
+                "AnimalNoun": {},
+                "ArtifactNoun": {},
+                "ArtificialNoun": {},
+                "AttributeNoun": {},
+                "BodyNoun": {},
+                "CognitionNoun": {},
+                "CommunicationNoun": {},
+                "EventNoun": {},
+                "FeelingNoun": {},
+                "FoodNoun": {},
+                "GroupNoun": {},
+                "LocationNoun": {
+                  "sameAs": "LOC"
+                },
+                "MotiveNoun": {},
+                "ObjectNoun": {},
+                "PersonNoun": {},
+                "PhenomenonNoun": {},
+                "PlantNoun": {},
+                "PossessionNoun": {},
+                "ProcessNoun": {},
+                "QuantityNoun": {},
+                "RelationNoun": {},
+                "ShapeNoun": {},
+                "StateNoun": {},
+                "SubstanceNoun": {},
+                "TimeNoun": {}
+              }
+            }
+          },
+          "Numeral": {
+            "properties": [],
+            "classes": {}
+          },
+          "Particle": {
+            "properties": [],
+            "classes": {}
+          },
+          "Phrase": {
+            "properties": [],
+            "classes": {
+              "AdverbialPhrase": {},
+              "AdverbAdjectivePhrase": {},
+              "AlliterativePhrase": {
+                "AlliterativeCompound": {}
+              },
+              "NonConstituent": {
+                "Coordinate": {}
+              },
+              "PhrasalPreposition": {},
+              "PhrasalVerb": {},
+              "Phrasebook": {
+                "Communication": {},
+                "Emergency": {},
+                "Ethnicity": {},
+                "Family": {},
+                "FoodAndDrink": {},
+                "Greeting": {},
+                "Health": {},
+                "Love": {},
+                "Religion": {},
+                "Sex": {},
+                "Time": {},
+                "Travel": {},
+                "Weather": {}
+              },
+              "PrepositionalPhrase": {},
+              "Proverb": {},
+              "RhymingPhrase": {
+                "RhymingCompound": {}
+              },
+              "SubordinateClause": {}
+            }
+          },
+          "Postposition": {
+            "properties": [],
+            "classes": {}
+          },
+          "Preposition": {
+            "properties": [],
+            "classes": {
+              "PhrasalPreposition": {},
+              "PrepositionalPhrase": {},
+              "PronominalAdverb": {},
+              "PrototypicalPreposition": {},
+              "DependantPreposition": {},
+              "IdiomaticPreposition": {},
+              "ComplexPreposition": {}
+            }
+          },
+          "Pronoun": {
+            "properties": [],
+            "classes": {
+              "DemonstrativePronoun": {},
+              "IndefinitePronoun": {},
+              "InterrogativePronoun": {},
+              "PersonalPronoun": {
+                "FirstPersonPronoun": {},
+                "ReciprocalPronoun": {},
+                "ReflexivePronoun": {},
+                "SecondPersonPronoun": {},
+                "ThirdPersonPronoun": {}
+              },
+              "PluralPronoun": {},
+              "PossessivePronoun": {},
+              "PronominalPronoun": {},
+              "ReciprocalPronoun": {},
+              "ReflexivePronoun": {},
+              "RelativePronoun": {}
+            }
+          },
+          "Verb": {
+            "properties": [
+              "present",
+              "past",
+              "third-person",
+              "gerund",
+              "participle"
+            ],
+            "classes": {
+              "AuxiliaryVerb": {
+                "ModalVerb": {}
+              },
+              "CausativeVerb": {},
+              "ControlVerb": {},
+              "CopulativeVerb": {},
+              "DefectiveVerb": {},
+              "DenominalVerb": {},
+              "DitransitiveVerb": {},
+              "ErgativeVerb": {},
+              "FrequentativeVerb": {},
+              "ImpersonalVerb": {},
+              "IrregularVerb": {
+                "DefectiveVerb": {},
+                "SuppletiveVerb": {}
+              },
+              "StrongVerb": {},
+              "IntensiveVerb": {},
+              "PassiveVerb": {},
+              "PhrasalVerb": {},
+              "RaisingVerb": {},
+              "ReciprocalVerb": {},
+              "ReflexiveVerb": {},
+              "StativeVerb": {},
+              "TransitiveVerb": {},
+              "MotionVerb": {},
+              "MeansVerb": {},
+              "StateVerb": {},
+              "MaterialisationVerb": {},
+              "SemiModalVerb": {},
+              "InstransitiveVerb": {},
+              "TypedVerb": {
+                "BodyVerb": {},
+                "ChangeVerb": {},
+                "CognitionVerb": {},
+                "CommunicationVerb": {},
+                "CompetitionVerb": {},
+                "ConsumptionVerb": {},
+                "ContactVerb": {},
+                "EmotionVerb": {},
+                "PerceptionVerb": {},
+                "PossessionVerb": {},
+                "SocialVerb": {},
+                "WeatherVerb": {}
+              }
+            }
+          },
+          "Punctuation": {
+            "properties": [],
+            "classes": {}
+          }
+        }
+      },
+      "LogicalFunction": {
+        "properties": [],
+        "classes": {}
+      },
+      "Dependency": {
+        "properties": [],
+        "classes": {}
+      }
+    }
+  },
+  "Dimensions": {
+    "properties": [],
+    "classes": {
+      "LOC": {},
+      "GPE": {}
+    }
+  },
+  "Property": {
+    "properties": [],
+    "classes": {
+      "atLocation": {},
+      "capableOf": {},
+      "causes": {},
+      "causesDesire": {},
+      "createdBy": {},
+      "definedAs": {},
+      "derivedFrom": {},
+      "desires": {},
+      "entails": {},
+      "eq": {},
+      "etymology": {},
+      "formOf": {},
+      "hasA": {},
+      "hasContext": {},
+      "hasFirstSubevent": {},
+      "hasLastSubevent": {},
+      "hasPrerequisite": {},
+      "hasProperty": {},
+      "hasSubevent": {},
+      "instanceOf": {},
+      "isA": {},
+      "locatedNear": {},
+      "madeOf": {},
+      "mannerOf": {},
+      "motivatedByGoal": {},
+      "neqTo": {},
+      "partOf": {},
+      "product": {},
+      "receivesAction": {},
+      "relatedTo": {},
+      "sharesIsAWith": {},
+      "symbolOf": {},
+      "usedFor": {},
+      "capital": {},
+      "field": {},
+      "genre": {},
+      "genus": {},
+      "influencedBy": {},
+      "knownFor": {},
+      "language": {},
+      "leader": {},
+      "occupation": {}
+    }
+  }
+}

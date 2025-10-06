@@ -1,0 +1,949 @@
+{
+  "types": {
+    "specification": [
+      {
+        "property": "regular",
+        "attachTo": "Singleton",
+        "argument": "property"
+      },
+      {
+        "property": "inverse",
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "denomination": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "origin": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "ofTerm": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "distance": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "extension": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "togetherness": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "union": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "relationship": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "manner": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "topic": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "partitive": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "concessive": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "replacement": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "limit": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "exclusion": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "distributive": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "interjection": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "vocative": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "aim_objective": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "comparison": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "quantity": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "measure": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "kind_quality": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "necessity_need": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "provenance": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "fault_blame": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "causation": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "punishment": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "price": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "estimation": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "age": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "abudnanceOf": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "privationOf": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "material": [
+      {
+        "property": "consequence",
+        "attachTo": "Singleton",
+        "argument": "property"
+      },
+      {
+        "property": "any",
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
+    ],
+    "instrument": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "advantage": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "time": [
+      {
+        "property": "continuous",
+        "attachTo": "Kernel",
+        "argument": "property"
+      },
+      {
+        "property": "defined",
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "space": [
+      {
+        "property": "stay in place",
+        "attachTo": "Kernel",
+        "argument": "property"
+      },
+      {
+        "property": "motion to place",
+        "attachTo": "Kernel",
+        "argument": "property"
+      },
+      {
+        "property": "motion from place",
+        "attachTo": "Kernel",
+        "argument": "property"
+      },
+      {
+        "property": "motion through place",
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
+    "passive agent_cause": [
+      {
+        "attachTo": "Kernel",
+        "argument": "subject"
+      }
+    ]
+  },
+  "derivation_rules": [
+    {
+      "premise": {
+        "SingletonHasBeenMatchedBy": [
+          "SUTime"
+        ],
+        "preposition": [
+          "on",
+          "in",
+          "at",
+          "as soon as"
+        ]
+      },
+      "classification": [
+        {
+          "type": "time",
+          "property": "defined"
+        }
+      ],
+      "__sentence_examples": [
+        "Traffic is flowing in Newcastle city centre, on Saturdays",
+        "In Newcastle city center on Saturdays, traffic is flowing",
+        "In Newcastle city center on saturdays, traffic is flowing"
+      ]
+    },
+    {
+      "premise": {
+        "SingletonHasBeenMatchedBy": [
+          "SUTime"
+        ],
+        "preposition": [
+          "during",
+          "before",
+          "after",
+          "while"
+        ]
+      },
+      "classification": [
+        {
+          "type": "time",
+          "property": "continuous"
+        }
+      ],
+      "__sentence_examples": [
+        "clean up after yourself"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "on"
+        ],
+        "abstract_entity": false
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "it looks good on me",
+        "being on same track",
+        "they may foll on the ground",
+        "be on the interne",
+        "The cat which I was talking about is on the table",
+        "Mailboxes on the street",
+        "putting images on paper",
+        "get something on the stand",
+        "a rug on the floor",
+        "What was the thing I was talking about which was sitting on the table?"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "to",
+          "at",
+          "for"
+        ],
+        "abstract_entity": false,
+        "verb_of_motion": true,
+        "not": {
+          "SingletonHasBeenMatchedBy": [
+            "SUTime"
+          ]
+        }
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "motion to place"
+        }
+      ],
+      "__sentence_examples": [
+        "go to dogs",
+        "go to a hospital",
+        "go to the store",
+        "come to his senses"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "to"
+        ],
+        "causative_verb": true
+      },
+      "classification": [
+        {
+          "type": "causation"
+        }
+      ],
+      "__sentence_examples": [
+        "lead to fatal diseases"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "to",
+          "at"
+        ],
+        "not": {
+          "SingletonHasBeenMatchedBy": [
+            "SUTime"
+          ]
+        }
+      },
+      "classification": [
+        {
+          "type": "ofTerm"
+        }
+      ],
+      "__sentence_examples": [
+        "providing access to medical care",
+        "providing information to others",
+        "coming to false conclusions",
+        "add as an ingredient to toothpaste",
+        "laughing at humor",
+        "aim at a tree"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "from"
+        ],
+        "hasNMod": true
+      },
+      "classification": [
+        {
+          "type": "provenance"
+        }
+      ],
+      "__sentence_examples": [
+        "four light years from the Earth",
+        "graduating from college",
+        "a letter from a friend"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "from"
+        ],
+        "verb_of_motion": true
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "motion from place"
+        }
+      ],
+      "__sentence_examples": [
+        "stand up from the barstool"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "from"
+        ]
+      },
+      "classification": [
+        {
+          "type": "provenance"
+        }
+      ],
+      "__sentence_examples": [
+        "bolt from blue"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "in",
+          "into"
+        ],
+        "verb_of_motion": true,
+        "abstract_entity": false
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "motion to place"
+        }
+      ],
+      "__sentence_examples": [
+        "viruses to get in your comuter"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "in",
+          "into"
+        ],
+        "SingletonHasBeenMatchedBy": [
+          "GPE",
+          "LOC"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "look into the facts",
+        "characters in movies",
+        "a family room in most homes",
+        "People that work in warehouses",
+        "putting trash in it",
+        "Newcastle has traffic but not in the city centre",
+        "used in the game of chess",
+        "There is traffic in the Newcastle city centre",
+        "accumulate fuel in a central location",
+        "It is busy in Newcastle",
+        "Traffic is flowing in Newcastle city centre, on Saturdays",
+        "There is traffic but not in the Newcastle city centre",
+        "On Saturdays, traffic is flowing in Newcastle city centre",
+        "fish in the water",
+        "proved successful in tests on monkeys",
+        "investing money in stock markets"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "in",
+          "into"
+        ],
+        "abstract_entity": false
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "look into the facts",
+        "characters in movies",
+        "a family room in most homes",
+        "People that work in warehouses",
+        "putting trash in it",
+        "Newcastle has traffic but not in the city centre",
+        "used in the game of chess",
+        "There is traffic in the Newcastle city centre",
+        "accumulate fuel in a central location",
+        "It is busy in Newcastle",
+        "Traffic is flowing in Newcastle city centre, on Saturdays",
+        "There is traffic but not in the Newcastle city centre",
+        "On Saturdays, traffic is flowing in Newcastle city centre",
+        "fish in the water",
+        "proved successful in tests on monkeys",
+        "investing money in stock markets"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "in"
+        ],
+        "abstract_entity": true
+      },
+      "classification": [
+        {
+          "type": "topic"
+        }
+      ],
+      "__sentence_examples": [
+        "Taking classes in fencing"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "across"
+        ],
+        "verb_of_motion": true
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "motion through place"
+        }
+      ],
+      "__sentence_examples": [
+        "going across the street"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "across"
+        ]
+      },
+      "classification": [
+        {
+          "type": "topic"
+        }
+      ],
+      "__sentence_examples": [
+        "across disciplines"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "than"
+        ]
+      },
+      "classification": [
+        {
+          "type": "comparison"
+        }
+      ],
+      "__sentence_examples": [
+        "more durable than latex"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "about"
+        ]
+      },
+      "classification": [
+        {
+          "type": "topic"
+        }
+      ],
+      "__sentence_examples": [
+        "think about their origin",
+        "The cat which I was talking about eats pinapples",
+        "The cat which I was talking about is on the table",
+        "being informed about ongoings"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "by"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "your family gathers by your bedside"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "as"
+        ]
+      },
+      "classification": [
+        {
+          "type": "comparison",
+          "property": "equivalence"
+        }
+      ],
+      "__sentence_examples": [
+        "add as an ingredient to toothpaste"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "of"
+        ],
+        "hasNMod": true,
+        "isSymmetricalIfComparedToNMod": true,
+        "hasNModPartOf": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "inverse"
+        }
+      ],
+      "__sentence_examples": [
+        "the front of a letter",
+        "the corner of two streets",
+        "phase of cell division",
+        "The surface of an object"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "of"
+        ],
+        "hasNMod": true,
+        "verb_of_means": true
+      },
+      "classification": [
+        {
+          "type": "instrument"
+        }
+      ],
+      "__sentence_examples": [
+        "use of many different muscles"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "'s",
+          "’s"
+        ],
+        "hasNMod": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "regular"
+        }
+      ],
+      "__sentence_examples": [
+        "attempt to steal someone's husband",
+        "emilia's short tailed opossum",
+        "one person's grade",
+        "raises one’s hand to"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "of"
+        ],
+        "hasNMod": true,
+        "isSymmetricalIfComparedToNMod": true,
+        "hasNModIsA": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "inverse"
+        }
+      ],
+      "__sentence_examples": [
+        "used in the game of chess"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "of"
+        ],
+        "hasNMod": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "regular"
+        }
+      ],
+      "__sentence_examples": [
+        "second battle of Ypres",
+        "A love of knowledge",
+        "one kind of bread",
+        "line of longitude",
+        "group of reindeer",
+        "enjoying the company of your friends",
+        "The capital city of Ohio",
+        "slip of tongue",
+        "propulsion of aircraft",
+        "use of many different muscles"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "of"
+        ],
+        "hasNMod": false
+      },
+      "classification": [
+        {
+          "type": "topic"
+        }
+      ],
+      "__sentence_examples": [
+        "dispose of trash"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "into"
+        ],
+        "isMaterializationVerb": true
+      },
+      "classification": [
+        {
+          "type": "material",
+          "property": "consequence"
+        }
+      ],
+      "__sentence_examples": [
+        "made into mummies"
+      ],
+      "__todo": "Consider all hierarchy of verbs via MannerOf ConceptNet hierarchy"
+    },
+    {
+      "premise": {
+        "hasNumber": true,
+        "hasUnitOfMeasure": true
+      },
+      "classification": [
+        {
+          "type": "measure"
+        }
+      ],
+      "__sentence_examples": [
+        "29.8 miles per second"
+      ]
+    },
+    {
+      "premise": {
+        "hasNumber": true
+      },
+      "classification": [
+        {
+          "type": "quantity"
+        }
+      ],
+      "__sentence_examples": [
+        "29 pears"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "with"
+        ]
+      },
+      "classification": [
+        {
+          "type": "togetherness"
+        }
+      ],
+      "__sentence_examples": [
+        "you end up with a document",
+        "come back with mixed results",
+        "take a risk with money"
+      ],
+      "__todo": "Consider all hierarchy of verbs via MannerOf ConceptNet hierarchy"
+    },
+    {
+      "premise": {
+        "preposition": [
+          "for"
+        ],
+        "causative_verb": true
+      },
+      "classification": [
+        {
+          "type": "aim_objective"
+        }
+      ],
+      "__sentence_examples": [
+        "utilized for many different things",
+        "look for it",
+        "The love for people",
+        "search for answers",
+        "fulfill all requirements for a course",
+        "a desire for justice",
+        "accessories for laptop computer"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "for"
+        ]
+      },
+      "classification": [
+        {
+          "type": "aim_objective"
+        }
+      ],
+      "__sentence_examples": [
+        "utilized for many different things",
+        "The love for people",
+        "a desire for justice",
+        "accessories for laptop computer"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "on"
+        ],
+        "verb_of_motion": false,
+        "verb_of_state": false
+      },
+      "classification": [
+        {
+          "type": "topic"
+        }
+      ],
+      "__sentence_examples": [
+        "proved successful in tests on monkeys",
+        "information on current events",
+        "you score well on tests"
+      ]
+    },
+    {
+      "premise": {
+        "preposition": [
+          "during",
+          "before",
+          "after",
+          "while"
+        ]
+      },
+      "classification": [
+        {
+          "type": "time",
+          "property": "continuous"
+        }
+      ],
+      "__sentence_examples": [
+        "clean up after yourself"
+      ]
+    },
+    {
+      "premise": {
+        "hasNMod": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "inverse"
+        }
+      ],
+      "__sentence_examples": [
+        "you see a head-on collision coming"
+      ]
+    }
+  ]
+}

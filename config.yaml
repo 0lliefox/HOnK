@@ -1,0 +1,42 @@
+database:
+  dbname: 'ontology_db'
+  user: 'fox'
+  password: 'drowssap'
+  host: 'localhost'
+  port: '5432'
+
+general:
+  language: 'en'  # Fix a specific language for filtering the knowledge bases
+  clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
+  sources: ['wordnet', 'conceptnet', 'wiktionary']
+  tables_to_delete: ['relations', 'properties', 'urls', 'concepts', 'undirected']
+  source_to_delete: []  # Set to [] to delete all sources
+
+local_files:
+  supporting_files: 'supporting_files'
+  cache: '.cache'
+
+  # Paths to the local data files for knowledge bases and their corresponding mapping configurations
+  wordnet: 'supporting_files/kb/wn31.nt'
+  wordnet_edge_mappings_file: 'supporting_files/mappings/wn_edge_mappings.json'
+  wordnet_pos_mappings_file: 'supporting_files/mappings/wn_pos_mappings.json'
+
+  conceptnet: 'supporting_files/kb/edges.csv'
+  conceptnet_edge_mappings_file: 'supporting_files/mappings/cn_edge_mappings.json'
+  conceptnet_pos_mappings_file: 'supporting_files/mappings/cn_pos_mappings.json'
+
+  wiktionary: 'supporting_files/kb/wiktionary_en.json'
+  wiktionary_edge_mappings_file: 'supporting_files/mappings/wk_edge_mappings.json'
+  wiktionary_pos_mappings_file: 'supporting_files/mappings/wk_pos_mappings.json'
+
+  parmenides: 'supporting_files/parmenides'
+  geonames: 'supporting_files/kb/allCountries.txt_sql_input.txt'
+
+  ontology_classes: 'supporting_files/mappings/ontology_classes.json'
+  rejected_classes: 'supporting_files/mappings/ignored_classes.json'
+
+turtle_export:
+  output_file: 'ontology.ttl'
+  base_uri: "https://logds.github.io/parmenides#"
+  base_prefix: "parmenides"
+

@@ -1,0 +1,24 @@
+{
+  "conditional": {
+    "preposition": [
+      "if",
+      "whether"
+    ],
+    "__sentence_examples": [
+      "If something resembles a horse",
+      "if they are rotten",
+      "If you move"
+    ]
+  },
+  "aim/objective": {
+    "preposition": [
+      "to"
+    ],
+    "__sentence_examples": [
+      "things to be neat and orderly",
+      "the hot water to run out",
+      "angry need to cool down",
+      "raises one’s hand to"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+miles per second
+miles per minute
+miles per hour
+kilometres per second
+kilometers per second
+kilometres per minute
+kilometers per minute
+kilometres per hour
+kilometers per hour
