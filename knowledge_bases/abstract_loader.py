@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 from abc import abstractmethod, ABC
+from functools import lru_cache
 
 
 class AbstractLoader(ABC):
@@ -21,6 +22,7 @@ class AbstractLoader(ABC):
     def _get_mapped_pos(self, pos_tag):
         return self.builder.full_mappings.get(pos_tag, pos_tag)
 
+    @lru_cache(maxsize=1024)
     def get_or_create_concept(self, term, pos, source, cursor=None):
         term, pos = term.replace('_', ' '), self._get_mapped_pos(pos)
 

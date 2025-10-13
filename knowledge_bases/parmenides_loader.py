@@ -52,11 +52,11 @@ class ParmenidesLoader(AbstractLoader):
         return name[:-1] if trim else name
 
     @staticmethod
-    def add_logical_functions(g: Graph):
+    def add_logical_functions(config, g: Graph):
         logging.info("Adding logical functions")
 
         p = ParmenidesBuild(g)
-        log_defs, log_rewr_rules = SentenceStructure.load_logical_analysis(f"{self.config['local_files']['parmenides']}/logical_analysis/logical_analysis.json")
+        log_defs, log_rewr_rules = SentenceStructure.load_logical_analysis(f"{config['local_files']['parmenides']}/logical_analysis/logical_analysis.json")
         for name, v in log_defs.items():
             for x in v.specs:
                 d = dataclasses.asdict(x)

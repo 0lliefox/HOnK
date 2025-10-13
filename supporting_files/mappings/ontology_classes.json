@@ -349,7 +349,9 @@
               "past",
               "third-person",
               "gerund",
-              "participle"
+              "participle",
+              "past participle",
+              "present participle"
             ],
             "classes": {
               "AuxiliaryVerb": {

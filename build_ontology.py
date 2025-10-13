@@ -1,20 +1,18 @@
-import dataclasses
 import json
 import logging
 import re
+from functools import lru_cache
 from urllib.parse import quote
 
 import psycopg2
 import yaml
-from oxrdflib import OxigraphStore
 from psycopg2._psycopg import AsIs
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from tqdm import tqdm
 
+from clustering.cluster_concepts import ConceptClusterer
 from knowledge_bases import ConceptNetLoader
-from supporting_files.parmenides.classes import SentenceStructure
-from supporting_files.parmenides.classes.ParmenidesBuild import ParmenidesBuild
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -50,7 +48,15 @@ class OntologyBuilder:
             self.ontology_classes = json.load(f)
             self.lemma_mappings = self.ontology_classes['MetaGrammaticalFunction']['classes']['GrammaticalFunction']['classes']
 
-        self.equivalent_classes = {}
+        # POS tag mappings
+        with open(self.config['local_files']['pos_tag_classes'], 'r') as f:
+            self.pos_tag_mappings = json.load(f)
+
+        self.equivalent_classes = {}  # Map of classes that should be added to a concept as equivalent classes
+        self.annotation_property_list = {}
+        self.prop_id = 1
+
+        self.should_cluster = self.config['clustering']
 
         # Rejected classes
         with open(self.config['local_files']['rejected_classes'], 'r') as f:
@@ -173,7 +179,7 @@ class OntologyBuilder:
         self.create_classes(g, ns)
 
         # Add logical functions
-        ParmenidesLoader.add_logical_functions(g)
+        ParmenidesLoader.add_logical_functions(self.config, g)
 
         all_properties = set()
         with self.conn.cursor(name='concepts') as cursor:
@@ -182,7 +188,7 @@ class OntologyBuilder:
             id_to_uri = {cid: self._get_safe_uri(term, ns) for cid, term, _, _ in concepts_data}
 
             for cid, term, pos, source in tqdm(concepts_data, desc="Processing Concepts"):
-                if pos.lower() in self.rejected_classes or 'GeoNames' in source: continue
+                if pos.lower() in self.rejected_classes: continue #or 'GeoNames' in source: continue
 
                 uri = id_to_uri[cid]
 
@@ -196,58 +202,38 @@ class OntologyBuilder:
 
         with self.conn.cursor(name='undirected') as cursor:
             cursor.execute("SELECT concept_id, type, value, source FROM undirected")
-            for cid, ctype, value, source in tqdm(cursor, desc="Processing Undirected (Definitions, alternatives)"):
+            for cid, ctype, value, source in tqdm(cursor, desc="Processing Undirected (Alternatives)"):
                 uri = id_to_uri[cid]
                 g.add((uri, ns[ctype], Literal(value)))
 
-        with self.conn.cursor(name='relations') as cursor:
-            prop_id = 1
-            annotation_property_list = {}
+        if not self.should_cluster:
+            with self.conn.cursor(name='relations') as cursor:
+                cursor.execute("SELECT start_concept_id, end_concept_id, relation_type, weight, source FROM relations")
+                for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing Relations"):
+                    self.add_relation_to_graph(g, start_id, end_id, id_to_uri, ns, rel_type, weight)
+        else:
+            with self.conn.cursor(name='cluster_relations') as cursor:
+                cursor.execute("SELECT start_cluster_id, end_cluster_id, relation_type, weight FROM cluster_relations")
+                for start_cluster_id, end_cluster_id, rel_type, weight in tqdm(cursor, desc="Processing Clustered Relations"):
+                    start_ids, end_ids = self.get_concept_from_cluster(start_cluster_id), self.get_concept_from_cluster(end_cluster_id)
 
-            cursor.execute("SELECT start_concept_id, end_concept_id, relation_type, weight, source FROM relations")
-            for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing Relations"):
-                if 'GeoNames' in source: continue
-
-                if start_id in id_to_uri and end_id in id_to_uri:
-                    start_uri, end_uri = id_to_uri[start_id], id_to_uri[end_id]
-
-                    mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
-
-                    rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
-
-                    sub_property_list = {'rel': rel, 'is_negated': Literal(is_negated), 'weight': Literal(weight)}
-                    sub_list_key = frozenset(sub_property_list.items())
-
-                    if sub_list_key in annotation_property_list:
-                        rel_uri = annotation_property_list[sub_list_key]
-                    else:
-                        rel_uri = self._get_safe_uri(f"{rel} {prop_id}", ns)
-                        annotation_property_list[sub_list_key] = rel_uri
-                        prop_id += 1
-
-                    g.add((ns[rel], RDF.type, OWL.AnnotationProperty))
-                    g.add((rel_uri, RDF.type, ns[rel]))
-
-                    for sub_prop_key, sub_prop_value in sub_property_list.items():
-                        if sub_prop_key == 'rel': continue
-                        g.add((rel_uri, ns[sub_prop_key], sub_prop_value))
-
-                    # p_uri = self._get_safe_uri(rel, ns)
-                    # all_properties.add((rel_uri, OWL.ObjectProperty))
-
-                    s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
-                    g.add((s, rel_uri, t))
+                    for start_id in start_ids:
+                        for end_id in end_ids:
+                            self.add_relation_to_graph(g, start_id, end_id, id_to_uri, ns, rel_type, weight)
 
         with self.conn.cursor(name='properties') as cursor:
             cursor.execute("SELECT concept_id, prop_type FROM properties")
             for concept_id, prop_type in tqdm(cursor, desc="Processing Properties"):
                 if concept_id in id_to_uri:
                     concept_id = id_to_uri[concept_id]
-                    g.add((concept_id, ns[prop_type], Literal(True)))
-                    all_properties.add((ns[prop_type], OWL.DatatypeProperty))
+                    prop_uri = self._get_safe_uri(prop_type, ns)
+                    g.add((concept_id, prop_uri, Literal(True)))
+                    all_properties.add((prop_uri, OWL.DatatypeProperty))
 
         for prop_uri, prop_type in tqdm(all_properties, desc="Adding Properties"):
             g.add((prop_uri, RDF.type, prop_type))
+
+        self.add_pos_tag_classes(g, ns)
 
         try:
             logging.info("Serialising ontology")
@@ -255,6 +241,37 @@ class OntologyBuilder:
             logging.info(f"Successfully saved ontology to {file_path}")
         except Exception as e:
             logging.error(f"Failed to write Turtle file: {e}")
+
+    def add_relation_to_graph(self, g, start_id, end_id, id_to_uri, ns, rel_type, weight):
+        if start_id in id_to_uri and end_id in id_to_uri:
+            start_uri, end_uri = id_to_uri[start_id], id_to_uri[end_id]
+
+            mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
+
+            rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
+
+            sub_property_list = {'rel': rel, 'is_negated': Literal(is_negated), 'weight': Literal(weight)}
+            sub_list_key = frozenset(sub_property_list.items())
+
+            if sub_list_key in self.annotation_property_list:
+                rel_uri = self.annotation_property_list[sub_list_key]
+            else:
+                rel_uri = self._get_safe_uri(f"{rel} {self.prop_id}", ns)
+                self.annotation_property_list[sub_list_key] = rel_uri
+                self.prop_id += 1
+
+            g.add((ns[rel], RDF.type, OWL.AnnotationProperty))
+            g.add((rel_uri, RDF.type, ns[rel]))
+
+            for sub_prop_key, sub_prop_value in sub_property_list.items():
+                if sub_prop_key == 'rel': continue
+                g.add((rel_uri, ns[sub_prop_key], sub_prop_value))
+
+            # p_uri = self._get_safe_uri(rel, ns)
+            # all_properties.add((rel_uri, OWL.ObjectProperty))
+
+            s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
+            g.add((s, rel_uri, t))
 
     def create_classes(self, g: Graph, ns: Namespace):
         logging.info("Creating ontology classes")
@@ -278,6 +295,58 @@ class OntologyBuilder:
             if len(children[child]) > 0 and 'sameAs' in children[child]:
                 self.equivalent_classes[child] = [child, children[child]['sameAs']]
 
+    def add_pos_tag_classes(self, g, ns):
+        logging.info("Adding POS tag classes")
+        g.add((ns['POSTag'], RDF.type, OWL.Class))
+
+        new_triples = []
+        # Find all unique subjects in the graph that have a type definition
+        subjects = {s for s in g.subjects(RDF.type, None) if isinstance(s, URIRef)}
+
+        for subject_uri in tqdm(subjects, desc="Matching POS tag classes"):
+            subject_types = list(g.objects(subject_uri, RDF.type))
+
+            for pos_tag, mapping in self.pos_tag_mappings.items():
+                pos_uri = self._get_safe_uri(pos_tag, ns)
+                pos_triple = (pos_uri, RDF.type, ns['POSTag'])
+                if pos_triple not in g:
+                    g.add(pos_triple)
+
+                if "classes" not in mapping:
+                    continue
+
+                for class_name, class_details in mapping["classes"].items():
+                    class_uri = ns[class_name]
+                    if class_uri in subject_types:
+                        required_properties = class_details.get("properties", [])
+
+                        has_all_properties = all(
+                            (subject_uri, self._get_safe_uri(prop, ns), Literal(True)) in g for prop in required_properties
+                        )
+
+                        if has_all_properties:
+                            new_triples.append((subject_uri, RDF.type, pos_uri))
+                            # logging.info(f"Adding '{subject_uri}' to '{pos_tag}'")
+                            break
+
+        logging.info(f"Identified {len(set(new_triples))} new POS tag classifications to add.")
+        for triple in set(new_triples):
+            if triple not in g:
+                g.add(triple)
+
+    @lru_cache(maxsize=1024)
+    def get_concept_from_cluster(self, cluster_id):
+        concepts = []
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT concept_id, cluster_id FROM clusters WHERE cluster_id = %s", [cluster_id])
+            concept_ids = [row[0] for row in cursor.fetchall()]
+
+        with self.conn.cursor() as cursor:
+            for concept_id in concept_ids:
+                cursor.execute("SELECT id, term, part_of_speech FROM concepts WHERE id = %s", [concept_id])
+                concepts.append(cursor.fetchone())
+        return concepts
+
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
@@ -293,6 +362,11 @@ def main():
     try:
         builder = OntologyBuilder(config)
         builder.build()
+
+        if builder.should_cluster:
+            clusterer = ConceptClusterer(builder.conn, config)
+            clusterer.run()
+
         builder.dump_to_turtle(config['turtle_export']['output_file'])
     except (psycopg2.Error, ConnectionRefusedError) as e:
         print(f"\nA database error occurred: {e}")

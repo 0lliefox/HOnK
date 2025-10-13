@@ -1,0 +1,211 @@
+{
+  "CC": {
+    "__name": "Coordinating Conjunction",
+    "classes": {
+      "CoordinatingConjunction": {}
+    }
+  },
+  "CD": {
+    "__name": "Cardinal Number",
+    "classes": {
+      "CardinalNumber": {}
+    }
+  },
+  "DT": {
+    "__name": "Determiner",
+    "classes": {
+      "Determiner": {}
+    }
+  },
+  "EX": {
+    "__name": "Existential there"
+  },
+  "FW": {
+    "__name": "Foreign Word"
+  },
+  "IN": {
+    "__name": "Preposition or Subordinating Conjunction",
+    "classes": {
+      "Preposition": {},
+      "SubordinatingConjunction": {}
+    }
+  },
+  "JJ": {
+    "__name": "Adjective",
+    "classes": {
+      "Adjective": {}
+    }
+  },
+  "JJR": {
+    "__name": "Adjective, comparative",
+    "classes": {
+      "Adjective": {
+        "properties": ["comparative"]
+      }
+    }
+  },
+  "JJS": {
+    "__name": "Adjective, superlative",
+    "classes": {
+      "Adjective": {
+        "properties": ["superlative"]
+      }
+    }
+  },
+  "LS": {
+    "__name": "List Item Marker"
+  },
+  "MD": {
+    "__name": "Modal"
+  },
+  "NN": {
+    "__name": "Noun, singular or mass",
+    "classes": {
+      "Noun": {
+        "properties": ["singular"]
+      }
+    }
+  },
+  "NNS": {
+    "__name": "Noun, plural",
+    "classes": {
+      "Noun": {
+        "properties": ["plural"]
+      }
+    }
+  },
+  "NNP": {
+    "__name": "Proper Noun, singular",
+    "classes": {
+      "ProperNoun": {
+        "properties": ["singular"]
+      }
+    }
+  },
+  "NNPS": {
+    "__name": "Proper noun, plural",
+    "classes": {
+      "ProperNoun": {
+        "properties": ["plural"]
+      }
+    }
+  },
+  "PDT": {
+    "__name": "Predeterminer"
+  },
+  "POS": {
+    "__name": "Possessive ending"
+  },
+  "PRP": {
+    "__name": "Personal pronoun",
+    "classes": {
+      "PersonalPronoun": {}
+    }
+  },
+  "PRP$": {
+    "__name": "Possessive pronoun"
+  },
+  "RB": {
+    "__name": "Adverb",
+    "classes": {
+      "Adverb": {}
+    }
+  },
+  "RBR": {
+    "__name": "Adverb, comparative",
+    "classes": {
+      "Adverb": {
+        "properties": ["comparative"]
+      }
+    }
+  },
+  "RBS": {
+    "__name": "Adverb, superlative",
+    "classes": {
+      "Adverb": {
+        "properties": ["superlative"]
+      }
+    }
+  },
+  "RP": {
+    "__name": "Particle",
+    "classes": {
+      "Particle": {}
+    }
+  },
+  "SYM": {
+    "__name": "Symbol",
+    "classes": {
+      "Symbol": {}
+    }
+  },
+  "TO": {
+    "__name": "to"
+  },
+  "UH": {
+    "__name": "Interjection",
+    "classes": {
+      "Interjection": {}
+    }
+  },
+  "VB": {
+    "__name": "Verb, base form",
+    "classes": {
+      "Verb": {
+        "properties": ["present"]
+      }
+    }
+  },
+  "VBD": {
+    "__name": "Verb, past tense",
+    "classes": {
+      "Verb": {
+        "properties": ["past"]
+      }
+    }
+  },
+  "VBG": {
+    "__name": "Verb, gerund or present participle",
+    "classes": {
+      "Verb": {
+        "properties": ["gerund", "present participle"]
+      }
+    }
+  },
+  "VBN": {
+    "__name": "Verb, past participle",
+    "classes": {
+      "Verb": {
+        "properties": ["past participle"]
+      }
+    }
+  },
+  "VBP": {
+    "__name": "Verb, non-3rd person singular present",
+    "classes": {
+      "Verb": {
+        "properties": ["singular", "present"]
+      }
+    }
+  },
+  "VBZ": {
+    "__name": "Verb, 3rd person singular present",
+    "classes": {
+      "Verb": {
+        "properties": ["singular", "present", "third-person"]
+      }
+    }
+  },
+  "WDT": {
+    "__name": "Wh-determiner"
+  },
+  "WP": {
+    "__name": "Wh-pronoun"
+  },
+  "WP$": {
+    "__name": "Possessive wh-pronoun"
+  },
+  "WRB": {
+    "__name": "Wh-adverb"
+  }
+}

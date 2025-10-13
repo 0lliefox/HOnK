@@ -54,9 +54,9 @@ class WiktionaryLoader(AbstractLoader):
                 definitions = []
                 senses = data.get('senses', [])
                 for sense in senses:
-                    glosses = sense.get('glosses')
-                    if glosses and isinstance(glosses, list) and glosses[0]:
-                        definitions.append(glosses[0])
+                    # glosses = sense.get('glosses')
+                    # if glosses and isinstance(glosses, list) and glosses[0]:
+                    #     definitions.append(glosses[0])
 
                     # Search through glosses to find extra POS tags
                     if searchable_classes:
@@ -74,9 +74,9 @@ class WiktionaryLoader(AbstractLoader):
                     if not main_concept_id:
                         continue
 
-                    if definitions:
-                        full_definition = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(definitions))
-                        self.add_undirected(main_concept_id, 'definition', full_definition, 'Wiktionary', cursor)
+                    # if definitions:
+                    #     full_definition = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(definitions))
+                    #     self.add_undirected(main_concept_id, 'definition', full_definition, 'Wiktionary', cursor)
 
                     classes = ['synonyms', 'related', 'derived', 'hyponyms', 'hypernyms', 'meronyms', 'holonyms']
                     for class_type in classes:
@@ -105,6 +105,15 @@ class WiktionaryLoader(AbstractLoader):
                 for search_prop in searchable_properties:
                     if self.match_class_name(search_prop, category):
                         found_props.add(search_prop)
+        if 'participle' in found_props:
+            if 'present' in found_props:
+                found_props.add('present participle')
+                found_props.remove('present')
+                found_props.remove('participle')
+            elif 'past' in found_props:
+                found_props.add('past participle')
+                found_props.remove('past')
+                found_props.remove('participle')
 
     def match_class_name(self, search_term, category_string):
         safe_search_term = re.escape(search_term)

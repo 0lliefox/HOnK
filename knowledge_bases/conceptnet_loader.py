@@ -44,16 +44,25 @@ class Relation:
         self.startRS = self.startR.split('/')
         self.langStart = self.startRS[2] if len(self.startRS) > 2 else None
         self.startPOS = self.startRS[4] if len(self.startRS) > 4 else self.startRS[1]
-
-        self.endR = self.end.replace("_", " ")
-        self.endRS = self.endR.split('/')
-        self.langEnd = self.endRS[2] if len(self.endRS) > 2 else None
-        self.endPOS = self.endRS[4] if len(self.endRS) > 4 else self.endRS[1]
-
         if self.surfaceStart is None and len(self.startRS) > 3:
             self.surfaceStart = self.startRS[3]
-        if self.surfaceEnd is None and len(self.endRS) > 3:
-            self.surfaceEnd = self.endRS[3]
+
+        self.lang = self.langStart
+
+        if not self.rel == "ExternalURL":
+            # self.endR = self.end
+            # self.endRS = self.end.split('//')[1].split('.')
+            # if len(self.endRS[0]) > 3:
+            #     self.langEnd = self.data['dataset'].split('/')[-1]
+            # else:
+            #     self.langEnd = self.endRS[0]
+            # self.endPOS = self.startPOS
+            self.endR = self.end.replace("_", " ")
+            self.endRS = self.endR.split('/')
+            self.langEnd = self.endRS[2] if len(self.endRS) > 2 else None
+            self.endPOS = self.endRS[4] if len(self.endRS) > 4 else self.endRS[1]
+            if self.surfaceEnd is None and len(self.endRS) > 3:
+                self.surfaceEnd = self.endRS[3]
 
 
 class ConceptNetLoader(AbstractLoader):
@@ -70,12 +79,9 @@ class ConceptNetLoader(AbstractLoader):
                     for row in tqdm(reader, desc="Processing ConceptNet Edges"):
                         relation = Relation(row)
 
-                        if not self.is_url(relation):
-                            if relation.langStart != lang or relation.langEnd != lang:
-                                continue
-
-                            if not all([relation.surfaceStart, relation.surfaceEnd, relation.rel]):
-                                continue
+                        is_url = self.is_url(relation)
+                        if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (is_url and relation.lang != lang) or (is_url and '#' in relation.end):
+                            continue
 
                         # Use the POS extracted by the Relation class
                         start_pos = self._get_mapped_pos(relation.startPOS)
