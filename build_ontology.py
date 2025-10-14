@@ -299,38 +299,34 @@ class OntologyBuilder:
         logging.info("Adding POS tag classes")
         g.add((ns['POSTag'], RDF.type, OWL.Class))
 
-        new_triples = []
-        # Find all unique subjects in the graph that have a type definition
-        subjects = {s for s in g.subjects(RDF.type, None) if isinstance(s, URIRef)}
+        new_triples = set()
+        for pos_tag, mapping in tqdm(self.pos_tag_mappings.items(), desc="Processing POS tagging"):
+            pos_uri = self._get_safe_uri(pos_tag, ns)
+            g.add((pos_uri, RDFS.subClassOf, ns['POSTag']))
 
-        for subject_uri in tqdm(subjects, desc="Matching POS tag classes"):
-            subject_types = list(g.objects(subject_uri, RDF.type))
+            if "classes" not in mapping:
+                continue
 
-            for pos_tag, mapping in self.pos_tag_mappings.items():
-                pos_uri = self._get_safe_uri(pos_tag, ns)
-                pos_triple = (pos_uri, RDF.type, ns['POSTag'])
-                if pos_triple not in g:
-                    g.add(pos_triple)
+            for class_name, class_details in mapping["classes"].items():
+                class_uri = ns[class_name]
 
-                if "classes" not in mapping:
-                    continue
+                required_property_uris = [
+                    (self._get_safe_uri(prop, ns), Literal(True))
+                    for prop in class_details.get("properties", [])
+                ]
 
-                for class_name, class_details in mapping["classes"].items():
-                    class_uri = ns[class_name]
-                    if class_uri in subject_types:
-                        required_properties = class_details.get("properties", [])
+                candidate_subjects = g.subjects(RDF.type, class_uri)
+                for subject_uri in candidate_subjects:
+                    has_all_properties = all(
+                        (subject_uri, prop_uri, prop_val) in g
+                        for prop_uri, prop_val in required_property_uris
+                    )
 
-                        has_all_properties = all(
-                            (subject_uri, self._get_safe_uri(prop, ns), Literal(True)) in g for prop in required_properties
-                        )
+                    if has_all_properties:
+                        new_triples.add((subject_uri, RDF.type, pos_uri))
 
-                        if has_all_properties:
-                            new_triples.append((subject_uri, RDF.type, pos_uri))
-                            # logging.info(f"Adding '{subject_uri}' to '{pos_tag}'")
-                            break
-
-        logging.info(f"Identified {len(set(new_triples))} new POS tag classifications to add.")
-        for triple in set(new_triples):
+        logging.info(f"Identified {len(new_triples)} new POS tag classifications to add.")
+        for triple in new_triples:
             if triple not in g:
                 g.add(triple)
 
