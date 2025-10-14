@@ -39,7 +39,7 @@ local_files:
 
 turtle_export:
   cache: false
-  output_file: 'ontology.ttl'
+  output_file: 'ontology.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"
 

@@ -67,7 +67,8 @@
                 "FrequencyAdverb": {},
                 "PointInTimeAdverb": {}
               },
-              "UncomparableAdverb": {}
+              "UncomparableAdverb": {},
+              "WHAdverb": {}
             }
           },
           "Conjunction": {
@@ -106,7 +107,8 @@
               "DemonstrativeDeterminer": {},
               "InterrogativeDeterminer": {},
               "PossessiveDeterminer": {},
-              "RelativeDeterminer": {}
+              "RelativeDeterminer": {},
+              "WHDeterminer": {}
             }
           },
           "Interjection": {
@@ -340,7 +342,9 @@
               "PronominalPronoun": {},
               "ReciprocalPronoun": {},
               "ReflexivePronoun": {},
-              "RelativePronoun": {}
+              "RelativePronoun": {},
+              "WHPronoun": {},
+              "PossessiveWHPronoun": {}
             }
           },
           "Verb": {

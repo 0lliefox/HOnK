@@ -80,7 +80,7 @@ class ConceptNetLoader(AbstractLoader):
                         relation = Relation(row)
 
                         is_url = self.is_url(relation)
-                        if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (is_url and relation.lang != lang) or (is_url and '#' in relation.end):
+                        if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (is_url and relation.lang != lang) or (is_url and '#' in relation.end) or (relation.surfaceStart == ''):
                             continue
 
                         # Use the POS extracted by the Relation class

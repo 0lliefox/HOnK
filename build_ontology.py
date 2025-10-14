@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import subprocess
 from functools import lru_cache
 from urllib.parse import quote
 
@@ -155,7 +156,7 @@ class OntologyBuilder:
 
     def build(self):
         ParmenidesLoader(self).load_data()
-        GeoNamesLoader(self).load_data()
+        # GeoNamesLoader(self).load_data()
         WordNetLoader(self).load_data()
         ConceptNetLoader(self).load_data()
         WiktionaryLoader(self).load_data()
@@ -237,8 +238,17 @@ class OntologyBuilder:
 
         try:
             logging.info("Serialising ontology")
-            g.serialize(destination=file_path, format="ttl")
-            logging.info(f"Successfully saved ontology to {file_path}")
+            format = file_path.split('.')[-1]
+            g.serialize(destination=file_path, format=format)
+            logging.info(f"Successfully saved ontology to '{file_path}'")
+
+            if format == 'nt':
+                logging.info(f"Converting '{file_path}' to .ttl")
+                result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True, text=True, check=True)
+                output_file_path = file_path.replace('.nt', '.ttl')
+                with open(output_file_path, 'w') as f:
+                    f.write(result.stdout)
+                logging.info(f"Successfully saved ontology to '{output_file_path}'")
         except Exception as e:
             logging.error(f"Failed to write Turtle file: {e}")
 

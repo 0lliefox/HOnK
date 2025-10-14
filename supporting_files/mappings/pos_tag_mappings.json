@@ -197,15 +197,27 @@
     }
   },
   "WDT": {
-    "__name": "Wh-determiner"
+    "__name": "Wh-determiner",
+    "classes": {
+      "WHDeterminer": {}
+    }
   },
   "WP": {
-    "__name": "Wh-pronoun"
+    "__name": "Wh-pronoun",
+    "classes": {
+      "WHPronoun": {}
+    }
   },
   "WP$": {
-    "__name": "Possessive wh-pronoun"
+    "__name": "Possessive wh-pronoun",
+    "classes": {
+      "WHPossessivePronoun": {}
+    }
   },
   "WRB": {
-    "__name": "Wh-adverb"
+    "__name": "Wh-adverb",
+    "classes": {
+      "WHAdverb": {}
+    }
   }
 }

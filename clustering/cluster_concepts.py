@@ -37,8 +37,8 @@ class ConceptClusterer:
             cursor.execute("""
                         CREATE TABLE IF NOT EXISTS clusters
                         (
-                            concept_id INTEGER PRIMARY KEY,
-                            cluster_id UUID NOT NULL,
+                            concept_id INTEGER,
+                            cluster_id VARCHAR(10) NOT NULL,
                             FOREIGN KEY (concept_id) REFERENCES concepts (id) ON DELETE CASCADE
                             );
                         """)
@@ -47,8 +47,8 @@ class ConceptClusterer:
             cursor.execute("""
                         CREATE TABLE IF NOT EXISTS cluster_relations
                         (
-                            start_cluster_id UUID NOT NULL,
-                            end_cluster_id UUID NOT NULL,
+                            start_cluster_id VARCHAR(10) NOT NULL,
+                            end_cluster_id VARCHAR(10) NOT NULL,
                             relation_type TEXT NOT NULL,
                             weight REAL,
                             source TEXT,
@@ -78,8 +78,8 @@ class ConceptClusterer:
 
             db = {k: sorted(list(v)) for k, v in db.items()}
 
-            # with open(cache_path, "w", encoding="utf-8") as f:
-            #     json.dump(db, f, ensure_ascii=False, indent=4)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(db, f, ensure_ascii=False, indent=4)
             # else:
             #     db = json.load(open(cache_path))
 
@@ -91,20 +91,23 @@ class ConceptClusterer:
             cluster_mappings = []
             visited_nodes = set()
 
+            visited_clusters = dict()
             for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
-                if key_node in visited_nodes:
-                    continue
-
                 cluster_nodes = set(adjacency_list)
                 cluster_nodes.add(key_node)
 
-                cluster_id = uuid.uuid4()
-                c_ids = [c_id for c_id in cluster_nodes if isinstance(c_id, int)]  # TODO: Check this logic
-                for c_id in c_ids:
-                    cluster_mappings.append((c_id, cluster_id))
-                for node in cluster_nodes:
-                    visited_nodes.add(node)
+                c_key = tuple(sorted(tuple(map(str, cluster_nodes))))
+                if not (c_key in visited_clusters.keys()):
+                    cluster_id = len(visited_clusters)
+                    visited_clusters[c_key] = cluster_id
 
+                    c_ids = {c_id for c_id in cluster_nodes if isinstance(c_id, int)}
+                    for c_id in c_ids:
+                        cluster_mappings.append((c_id, f"c{cluster_id}"))
+                    for node in cluster_nodes:
+                        visited_nodes.add(node)
+
+            # TODO: Find all non visited nodes (relations)
 
             # Handle concepts that had no connections
             # cursor.execute("SELECT id FROM concepts WHERE id NOT IN (SELECT concept_id FROM clusters);")

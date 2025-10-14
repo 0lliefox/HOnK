@@ -26,22 +26,26 @@ class ParmenidesLoader(AbstractLoader):
             all_concepts = self.list_files('/concepts')
             self.create_concepts(all_concepts, cursor, False)
 
-            all_prepositions = self.list_files('/prepositions')
+            all_prepositions = self.list_files('/prepositions')  # TODO: Load .json
             self.create_concepts(all_prepositions, cursor, True)
 
             all_measures = self.list_files('/measures')
             self.create_concepts(all_measures, cursor, False)
+
+            all_wh = self.list_files('/wh')
+            self.create_concepts(all_wh, cursor, False)
 
             self.conn.commit()
             logging.info(f"Finished processing Parmenides")
 
     def create_concepts(self, file_paths, cursor, trim):
         for path in file_paths:
-            with open(path, "r") as dep:
-                pos = self.get_class_name(path, trim)
-                for line in dep:
-                    line = line.strip()
-                    self.get_or_create_concept(line, pos, "Parmenides", cursor)
+            if path.endswith('.txt'):
+                with open(path, "r") as dep:
+                    pos = self.get_class_name(path, trim)
+                    for line in dep:
+                        line = line.strip()
+                        self.get_or_create_concept(line, pos, "Parmenides", cursor)
 
     def list_files(self, folder) -> list[str]:
         new_folder = f"{self.config['local_files']['parmenides']}{folder}"

@@ -44,5 +44,6 @@
   "verb.social": "SocialVerb",
   "verb.stative": "StativeVerb",
   "verb.weather": "WeatherVerb",
-  "adj.ppl": "ParticipleAdjective"
+  "adj.ppl": "ParticipleAdjective",
+  "idiom": "Idiom"
 }

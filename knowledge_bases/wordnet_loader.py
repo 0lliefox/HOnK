@@ -1,7 +1,10 @@
 import logging
 import os
+import ssl
 from collections import defaultdict
 
+import nltk
+from nltk import word_tokenize
 from rdflib import Graph
 from tqdm import tqdm
 
@@ -9,6 +12,19 @@ from .abstract_loader import AbstractLoader
 
 
 class WordNetLoader(AbstractLoader):
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+
+    try:
+        nltk.data.find('averaged_perceptron_tagger')
+    except LookupError:
+        logging.info("Downloading NLTK's 'averaged_perceptron_tagger'...")
+        nltk.download('averaged_perceptron_tagger')
+
     def load_data(self):
         filepath = self.config['local_files']['wordnet']
         try:
@@ -45,16 +61,30 @@ class WordNetLoader(AbstractLoader):
                 for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts"):
                     if '#Component' in synset_uri:
                         component_split = synset_uri.split('#Component-')
+                        component_index = int(component_split[1]) - 1
                         component_parts = component_split[0][:-2].split('/')[-1].split('+')
                         component_to_relate = component_parts[int(component_split[1]) - 1]
                         full_component_label = ' '.join(component_parts)
-
                         full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', "WordNet", cursor)
-                        component_to_relate_db_id = self.get_or_create_concept(component_to_relate, 'Concept', "WordNet", cursor) # TODO: Shouldn't be Concept, replace with proper POS
+
+                        tagged_phrase = nltk.pos_tag(word_tokenize(full_component_label))
+                        if tagged_phrase[component_index][0].lower() == component_to_relate.lower():
+                            nltk_pos = tagged_phrase[component_index][1]
+                        else:
+                            # Search for the word incase index doesn't match
+                            for word, tag in tagged_phrase:
+                                if word.lower() == component_to_relate.lower():
+                                    nltk_pos = tag
+                                    break
+
+                        # TODO: Map tag from .json
+                        component_to_relate_db_id = self.get_or_create_concept(component_to_relate, nltk_pos, "WordNet", cursor)
                         self.add_relation(full_component_db_id, component_to_relate_db_id, 'compositeFormWith', 1.0, 'WordNet', cursor)
                     else:
                         if data['pos'] == 'phrase':
                             pos = 'Phrase'
+                            # if data['phrase_type']:
+                            #     pos = self._get_mapped_pos(data['phrase_type'])
                         elif data['lexical_domain'] == '':
                             pos = self._get_mapped_pos(data['pos'])
                         else:
@@ -169,6 +199,7 @@ class WordNetLoader(AbstractLoader):
                     'definition': "",
                     'pos': "",
                     'lexical_domain': "",
+                    'phrase_type': "",
                     'relations': set()
                 }
             synset_data[component_uri]['lemmas'][str(row.lemma)] = component_uri
@@ -179,7 +210,7 @@ class WordNetLoader(AbstractLoader):
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                     PREFIX wnp: <http://wordnet-rdf.princeton.edu/ontology#>
 
-                    SELECT ?synset ?lemma ?definition ?pos ?lexical_domain ?synset_member
+                    SELECT ?synset ?lemma ?definition ?pos ?lexical_domain ?synset_member ?phrase_type
                     WHERE {
                         ?synset rdf:type wnp:Synset .
                         ?synset rdfs:label ?lemma . FILTER(langMatches(lang(?lemma), "eng")) .
@@ -191,6 +222,10 @@ class WordNetLoader(AbstractLoader):
                         OPTIONAL {
                             ?synset wnp:lexical_domain ?lexical_domain .
                             BIND(STRAFTER(STR(?lexical_domain), STR(wnp:)) AS ?lexical_domain) .
+                        }
+                        
+                        OPTIONAL {
+                            ?synset wnp:phrase_type ?phrase_type .
                         }
 
                         # BIND(IF(BOUND(?lexical_domain) && ?lexical_domain != 'unlabeled', ?lexical_domain, ?pos_fallback) AS ?pos) .
@@ -209,6 +244,7 @@ class WordNetLoader(AbstractLoader):
                     'definition': str(row.definition),
                     'pos': str(row.pos),
                     'lexical_domain': str(row.get('lexical_domain', '')),
+                    'phrase_type': str(row.get('phrase_type', '')),
                     'relations': set()
                 }
             if str(row.lemma).replace(" ", "+") == str(row.synset_member).split('/')[-1][:-2]:
