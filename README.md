@@ -38,15 +38,13 @@ The script below can be used, which will download and extract the files in the c
 ```
 Files used in our experiments can be found at OSF.io here: https://osf.io/8mqs4/?view_only=282c38027c8043d5abd76a98001c31fa, or can be retrieved manually using the methods below:
 #### ConceptNet
-ConceptNet was retrieved from https://github.com/commonsense/conceptnet5/, where the English Wiktionary dump from 2025-09-20 was used in training.
+[ConceptNet](https://github.com/commonsense/conceptnet5/) was downloaded where the English Wiktionary dump from 2025-09-20 was used in experiments.
 
 #### Wiktionary
-Download the pre-expanded data from https://github.com/tatuylonen/wiktextract?tab=readme-ov-file#pre-extracted-data. 
-
-The dump file used for current experiments was from 2025-08-23, and was then filtered to only contain English terms.
+Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?tab=readme-ov-file#pre-extracted-data), which was used for current experiments was from 2025-08-23, and was then filtered to only contain English terms.
 
 #### WordNet
-The WordNet dump file was originally found here: https://doi.org/10.5281/zenodo.3739540, as an input for ConceptNet, therefore used here to ensure the best clustering possible.
+The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo.3739540), as an input for ConceptNet, therefore used here to ensure the best clustering possible.
 
 [//]: # (```bash)
 

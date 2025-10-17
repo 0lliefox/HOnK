@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import logging
 from os import listdir
 from os.path import isfile, join
@@ -40,12 +41,21 @@ class ParmenidesLoader(AbstractLoader):
 
     def create_concepts(self, file_paths, cursor, trim):
         for path in file_paths:
-            if path.endswith('.txt'):
-                with open(path, "r") as dep:
-                    pos = self.get_class_name(path, trim)
+            with open(path, "r") as dep:
+                pos = self.get_class_name(path, trim)
+                if path.endswith('.txt'):
                     for line in dep:
                         line = line.strip()
                         self.get_or_create_concept(line, pos, "Parmenides", cursor)
+                    dep.close()
+                elif path.endswith('.json'):
+                    lines = json.load(dep)
+                    for term, v in lines.items():
+                        if not term.startswith("__"):
+                            c_id = self.get_or_create_concept(term, pos, "Parmenides", cursor)
+                            for prop in v:
+                                self.add_property(c_id, prop, v[prop], "Parmenides", cursor)
+                    dep.close()
 
     def list_files(self, folder) -> list[str]:
         new_folder = f"{self.config['local_files']['parmenides']}{folder}"

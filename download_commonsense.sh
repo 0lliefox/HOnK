@@ -32,27 +32,33 @@ for path in "$EXTRACT_DIR"/*; do
     # Check if a file was actually found
     if [ -n "$file_to_process" ]; then
 
-      # ConceptNet is a .gz, so extract
+      # ConceptNet/Wiktionary/GeoNames are compressed to .gz, so extract
       if [[ "$file_to_process" == *.gz ]]; then
         echo "Extracting gzip file to '$dir_name'"
         gunzip "$file_to_process"
         file_to_process=$(find "$path" -type f -print -quit)
       fi
 
-      if [ -n "$file_to_process" ]; then
-          original_filename=$(basename -- "$file_to_process")
-          extension="${original_filename##*.}"
+      file_count=$(find "$path" -type f | wc -l)
 
-          new_filename="$dir_name"
-          if [[ "$original_filename" != "$extension" ]]; then
-              new_filename="${dir_name}.${extension}"
-          fi
+      if [ "$file_count" -eq 1 ]; then
+        if [ -n "$file_to_process" ]; then
+            original_filename=$(basename -- "$file_to_process")
+            extension="${original_filename##*.}"
 
-          final_path="$EXTRACT_DIR/$new_filename"
-          mv "$file_to_process" "$final_path"
-          echo "Processed and moved '$new_filename' to $EXTRACT_DIR"
+            new_filename="$dir_name"
+            if [[ "$original_filename" != "$extension" ]]; then
+                new_filename="${dir_name}.${extension}"
+            fi
+
+            final_path="$EXTRACT_DIR/$new_filename"
+            mv "$file_to_process" "$final_path"
+            echo "Processed and moved '$new_filename' to $EXTRACT_DIR"
+        else
+            echo "Warning: No file found after extraction in '$dir_name'"
+        fi
       else
-          echo "Warning: No file found after extraction in '$dir_name'"
+        echo "More than one file in folder, leaving as is"
       fi
 
     else

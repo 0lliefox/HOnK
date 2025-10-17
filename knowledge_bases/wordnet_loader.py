@@ -12,18 +12,20 @@ from .abstract_loader import AbstractLoader
 
 
 class WordNetLoader(AbstractLoader):
-    try:
-        _create_unverified_https_context = ssl._create_unverified_context
-    except AttributeError:
-        pass
-    else:
-        ssl._create_default_https_context = _create_unverified_https_context
+    def __init__(self, builder):
+        super().__init__(builder)
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context
+        except AttributeError:
+            pass
+        else:
+            ssl._create_default_https_context = _create_unverified_https_context
 
-    try:
-        nltk.data.find('averaged_perceptron_tagger')
-    except LookupError:
-        logging.info("Downloading NLTK's 'averaged_perceptron_tagger'...")
-        nltk.download('averaged_perceptron_tagger')
+        try:
+            nltk.data.find('averaged_perceptron_tagger')
+        except LookupError:
+            logging.info("Downloading NLTK's 'averaged_perceptron_tagger'...")
+            nltk.download('averaged_perceptron_tagger')
 
     def load_data(self):
         filepath = self.config['local_files']['wordnet']
@@ -77,14 +79,22 @@ class WordNetLoader(AbstractLoader):
                                     nltk_pos = tag
                                     break
 
-                        # TODO: Map tag from .json
-                        component_to_relate_db_id = self.get_or_create_concept(component_to_relate, nltk_pos, "WordNet", cursor)
-                        self.add_relation(full_component_db_id, component_to_relate_db_id, 'compositeFormWith', 1.0, 'WordNet', cursor)
+                        if 'classes' in self.builder.pos_tag_mappings[nltk_pos]:  # TODO: A few POS tags need classes adding
+                            pos_classes = self.builder.pos_tag_mappings[nltk_pos]['classes']
+                        else:
+                            pos_classes = [nltk_pos]
+
+                        for pos_class in pos_classes:
+                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, "WordNet", cursor)
+                            self.add_relation(full_component_db_id, component_to_relate_db_id, 'compositeFormWith', 1.0, 'WordNet', cursor)
+                            if isinstance(pos_classes, dict) and 'properties' in pos_classes[pos_class]:
+                                for prop in pos_classes[pos_class]['properties']:
+                                    self.add_property(component_to_relate_db_id, prop, True, "WordNet", cursor)
                     else:
                         if data['pos'] == 'phrase':
                             pos = 'Phrase'
-                            # if data['phrase_type']:
-                            #     pos = self._get_mapped_pos(data['phrase_type'])
+                            if data['phrase_type']:
+                                pos = self._get_mapped_pos(data['phrase_type'])
                         elif data['lexical_domain'] == '':
                             pos = self._get_mapped_pos(data['pos'])
                         else:
@@ -95,7 +105,8 @@ class WordNetLoader(AbstractLoader):
                             pos = lexical_pos.capitalize()
                             lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, "WordNet", cursor)
                         else:
-                            pos = data['pos']
+                            if pos != 'Phrase':
+                                pos = data['pos']
                             lexical_domain = None
 
                         lemma_db_ids = [self.get_or_create_concept(term, pos, "WordNet", cursor) for term, uri in data['lemmas'].items()]
@@ -146,7 +157,7 @@ class WordNetLoader(AbstractLoader):
 
     def get_relationships(self, g, synset_data):
         logging.info("Querying for WordNet relationships using targeted queries...")
-        relations_to_query = list(self.mappings.keys())
+        relations_to_query = list(self.mappings.keys())  # TODO: Restrict to just WordNet mappings
         total_relations_found = 0
 
         for rel_fragment in tqdm(relations_to_query, desc="Querying Relation Types"):
@@ -226,6 +237,7 @@ class WordNetLoader(AbstractLoader):
                         
                         OPTIONAL {
                             ?synset wnp:phrase_type ?phrase_type .
+                            BIND(STRAFTER(STR(?phrase_type), STR(wnp:)) AS ?phrase_type) .
                         }
 
                         # BIND(IF(BOUND(?lexical_domain) && ?lexical_domain != 'unlabeled', ?lexical_domain, ?pos_fallback) AS ?pos) .

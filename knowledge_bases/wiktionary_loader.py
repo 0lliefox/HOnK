@@ -88,7 +88,7 @@ class WiktionaryLoader(AbstractLoader):
                                 #                           'Wiktionary', cursor)
 
                     for prop in found_props:
-                        self.add_property(main_concept_id, prop, 'Wiktionary', cursor)
+                        self.add_property(main_concept_id, prop, True, 'Wiktionary', cursor)
 
         self.conn.commit()
         logging.info("Finished loading Wiktionary data from file.")

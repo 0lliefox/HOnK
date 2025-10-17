@@ -7,7 +7,7 @@ database:
 
 general:
   language: 'en'  # Fix a specific language for filtering the knowledge bases
-  clear_db_on_start: false  # Set to true to drop and recreate the database tables on every run
+  clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
   sources: ['wordnet', 'conceptnet', 'wiktionary']
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts', 'undirected']
   source_to_delete: []  # Set to [] to delete all sources
@@ -17,7 +17,7 @@ local_files:
   cache: '.cache'
 
   # Paths to the local data files for knowledge bases and their corresponding mapping configurations
-  wordnet: 'supporting_files/kb/WordNet.ttl'
+  wordnet: 'supporting_files/kb/WordNet.nt'
   wordnet_edge_mappings_file: 'supporting_files/mappings/wn_edge_mappings.json'
   wordnet_pos_mappings_file: 'supporting_files/mappings/wn_pos_mappings.json'
 
@@ -30,7 +30,9 @@ local_files:
   wiktionary_pos_mappings_file: 'supporting_files/mappings/wk_pos_mappings.json'
 
   parmenides: 'supporting_files/parmenides'
-  geonames: 'supporting_files/kb/GeoNames.txt'
+  geonames: 'supporting_files/kb/GeoNames/all_countries.csv'
+  geonames_hierarchy: 'supporting_files/kb/GeoNames/hierarchy.json'
+  geonames_alternates: 'supporting_files/kb/GeoNames/alternates_map.json'
 
   ontology_classes: 'supporting_files/mappings/ontology_classes.json'
   rejected_classes: 'supporting_files/mappings/ignored_classes.json'

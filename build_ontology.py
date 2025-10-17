@@ -125,14 +125,6 @@ class OntologyBuilder:
                                (
                                    id SERIAL PRIMARY KEY,
                                    concept_id INTEGER NOT NULL REFERENCES concepts (id),
-                                   prop_type TEXT NOT NULL,
-                                   source TEXT,
-                                   UNIQUE (concept_id, prop_type)
-                               );
-                               CREATE TABLE IF NOT EXISTS undirected
-                               (
-                                   id SERIAL PRIMARY KEY,
-                                   concept_id INTEGER NOT NULL REFERENCES concepts (id),
                                    type TEXT,
                                    value TEXT,
                                    source TEXT,
@@ -156,7 +148,7 @@ class OntologyBuilder:
 
     def build(self):
         ParmenidesLoader(self).load_data()
-        # GeoNamesLoader(self).load_data()
+        GeoNamesLoader(self).load_data()
         WordNetLoader(self).load_data()
         ConceptNetLoader(self).load_data()
         WiktionaryLoader(self).load_data()
@@ -197,16 +189,6 @@ class OntologyBuilder:
                     g.add((uri, RDF.type, ns[i_pos]))
                 g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
 
-                # for prop in ['alwaysOmit', 'alwaysTakeInfinitive', 'canOmit', 'comparative', 'superlative']:
-                #     g.add((uri, ns[prop], Literal(False)))
-                #     all_properties.add((ns[prop], OWL.DatatypeProperty))
-
-        with self.conn.cursor(name='undirected') as cursor:
-            cursor.execute("SELECT concept_id, type, value, source FROM undirected")
-            for cid, ctype, value, source in tqdm(cursor, desc="Processing Undirected (Alternatives)"):
-                uri = id_to_uri[cid]
-                g.add((uri, ns[ctype], Literal(value)))
-
         if not self.should_cluster:
             with self.conn.cursor(name='relations') as cursor:
                 cursor.execute("SELECT start_concept_id, end_concept_id, relation_type, weight, source FROM relations")
@@ -223,12 +205,12 @@ class OntologyBuilder:
                             self.add_relation_to_graph(g, start_id, end_id, id_to_uri, ns, rel_type, weight)
 
         with self.conn.cursor(name='properties') as cursor:
-            cursor.execute("SELECT concept_id, prop_type FROM properties")
-            for concept_id, prop_type in tqdm(cursor, desc="Processing Properties"):
+            cursor.execute("SELECT concept_id, type, value, source FROM properties")
+            for concept_id, prop_type, value, source in tqdm(cursor, desc="Processing Properties"):
                 if concept_id in id_to_uri:
                     concept_id = id_to_uri[concept_id]
                     prop_uri = self._get_safe_uri(prop_type, ns)
-                    g.add((concept_id, prop_uri, Literal(True)))
+                    g.add((concept_id, prop_uri, Literal(value)))
                     all_properties.add((prop_uri, OWL.DatatypeProperty))
 
         for prop_uri, prop_type in tqdm(all_properties, desc="Adding Properties"):
@@ -238,11 +220,11 @@ class OntologyBuilder:
 
         try:
             logging.info("Serialising ontology")
-            format = file_path.split('.')[-1]
-            g.serialize(destination=file_path, format=format)
+            ont_format = file_path.split('.')[-1]
+            g.serialize(destination=file_path, format=ont_format)
             logging.info(f"Successfully saved ontology to '{file_path}'")
 
-            if format == 'nt':
+            if ont_format == 'nt':
                 logging.info(f"Converting '{file_path}' to .ttl")
                 result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True, text=True, check=True)
                 output_file_path = file_path.replace('.nt', '.ttl')

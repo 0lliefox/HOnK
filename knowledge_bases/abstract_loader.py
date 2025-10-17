@@ -53,15 +53,9 @@ class AbstractLoader(ABC):
             (start_id, end_id, rel_type, weight, source)
         )
 
-    def add_property(self, c_id, prop_type, source, cursor):
+    def add_property(self, c_id, c_type, c_value, source, cursor):
         cursor.execute(
-            "INSERT INTO properties (concept_id, prop_type, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, prop_type) DO NOTHING",
-            (c_id, prop_type, source)
-        )
-
-    def add_undirected(self, c_id, c_type, c_value, source, cursor):
-        cursor.execute(
-            "INSERT INTO undirected (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
+            "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
             (c_id, c_type, c_value, source)
         )
 

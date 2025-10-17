@@ -59,7 +59,7 @@ class ConceptClusterer:
         logging.info("Clustering tables are set up.")
 
     def _find_and_store_clusters(self):
-        cache_path = f"../{self.config['local_files']['cache']}/adj_list.json"
+        cache_path = f"{self.config['local_files']['cache']}/adj_list.json"
         with self.conn.cursor() as cursor:
             # Adjacency list
             logging.info("  - Building adjacency list from URLs")
@@ -107,14 +107,14 @@ class ConceptClusterer:
                     for node in cluster_nodes:
                         visited_nodes.add(node)
 
-            # TODO: Find all non visited nodes (relations)
-
-            # Handle concepts that had no connections
-            # cursor.execute("SELECT id FROM concepts WHERE id NOT IN (SELECT concept_id FROM clusters);")
-            # isolated_nodes = [row[0] for row in cursor.fetchall()]
-            # for node in tqdm(isolated_nodes, desc="Handling isolated nodes"):
-            #     if node not in visited_nodes:
-            #         cluster_mappings.append((node, uuid.uuid4()))
+            logging.info("  - Fetching all concept IDs from database...")
+            cursor.execute("SELECT id FROM concepts;")
+            all_concept_ids = {row[0] for row in cursor.fetchall()}
+            unvisited_nodes = list(all_concept_ids - visited_nodes)
+            cluster_id = int(cluster_mappings[-1][1].split('c')[-1])
+            for node in tqdm(unvisited_nodes, desc="Handling isolated nodes"):
+                cluster_id += 1
+                cluster_mappings.append((node, f"c{cluster_id}"))
 
             logging.info(f"  - Storing {len(cluster_mappings)} concept to cluster mappings...")
             psycopg2.extras.execute_values(cursor, "INSERT INTO clusters (concept_id, cluster_id) VALUES %s", cluster_mappings)
