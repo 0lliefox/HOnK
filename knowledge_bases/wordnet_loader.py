@@ -27,7 +27,7 @@ class WordNetLoader(AbstractLoader):
             logging.info("Downloading NLTK's 'averaged_perceptron_tagger'...")
             nltk.download('averaged_perceptron_tagger')
 
-    def load_data(self):
+    def _load_data_implementation(self):
         filepath = self.config['local_files']['wordnet']
         try:
             synset_data = self.load_from_pickle('synset_data')
@@ -102,7 +102,7 @@ class WordNetLoader(AbstractLoader):
 
                         if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
                             lexical_pos, lexical_domain = data['lexical_domain'].split('.')
-                            pos = lexical_pos.capitalize()
+                            pos = self._get_mapped_pos(lexical_pos)
                             lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, "WordNet", cursor)
                         else:
                             if pos != 'Phrase':

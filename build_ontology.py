@@ -11,7 +11,9 @@ from psycopg2._psycopg import AsIs
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from tqdm import tqdm
+import time
 
+from benchmarking.benchmark import Benchmark
 from clustering.cluster_concepts import ConceptClusterer
 from knowledge_bases import ConceptNetLoader
 
@@ -24,7 +26,8 @@ from knowledge_bases.wiktionary_loader import WiktionaryLoader
 
 
 class OntologyBuilder:
-    def __init__(self, config):
+    def __init__(self, config, run_id = 0, benchmarking = None):
+        self.run_id = run_id
         self.config = config
         self.db_params = config['database']
         self.conn = None
@@ -62,6 +65,11 @@ class OntologyBuilder:
         # Rejected classes
         with open(self.config['local_files']['rejected_classes'], 'r') as f:
             self.rejected_classes = json.load(f)
+
+        if benchmarking is None:
+            self.benchmarking = Benchmark("timing")
+        else:
+            self.benchmarking = benchmarking
 
     def get_all_keys(self, nested_dict):
         keys = []
@@ -158,6 +166,8 @@ class OntologyBuilder:
         return URIRef(namespace + quote(term)) if re.search(r'[^a-zA-Z0-9_-]', term) else namespace[term]
 
     def dump_to_turtle(self, file_path):
+        start = time.time()
+
         if not self.conn: logging.error("No DB connection for Turtle dump"); return
         logging.info(f"Dumping database to Turtle file: {file_path}")
 
@@ -223,6 +233,9 @@ class OntologyBuilder:
             ont_format = file_path.split('.')[-1]
             g.serialize(destination=file_path, format=ont_format)
             logging.info(f"Successfully saved ontology to '{file_path}'")
+
+            end = time.time()
+            self.benchmarking.add_time(self.run_id, f"NT dumping", end - start)
 
             if ont_format == 'nt':
                 logging.info(f"Converting '{file_path}' to .ttl")
@@ -338,7 +351,7 @@ class OntologyBuilder:
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
-def main():
+def main(iterations = 1):
     try:
         with open('config.yaml', 'r') as f:
             config = yaml.safe_load(f)
@@ -348,14 +361,17 @@ def main():
 
     builder = None
     try:
-        builder = OntologyBuilder(config)
-        builder.build()
+        benchmarking = Benchmark("timing")
+        for i in range(iterations):
+            builder = OntologyBuilder(config, i, benchmarking)
+            builder.build()
 
-        if builder.should_cluster:
-            clusterer = ConceptClusterer(builder.conn, config)
-            clusterer.run()
+            if builder.should_cluster:
+                clusterer = ConceptClusterer(builder, config)
+                clusterer.run()
 
-        builder.dump_to_turtle(config['turtle_export']['output_file'])
+            builder.dump_to_turtle(config['turtle_export']['output_file'])
+        benchmarking.to_csv()
     except (psycopg2.Error, ConnectionRefusedError) as e:
         print(f"\nA database error occurred: {e}")
     finally:

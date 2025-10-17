@@ -66,7 +66,7 @@ class Relation:
 
 
 class ConceptNetLoader(AbstractLoader):
-    def load_data(self):
+    def _load_data_implementation(self):
         filepath = self.config['local_files']['conceptnet']
         lang = self.config['general']['language']
         logging.info(f"Loading ConceptNet data from local file: '{filepath}'...")

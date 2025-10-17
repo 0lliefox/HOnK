@@ -9,7 +9,7 @@ general:
   language: 'en'  # Fix a specific language for filtering the knowledge bases
   clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
   sources: ['wordnet', 'conceptnet', 'wiktionary']
-  tables_to_delete: ['relations', 'properties', 'urls', 'concepts', 'undirected']
+  tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
 
 local_files:
@@ -33,6 +33,7 @@ local_files:
   geonames: 'supporting_files/kb/GeoNames/all_countries.csv'
   geonames_hierarchy: 'supporting_files/kb/GeoNames/hierarchy.json'
   geonames_alternates: 'supporting_files/kb/GeoNames/alternates_map.json'
+  geonames_ignore: 'supporting_files/kb/GeoNames/ignored_places.txt'
 
   ontology_classes: 'supporting_files/mappings/ontology_classes.json'
   rejected_classes: 'supporting_files/mappings/ignored_classes.json'

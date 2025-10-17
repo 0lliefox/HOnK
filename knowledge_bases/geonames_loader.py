@@ -14,8 +14,10 @@ class GeoNamesLoader(AbstractLoader):
         self.id_term_map = self.load_from_pickle(self.map_cache_filepath)
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
+        with open(self.config['local_files']['geonames_ignore'], 'r') as f:
+            self.ignore_names = f.readlines()
 
-    def load_data(self):
+    def _load_data_implementation(self):
         filepath = self.config['local_files']['geonames']
         hierarchy_filepath = self.config['local_files']['geonames_hierarchy']
         with open(hierarchy_filepath, 'r') as f:
@@ -28,6 +30,10 @@ class GeoNamesLoader(AbstractLoader):
                     reader = csv.reader(f, delimiter='\t')
                     for line in tqdm(reader, desc="Processing GeoNames"):
                         n_id, name, _, translations = line[:4] # https://download.geonames.org/export/dump/readme.txt
+
+                        if name in self.ignore_names:
+                            continue
+
                         self.id_term_map[n_id] = name
                         current_id = self.get_or_create_concept(name, "GPE", "GeoNames", cursor)
 

@@ -1,8 +1,24 @@
 import logging
 import os
 import pickle
+import time
 from abc import abstractmethod, ABC
-from functools import lru_cache
+from functools import lru_cache, wraps
+
+
+def timer(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        class_name = self.__class__.__name__
+        logging.info(f"Starting execution of {class_name}.load_data...")
+        start_time = time.time()
+        result = func(self, *args, **kwargs)
+        end_time = time.time()
+        duration = end_time - start_time
+        logging.info(f"Finished execution of {class_name}.load_data in {duration:.2f} seconds.")
+        self.builder.benchmarking.add_row(self.builder.run_id, class_name, duration)
+        return result
+    return wrapper
 
 
 class AbstractLoader(ABC):
@@ -12,8 +28,12 @@ class AbstractLoader(ABC):
         self.conn = builder.conn
         self.mappings = builder.full_mappings
 
-    @abstractmethod
+    @timer
     def load_data(self):
+        self._load_data_implementation()
+
+    @abstractmethod
+    def _load_data_implementation(self):
         pass
 
     def _is_valid_term_for_language(self, lang):
@@ -25,6 +45,9 @@ class AbstractLoader(ABC):
     @lru_cache(maxsize=1024)
     def get_or_create_concept(self, term, pos, source, cursor=None):
         term, pos = term.replace('_', ' '), self._get_mapped_pos(pos)
+
+        if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
+            term = term.strip()
 
         standalone = cursor is None
         if standalone: cursor = self.conn.cursor()

@@ -1,6 +1,8 @@
 {
   "adj.all": "Adjective",
+  "adj": "Adjective",
   "adj.pert": "RelationalAdjective",
+  "adv": "Adverb",
   "adv.all": "Adverb",
   "noun.tops": "BeginningNoun",
   "noun.act": "AgentNoun",

@@ -1,32 +1,36 @@
 import json
 import logging
-import os
-import uuid
+import time
 from collections import defaultdict
 
 import psycopg2
 import psycopg2.extras
-import networkx as nx
 import yaml
 from psycopg2._psycopg import AsIs
-from rdflib import Namespace, Graph
 from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class ConceptClusterer:
-    def __init__(self, connection, config):
-        self.conn = connection
+    def __init__(self, builder, config):
+        self.builder = builder
+        self.conn = self.builder.conn
         self.config = config
         psycopg2.extras.register_uuid() # Used to convert Python UUID to PostgreSQL UUID
 
     def run(self):
+        start = time.time()
+
         logging.info("Starting clustering...")
         self._setup_database()
         self._find_and_store_clusters()
         self._coalesce_relationships()
         logging.info("Concept clustering finished")
+
+        end = time.time()
+        self.builder.benchmarking.add_row(self.builder.run_id, "Clustering", end - start)
+        logging.info(f"Clustering took {end - start:.2f} seconds.")
 
     def _setup_database(self):
         logging.info("Setting up database tables for clustering...")

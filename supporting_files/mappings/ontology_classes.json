@@ -415,6 +415,10 @@
         "properties": [],
         "classes": {}
       },
+      "LogicalRewritingRule": {
+        "properties": [],
+        "classes": {}
+      },
       "Dependency": {
         "properties": [],
         "classes": {}

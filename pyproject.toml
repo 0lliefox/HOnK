@@ -15,7 +15,7 @@ dependencies = [
     "rdflib",
     "tqdm",
     "dacite",
-    "oxrdflib"
+    "nltk"
 ]
 
 [project.scripts]

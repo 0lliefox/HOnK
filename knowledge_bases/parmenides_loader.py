@@ -12,7 +12,7 @@ from supporting_files.parmenides.classes.ParmenidesBuild import ParmenidesBuild
 
 
 class ParmenidesLoader(AbstractLoader):
-    def load_data(self):
+    def _load_data_implementation(self):
         filepath = self.config['local_files']['parmenides']
 
         with self.conn.cursor() as cursor:
@@ -27,14 +27,14 @@ class ParmenidesLoader(AbstractLoader):
             all_concepts = self.list_files('/concepts')
             self.create_concepts(all_concepts, cursor, False)
 
-            all_prepositions = self.list_files('/prepositions')  # TODO: Load .json
+            all_prepositions = self.list_files('/prepositions')
             self.create_concepts(all_prepositions, cursor, True)
 
             all_measures = self.list_files('/measures')
             self.create_concepts(all_measures, cursor, False)
 
             all_wh = self.list_files('/wh')
-            self.create_concepts(all_wh, cursor, False)
+            self.create_concepts(all_wh, cursor, True)
 
             self.conn.commit()
             logging.info(f"Finished processing Parmenides")
