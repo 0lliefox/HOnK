@@ -107,4 +107,7 @@ class AbstractLoader(ABC):
 
     def get_cache_dir(self, filepath):
         file_name = os.path.splitext(filepath)[0].split('/')[-1]
-        return f"{self.config['local_files']['cache']}/{file_name}.pkl"
+        cache_dir = self.config['local_files']['cache']
+        if not os.path.isdir(cache_dir):
+            os.mkdir(cache_dir)
+        return f"{cache_dir}/{file_name}.pkl"

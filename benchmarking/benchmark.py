@@ -1,4 +1,5 @@
 import csv
+import os
 from typing import Dict, List
 
 class Benchmark:
@@ -47,6 +48,9 @@ class Benchmark:
             return
 
         filename = f"benchmarking/results/{filename}_{len(self.data)}.csv"
+
+        if not os.path.isdir('benchmarking/results'):
+            os.mkdir('benchmarking/results')
 
         try:
             with open(filename, 'w', newline='') as csvfile:
