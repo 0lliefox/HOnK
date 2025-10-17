@@ -2,7 +2,7 @@
 Project for combining multiple commonsense knowledge bases into one, single ontology, to aid research in achieving better type resolution for work carried out in [LaSSI](https://github.com/LogDS/LaSSI).
 
 ## Setting Up
-### Database (PostgreSQL)
+### 1.  Database (PostgreSQL)
 PostgreSQL must be installed, along with a database and user:
 
 #### Installation
@@ -29,12 +29,12 @@ exit
 ```
 
 
-### Getting Supporting Files
+### 2. Getting Supporting Files
 For this particular research, the following Knowledge Bases (KBs) were used, this does not mean other KBs could not be incorporated to enhance the final ontology further.
 
 The script below can be used, which will download and extract the files in the correct format: 
 ```bash
-./supporting_files/download_commonsense.sh
+./download_commonsense.sh
 ```
 Files used in our experiments can be found at OSF.io here: https://osf.io/8mqs4/?view_only=282c38027c8043d5abd76a98001c31fa, or can be retrieved manually using the methods below:
 #### ConceptNet
@@ -51,3 +51,13 @@ The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo
 [//]: # (curl "http://ldf.fi/wordnet/data?graph=http://ldf.fi/wordnet/wn31" --output supporting_files/wordnet.ttl)
 
 [//]: # (```)
+
+### 3. Install Packages and Run
+Setup a virtual Python environment (3.10.x tested), and run:
+```bash
+pip install .
+```
+Then:
+```bash
+build-ontology
+```

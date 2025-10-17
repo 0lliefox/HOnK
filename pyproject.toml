@@ -22,5 +22,5 @@ dependencies = [
 build-ontology = "build_ontology:main"
 
 [tool.setuptools]
-packages = ["knowledge_bases"]
+packages = ["knowledge_bases", "benchmarking", "clustering", "supporting_files.parmenides.classes"]
 py-modules = ["build_ontology"]
