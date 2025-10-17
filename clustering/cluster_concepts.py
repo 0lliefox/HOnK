@@ -20,17 +20,20 @@ class ConceptClusterer:
         psycopg2.extras.register_uuid() # Used to convert Python UUID to PostgreSQL UUID
 
     def run(self):
-        start = time.time()
-
         logging.info("Starting clustering...")
         self._setup_database()
-        self._find_and_store_clusters()
+        cluster_mappings = self._find_and_store_clusters()
+
+        start = time.time()
+
+        self._store_clusters(cluster_mappings)
         self._coalesce_relationships()
-        logging.info("Concept clustering finished")
 
         end = time.time()
-        self.builder.benchmarking.add_row(self.builder.run_id, "Clustering", end - start)
-        logging.info(f"Clustering took {end - start:.2f} seconds.")
+        self.builder.benchmarking.add_row(self.builder.run_id, "Storing clusters in DB", end - start)
+        logging.info(f"Storing clusters took {end - start:.2f} seconds.")
+
+        logging.info("Concept clustering finished")
 
     def _setup_database(self):
         logging.info("Setting up database tables for clustering...")
@@ -65,6 +68,8 @@ class ConceptClusterer:
     def _find_and_store_clusters(self):
         cache_path = f"{self.config['local_files']['cache']}/adj_list.json"
         with self.conn.cursor() as cursor:
+            start = time.time()
+
             # Adjacency list
             logging.info("  - Building adjacency list from URLs")
 
@@ -120,10 +125,11 @@ class ConceptClusterer:
                 cluster_id += 1
                 cluster_mappings.append((node, f"c{cluster_id}"))
 
-            logging.info(f"  - Storing {len(cluster_mappings)} concept to cluster mappings...")
-            psycopg2.extras.execute_values(cursor, "INSERT INTO clusters (concept_id, cluster_id) VALUES %s", cluster_mappings)
-            self.conn.commit()
+            end = time.time()
+            self.builder.benchmarking.add_row(self.builder.run_id, "Clustering (Adj list + FW)", end - start)
+            logging.info(f"Clustering took {end - start:.2f} seconds.")
         logging.info("Cluster identification and storage complete.")
+        return cluster_mappings
 
     def floyd_warshall(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
@@ -142,6 +148,13 @@ class ConceptClusterer:
                 j_idx += 1
                 adjacency_db[j] = adjacency_list_j
             adjacency_db[i] = adjacency_list
+
+    def _store_clusters(self, cluster_mappings):
+        with self.conn.cursor() as cursor:
+            logging.info(f"  - Storing {len(cluster_mappings)} concept to cluster mappings...")
+            psycopg2.extras.execute_values(cursor, "INSERT INTO clusters (concept_id, cluster_id) VALUES %s",
+                                           cluster_mappings)
+            self.conn.commit()
 
     def _coalesce_relationships(self):
         # Join clusters table from cluster ID to start_concept_id and end_concept_id from relations table
