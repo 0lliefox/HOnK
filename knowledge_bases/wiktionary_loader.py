@@ -1,3 +1,4 @@
+import itertools
 import json
 import logging
 import re
@@ -18,6 +19,11 @@ class WiktionaryLoader(AbstractLoader):
                 entries = json.load(f)
 
             self.save_to_pickle(filepath, entries)
+
+        word_to_pos = {
+            key: {self._get_mapped_pos(item['pos']) for item in group}
+            for key, group in itertools.groupby(sorted(entries, key=lambda x: x['word']), key=lambda x: x['word'])
+        }
         with self.conn.cursor() as cursor:
             for data in tqdm(entries, desc="Processing Wiktionary Entries"):
                 term = data.get('word')
@@ -80,7 +86,7 @@ class WiktionaryLoader(AbstractLoader):
                     classes = ['synonyms', 'related', 'derived', 'hyponyms', 'hypernyms', 'meronyms', 'holonyms']
                     for class_type in classes:
                         for c_item in [s_obj.get('word') for s_obj in data.get(class_type, []) if s_obj.get('word')]:
-                            c_item_pos = [en for en in entries if en['word'] == c_item]
+                            c_item_pos = word_to_pos.get(c_item, [])
                             for c_pos in c_item_pos:
                                 c_id = self.get_or_create_concept(c_item, c_pos, "Wiktionary", cursor)
                                 if c_id:
