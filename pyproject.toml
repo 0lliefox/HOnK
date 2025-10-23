@@ -15,7 +15,10 @@ dependencies = [
     "rdflib",
     "tqdm",
     "dacite",
-    "nltk"
+    "nltk",
+    "pandas",
+    "matplotlib",
+    "plotnine"
 ]
 
 [project.scripts]

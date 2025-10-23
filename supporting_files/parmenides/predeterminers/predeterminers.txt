@@ -1,0 +1,11 @@
+all
+both
+double
+half
+many
+quarter
+twice
+quite
+rather
+such
+what

@@ -79,7 +79,7 @@ class WordNetLoader(AbstractLoader):
                                     nltk_pos = tag
                                     break
 
-                        if 'classes' in self.builder.pos_tag_mappings[nltk_pos]:  # TODO: A few POS tags need classes adding
+                        if 'classes' in self.builder.pos_tag_mappings[nltk_pos]:
                             pos_classes = self.builder.pos_tag_mappings[nltk_pos]['classes']
                         else:
                             pos_classes = [nltk_pos]
@@ -105,7 +105,7 @@ class WordNetLoader(AbstractLoader):
                             pos = self._get_mapped_pos(lexical_pos)
                             lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, "WordNet", cursor)
                         else:
-                            if pos != 'Phrase':
+                            if data['phrase_type'] != '':
                                 pos = data['pos']
                             lexical_domain = None
 

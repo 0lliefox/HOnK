@@ -30,10 +30,12 @@ local_files:
   wiktionary_pos_mappings_file: 'supporting_files/mappings/wk_pos_mappings.json'
 
   parmenides: 'supporting_files/parmenides'
+
   geonames: 'supporting_files/kb/GeoNames/all_countries.csv'
   geonames_hierarchy: 'supporting_files/kb/GeoNames/hierarchy.json'
   geonames_alternates: 'supporting_files/kb/GeoNames/alternates_map.json'
   geonames_ignore: 'supporting_files/kb/GeoNames/ignored_places.txt'
+  geonames_feature_codes: 'supporting_files/kb/GeoNames/feature_map.json'
 
   ontology_classes: 'supporting_files/mappings/ontology_classes.json'
   rejected_classes: 'supporting_files/mappings/ignored_classes.json'

@@ -16,6 +16,8 @@ class GeoNamesLoader(AbstractLoader):
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
             self.ignore_names = f.readlines()
+        with open(self.config['local_files']['geonames_feature_codes'], 'r') as f:
+            self.feature_codes = json.load(f)
 
     def _load_data_implementation(self):
         filepath = self.config['local_files']['geonames']
@@ -29,13 +31,25 @@ class GeoNamesLoader(AbstractLoader):
                 with open(filepath, 'r') as f:
                     reader = csv.reader(f, delimiter='\t')
                     for line in tqdm(reader, desc="Processing GeoNames"):
-                        n_id, name, _, translations = line[:4] # https://download.geonames.org/export/dump/readme.txt
+                        n_id, name, _, translations, _, _, feature_class, feature_code  = line[:8] # https://download.geonames.org/export/dump/readme.txt
 
                         if name in self.ignore_names:
                             continue
 
-                        self.id_term_map[n_id] = name
-                        current_id = self.get_or_create_concept(name, "GPE", "GeoNames", cursor)
+                        # 'A' is country, state, region: http://www.geonames.org/export/codes.html
+                        if feature_class == 'A':
+                            pos = 'GPE'
+                        else:
+                            pos = 'LOC'
+
+                        self.id_term_map[n_id] = [name, pos]
+                        current_id = self.get_or_create_concept(name, pos, "GeoNames", cursor)
+
+                        # Feature code might be empty, feature class is too general for instanceOf relationship (?)
+                        if feature_code != '':
+                            feature_instance = self.feature_codes[f"{feature_class}.{feature_code}"]
+                            feature_db_id = self.get_or_create_concept(feature_instance, "Noun", "GeoNames", cursor)
+                            self.add_relation(current_id, feature_db_id, "instanceOf", 1, "GeoNames", cursor)
 
                         if len(translations) > 0:
                             translations = translations.split(',')
@@ -49,10 +63,10 @@ class GeoNamesLoader(AbstractLoader):
 
             for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
                 parent = self.check_id(parent)
-                parent_db_id = self.get_or_create_concept(self.id_term_map[parent], "GPE", "GeoNames", cursor)
+                parent_db_id = self.get_or_create_concept(self.id_term_map[parent][0], self.id_term_map[parent][1], "GeoNames", cursor)
                 for child in children:
                     child = self.check_id(child)
-                    child_db_id = self.get_or_create_concept(self.id_term_map[child], "GPE", "GeoNames", cursor)
+                    child_db_id = self.get_or_create_concept(self.id_term_map[child][0], self.id_term_map[child][1], "GeoNames", cursor)
                     self.add_relation(child_db_id, parent_db_id, "partOf", 1, "GeoNames", cursor)
 
             self.conn.commit()
@@ -62,6 +76,7 @@ class GeoNamesLoader(AbstractLoader):
         while c_id not in self.id_term_map:
             if c_id not in self.alternate_names:
                 logging.error(f"Could not find alternative name {c_id}")
+                return None
             else:
                 c_id = self.alternate_names[c_id]
         return c_id

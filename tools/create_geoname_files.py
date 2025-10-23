@@ -32,3 +32,16 @@ if __name__ == '__main__':
 
     with open('geonames/alternates_map.json', 'w') as f:
         f.write(json.dumps(alternates))
+
+    features = {}
+    with open('geonames/feature_codes.csv') as f:
+        lines = f.readlines()
+        for line in lines:
+            try:
+                feature_code, feature_instance = line.strip().split('\t')[:2]
+                features[feature_code] = feature_instance
+            except Exception as e:
+                print(e, line)
+
+    with open('geonames/feature_map.json', 'w') as f:
+        f.write(json.dumps(features))

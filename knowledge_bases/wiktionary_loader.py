@@ -86,7 +86,10 @@ class WiktionaryLoader(AbstractLoader):
                     classes = ['synonyms', 'related', 'derived', 'hyponyms', 'hypernyms', 'meronyms', 'holonyms']
                     for class_type in classes:
                         for c_item in [s_obj.get('word') for s_obj in data.get(class_type, []) if s_obj.get('word')]:
-                            c_item_pos = word_to_pos.get(c_item, [])
+                            if class_type in {'related', 'derived'}:
+                                c_item_pos = word_to_pos.get(c_item, [])
+                            else:
+                                c_item_pos = pos
                             for c_pos in c_item_pos:
                                 c_id = self.get_or_create_concept(c_item, c_pos, "Wiktionary", cursor)
                                 if c_id:

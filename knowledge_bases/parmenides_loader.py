@@ -36,6 +36,9 @@ class ParmenidesLoader(AbstractLoader):
             all_wh = self.list_files('/wh')
             self.create_concepts(all_wh, cursor, True)
 
+            all_predeterminers = self.list_files('/predeterminers')
+            self.create_concepts(all_predeterminers, cursor, True)
+
             self.conn.commit()
             logging.info(f"Finished processing Parmenides")
 
@@ -62,7 +65,7 @@ class ParmenidesLoader(AbstractLoader):
         return [f"{new_folder}/{f}" for f in listdir(new_folder) if isfile(join(new_folder, f))]
 
     def get_class_name(self, file_name, trim):
-        name = ''.join([n.capitalize() for n in file_name.split('/')[-1].split('.')[:1][0].split('_')])
+        name = ''.join([n.capitalize() if len(n) > 2 else n.upper() for n in file_name.split('/')[-1].split('.')[:1][0].split('_')])
         return name[:-1] if trim else name
 
     @staticmethod

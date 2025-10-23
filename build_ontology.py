@@ -235,7 +235,7 @@ class OntologyBuilder:
             logging.info(f"Successfully saved ontology to '{file_path}'")
 
             end = time.time()
-            self.benchmarking.add_time(self.run_id, f"NT dumping", end - start)
+            self.benchmarking.add_row(self.run_id, f"NT dumping", end - start)
 
             if ont_format == 'nt':
                 logging.info(f"Converting '{file_path}' to .ttl")

@@ -42,12 +42,12 @@ class Benchmark:
                     previous_row[phase] = 0.0
         self.data.append(new_row)
 
-    def to_csv(self, filename: str = 'benchmark_results') -> None:
+    def to_csv(self, filename='benchmark_results', data_length=True) -> None:
         if not self.data:
             print("No data to export.")
             return
 
-        filename = f"benchmarking/results/{filename}_{len(self.data)}.csv"
+        filename = f"benchmarking/results/{filename}{f'_{len(self.data)}' if data_length else ''}.csv"
 
         if not os.path.isdir('benchmarking/results'):
             os.mkdir('benchmarking/results')

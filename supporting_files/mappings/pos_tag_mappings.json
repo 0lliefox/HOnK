@@ -56,7 +56,10 @@
     "__name": "List Item Marker"
   },
   "MD": {
-    "__name": "Modal"
+    "__name": "Modal",
+    "classes": {
+      "ModalVerb" : {}
+    }
   },
   "NN": {
     "__name": "Noun, singular or mass",
@@ -91,10 +94,16 @@
     }
   },
   "PDT": {
-    "__name": "Predeterminer"
+    "__name": "Predeterminer",
+    "classes": {
+      "Predeterminer": {}
+    }
   },
   "POS": {
-    "__name": "Possessive ending"
+    "__name": "Possessive ending",
+    "classes": {
+      "PossessiveDeterminer": {}
+    }
   },
   "PRP": {
     "__name": "Personal pronoun",
@@ -103,7 +112,10 @@
     }
   },
   "PRP$": {
-    "__name": "Possessive pronoun"
+    "__name": "Possessive pronoun",
+    "classes": {
+      "PossessivePronoun": {}
+    }
   },
   "RB": {
     "__name": "Adverb",
@@ -140,7 +152,10 @@
     }
   },
   "TO": {
-    "__name": "to"
+    "__name": "to",
+    "classes": {
+      "Preposition": {}
+    }
   },
   "UH": {
     "__name": "Interjection",

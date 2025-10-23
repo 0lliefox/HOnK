@@ -1,6 +1,6 @@
 import json
 import logging
-import time
+import os
 from collections import defaultdict
 
 import psycopg2
@@ -9,50 +9,58 @@ import yaml
 from psycopg2._psycopg import AsIs
 from tqdm import tqdm
 
+
+
+from knowledge_bases.abstract_loader import timer
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class ConceptClusterer:
-    def __init__(self, builder, config):
+    def __init__(self, builder, config, table_names=None):
         self.builder = builder
         self.conn = self.builder.conn
         self.config = config
-        psycopg2.extras.register_uuid() # Used to convert Python UUID to PostgreSQL UUID
 
+        if table_names is None:
+            self.tables = {
+                "concepts": "concepts",
+                "urls": "urls",
+                "relations": "relations",
+                "clusters": "clusters",
+                "cluster_relations": "cluster_relations"
+            }
+        else:
+            self.tables = table_names
+
+    @timer
     def run(self):
         logging.info("Starting clustering...")
         self._setup_database()
         cluster_mappings = self._find_and_store_clusters()
-
-        start = time.time()
-
         self._store_clusters(cluster_mappings)
         self._coalesce_relationships()
-
-        end = time.time()
-        self.builder.benchmarking.add_row(self.builder.run_id, "Storing clusters in DB", end - start)
-        logging.info(f"Storing clusters took {end - start:.2f} seconds.")
-
         logging.info("Concept clustering finished")
+        self.builder.benchmarking.to_csv("clustering_benchmark", False)
 
     def _setup_database(self):
         logging.info("Setting up database tables for clustering...")
         with self.conn.cursor() as cursor:
-            for table in ['clusters', 'cluster_relations']:
+            for table in [self.tables['clusters'], self.tables['cluster_relations']]:
                 cursor.execute("DROP TABLE IF EXISTS %s CASCADE", [AsIs(table)])
 
-            cursor.execute("""
-                        CREATE TABLE IF NOT EXISTS clusters
+            cursor.execute(f"""
+                        CREATE TABLE IF NOT EXISTS {AsIs(self.tables['clusters'])}
                         (
                             concept_id INTEGER,
                             cluster_id VARCHAR(10) NOT NULL,
-                            FOREIGN KEY (concept_id) REFERENCES concepts (id) ON DELETE CASCADE
+                            FOREIGN KEY (concept_id) REFERENCES {AsIs(self.tables['concepts'])} (id) ON DELETE CASCADE
                             );
                         """)
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_clusters_cluster_id ON clusters(cluster_id);")
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_cluster_id ON {AsIs(self.tables['clusters'])}(cluster_id);")
 
-            cursor.execute("""
-                        CREATE TABLE IF NOT EXISTS cluster_relations
+            cursor.execute(f"""
+                        CREATE TABLE IF NOT EXISTS {AsIs(self.tables['cluster_relations'])}
                         (
                             start_cluster_id VARCHAR(10) NOT NULL,
                             end_cluster_id VARCHAR(10) NOT NULL,
@@ -68,69 +76,71 @@ class ConceptClusterer:
     def _find_and_store_clusters(self):
         cache_path = f"{self.config['local_files']['cache']}/adj_list.json"
         with self.conn.cursor() as cursor:
-            start = time.time()
-
             # Adjacency list
-            logging.info("  - Building adjacency list from URLs")
-
-            # if not os.path.exists(cache_path):
-                # cursor.execute("SELECT t1.concept_id, t2.concept_id "
-                #                "FROM urls AS t1 JOIN urls AS t2 ON t1.external_url = t2.external_url "
-                #                "WHERE t1.concept_id != t2.concept_id;")
-            cursor.execute("SELECT t1.concept_id, t1.external_url FROM urls AS t1")
-            edges = cursor.fetchall()
-
-            db = defaultdict(set)
-            for id1, id2 in tqdm(edges, desc="Processing edges from URLs database"):
-                db[id1].add(id2)
-                db[id2].add(id1)
-
-            db = {k: sorted(list(v)) for k, v in db.items()}
-
+            db = self.build_adj_list(cursor)
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(db, f, ensure_ascii=False, indent=4)
-            # else:
-            #     db = json.load(open(cache_path))
 
             # Transitive closure (Floyd Warshall)
             self.floyd_warshall(db)
 
             # Build clusters
-            logging.info("  - Building clusters from adjacency list...")
-            cluster_mappings = []
-            visited_nodes = set()
+            cluster_mappings, visited_nodes = self.build_clusters_from_adj(db)
 
-            visited_clusters = dict()
-            for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
-                cluster_nodes = set(adjacency_list)
-                cluster_nodes.add(key_node)
-
-                c_key = tuple(sorted(tuple(map(str, cluster_nodes))))
-                if not (c_key in visited_clusters.keys()):
-                    cluster_id = len(visited_clusters)
-                    visited_clusters[c_key] = cluster_id
-
-                    c_ids = {c_id for c_id in cluster_nodes if isinstance(c_id, int)}
-                    for c_id in c_ids:
-                        cluster_mappings.append((c_id, f"c{cluster_id}"))
-                    for node in cluster_nodes:
-                        visited_nodes.add(node)
-
-            logging.info("  - Fetching all concept IDs from database...")
-            cursor.execute("SELECT id FROM concepts;")
-            all_concept_ids = {row[0] for row in cursor.fetchall()}
-            unvisited_nodes = list(all_concept_ids - visited_nodes)
-            cluster_id = int(cluster_mappings[-1][1].split('c')[-1])
-            for node in tqdm(unvisited_nodes, desc="Handling isolated nodes"):
-                cluster_id += 1
-                cluster_mappings.append((node, f"c{cluster_id}"))
-
-            end = time.time()
-            self.builder.benchmarking.add_row(self.builder.run_id, "Clustering (Adj list + FW)", end - start)
-            logging.info(f"Clustering took {end - start:.2f} seconds.")
+            # Create clusters for unclustered concepts
+            self.add_unclustered_concepts(cluster_mappings, cursor, visited_nodes)
         logging.info("Cluster identification and storage complete.")
         return cluster_mappings
 
+    @timer
+    def build_adj_list(self, cursor):
+        logging.info("  - Building adjacency list from URLs")
+        cursor.execute(f"SELECT t1.concept_id, t1.external_url FROM {AsIs(self.tables['urls'])} AS t1")
+        edges = cursor.fetchall()
+
+        db = defaultdict(set)
+        for id1, id2 in tqdm(edges, desc="Processing edges from URLs database"):
+            db[id1].add(id2)
+            db[id2].add(id1)
+
+        db = {k: sorted(list(v)) for k, v in db.items()}
+        return db
+
+    @timer
+    def add_unclustered_concepts(self, cluster_mappings, cursor, visited_nodes):
+        logging.info("  - Fetching all concept IDs from database...")
+        cursor.execute(f"SELECT id FROM {AsIs(self.tables['concepts'])};")
+        all_concept_ids = {row[0] for row in cursor.fetchall()}
+        unvisited_nodes = list(all_concept_ids - visited_nodes)
+        cluster_id = int(cluster_mappings[-1][1].split('c')[-1])
+        for node in tqdm(unvisited_nodes, desc="Handling isolated nodes"):
+            cluster_id += 1
+            cluster_mappings.append((node, f"c{cluster_id}"))
+
+    @timer
+    def build_clusters_from_adj(self, db):
+        logging.info("  - Building clusters from adjacency list...")
+        cluster_mappings = []
+        visited_nodes = set()
+
+        visited_clusters = dict()
+        for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
+            cluster_nodes = set(adjacency_list)
+            cluster_nodes.add(key_node)
+
+            c_key = tuple(sorted(tuple(map(str, cluster_nodes))))
+            if not (c_key in visited_clusters.keys()):
+                cluster_id = len(visited_clusters)
+                visited_clusters[c_key] = cluster_id
+
+                c_ids = {c_id for c_id in cluster_nodes if isinstance(c_id, int)}
+                for c_id in c_ids:
+                    cluster_mappings.append((c_id, f"c{cluster_id}"))
+                for node in cluster_nodes:
+                    visited_nodes.add(node)
+        return cluster_mappings, visited_nodes
+
+    @timer
     def floyd_warshall(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
         for i in tqdm(adjacency_db.keys(), desc="Floyd Warshall"):
@@ -149,30 +159,32 @@ class ConceptClusterer:
                 adjacency_db[j] = adjacency_list_j
             adjacency_db[i] = adjacency_list
 
+    @timer
     def _store_clusters(self, cluster_mappings):
         with self.conn.cursor() as cursor:
             logging.info(f"  - Storing {len(cluster_mappings)} concept to cluster mappings...")
-            psycopg2.extras.execute_values(cursor, "INSERT INTO clusters (concept_id, cluster_id) VALUES %s",
+            psycopg2.extras.execute_values(cursor, f"INSERT INTO {AsIs(self.tables['clusters'])} (concept_id, cluster_id) VALUES %s",
                                            cluster_mappings)
             self.conn.commit()
 
+    @timer
     def _coalesce_relationships(self):
         # Join clusters table from cluster ID to start_concept_id and end_concept_id from relations table
         logging.info("Coalescing relationships between clusters...")
         with self.conn.cursor() as cursor:
-            cursor.execute("TRUNCATE TABLE cluster_relations;")
-            cursor.execute("""
-                        INSERT INTO cluster_relations (start_cluster_id, end_cluster_id, relation_type, weight, source)
+            cursor.execute(f"TRUNCATE TABLE {AsIs(self.tables['cluster_relations'])};")
+            cursor.execute(f"""
+                        INSERT INTO {AsIs(self.tables['cluster_relations'])} (start_cluster_id, end_cluster_id, relation_type, weight, source)
                         SELECT DISTINCT c1.cluster_id,
                                         c2.cluster_id,
                                         r.relation_type,
                                         r.weight,
                                         r.source
-                        FROM relations AS r
+                        FROM {AsIs(self.tables['relations'])} AS r
                                  JOIN
-                             clusters AS c1 ON r.start_concept_id = c1.concept_id
+                             {AsIs(self.tables['clusters'])} AS c1 ON r.start_concept_id = c1.concept_id
                                  JOIN
-                             clusters AS c2 ON r.end_concept_id = c2.concept_id
+                             {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id
                         WHERE c1.cluster_id != c2.cluster_id
                         ON CONFLICT (start_cluster_id, end_cluster_id, relation_type) DO NOTHING;
                         """)
@@ -183,19 +195,13 @@ class ConceptClusterer:
 def main():
     with open('../config.yaml', 'r') as f:
         config = yaml.safe_load(f)
-    db = config.get('database')
+    os.chdir('../')
 
-    conn = None
-    try:
-        conn = psycopg2.connect(**db)
-        clusterer = ConceptClusterer(conn, config)
-        clusterer.run()
-    except psycopg2.Error as e:
-        logging.error(f"Database error: {e}")
-    finally:
-        if conn:
-            conn.close()
-            logging.info("Database connection closed.")
+    from build_ontology import OntologyBuilder
+    from benchmarking.benchmark import Benchmark
+    builder = OntologyBuilder(config, 0, Benchmark("scalability"))
+    clusterer = ConceptClusterer(builder, config)
+    clusterer.run()
 
 
 if __name__ == "__main__":
