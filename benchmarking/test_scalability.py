@@ -144,6 +144,7 @@ def run_experiment(config, fractions):
             logging.info(f"Running test for {id_percentage}% ({concept_count} concepts)")
 
             clusterer.run()
+            mock_builder.benchmarking.to_csv("clustering_benchmark", False)
 
             drop_subset_tables(conn)
     except psycopg2.Error as e:

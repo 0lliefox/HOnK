@@ -90,27 +90,3 @@ class AbstractLoader(ABC):
             "INSERT INTO urls (concept_id, external_url, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, external_url) DO NOTHING",
             (c_id, e_url, source)
         )
-
-    def save_to_pickle(self, filepath, data):
-        cache_dir = self.get_cache_dir(filepath)
-        with open(cache_dir, 'wb') as f:
-            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-            logging.info(f"Saved to pickle file, '{cache_dir}'")
-
-    def load_from_pickle(self, filepath):
-        cache_dir = self.get_cache_dir(filepath)
-        if os.path.exists(cache_dir):
-            logging.info(f"Loading file from cache, '{cache_dir}'")
-            with open(cache_dir, 'rb') as f:
-                data = pickle.load(f)
-            logging.info("Finished loading graph from cache")
-            return data
-        else:
-            return None
-
-    def get_cache_dir(self, filepath):
-        file_name = os.path.splitext(filepath)[0].split('/')[-1]
-        cache_dir = self.config['local_files']['cache']
-        if not os.path.isdir(cache_dir):
-            os.mkdir(cache_dir)
-        return f"{cache_dir}/{file_name}.pkl"

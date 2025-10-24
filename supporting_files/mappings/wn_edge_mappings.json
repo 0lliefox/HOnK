@@ -9,6 +9,7 @@
     "instance_hypernym": {"rel": "isA", "relNegated": false, "swap": true},
     "hyponym": {"rel": "instanceOf", "relNegated": false},
     "instance_hyponym": {"rel": "instanceOf", "relNegated": false, "swap": true},
+    "compositeFormWith": {"rel": "compositeFormWith", "relNegated": false, "swap": false},
     "member_holonym": {"rel": "instanceOf", "relNegated": false},
     "substance_holonym": {"rel": "instanceOf", "relNegated": false},
     "part_holonym": {"rel": "partOf", "relNegated": false},

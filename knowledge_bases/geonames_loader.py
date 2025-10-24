@@ -5,13 +5,14 @@ import logging
 from tqdm import tqdm
 
 from knowledge_bases import AbstractLoader
+from tools.pickling import load_from_pickle, save_to_pickle
 
 
 class GeoNamesLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
         self.map_cache_filepath = f"{self.config['local_files']['cache']}/geonames_map.pkl"
-        self.id_term_map = self.load_from_pickle(self.map_cache_filepath)
+        self.id_term_map = load_from_pickle(self.map_cache_filepath)
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
@@ -57,7 +58,7 @@ class GeoNamesLoader(AbstractLoader):
                                 if name != translation and translation != '':
                                     self.add_property(current_id, 'alternativeOf', translation, "GeoNames", cursor)
                 self.conn.commit()
-                self.save_to_pickle(self.map_cache_filepath, self.id_term_map)
+                save_to_pickle(self.map_cache_filepath, self.id_term_map)
             else:
                 logging.info(f"Loading ID map from pickle file {filepath}")
 

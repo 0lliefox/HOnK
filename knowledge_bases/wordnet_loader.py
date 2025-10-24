@@ -8,6 +8,7 @@ from nltk import word_tokenize
 from rdflib import Graph
 from tqdm import tqdm
 
+from tools.pickling import load_from_pickle, save_to_pickle
 from .abstract_loader import AbstractLoader
 
 
@@ -21,19 +22,21 @@ class WordNetLoader(AbstractLoader):
         else:
             ssl._create_default_https_context = _create_unverified_https_context
 
-        try:
-            nltk.data.find('averaged_perceptron_tagger')
-        except LookupError:
-            logging.info("Downloading NLTK's 'averaged_perceptron_tagger'...")
-            nltk.download('averaged_perceptron_tagger')
+        nltk_packages = ['averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']
+        for nltk_package in nltk_packages:
+            try:
+                nltk.data.find(nltk_package)
+            except LookupError:
+                logging.info(f"Downloading NLTK's '{nltk_package}'...")
+                nltk.download(nltk_package)
 
     def _load_data_implementation(self):
         filepath = self.config['local_files']['wordnet']
         try:
-            synset_data = self.load_from_pickle('synset_data')
+            synset_data = load_from_pickle('synset_data')
             if not synset_data:
                 logging.info(f"Loading WordNet data from file: '{filepath}'...")
-                g = self.load_from_pickle(filepath)
+                g = load_from_pickle(filepath)
                 if not g:
                     g = Graph()
                     logging.info("Parsing WordNet file (this may take a few minutes)...")
@@ -105,7 +108,7 @@ class WordNetLoader(AbstractLoader):
                             pos = self._get_mapped_pos(lexical_pos)
                             lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, "WordNet", cursor)
                         else:
-                            if data['phrase_type'] != '':
+                            if data['phrase_type'] == '':
                                 pos = data['pos']
                             lexical_domain = None
 
@@ -184,7 +187,7 @@ class WordNetLoader(AbstractLoader):
         logging.info(f"Found {total_relations_found} total relationship rows across all types.")
         logging.info(f"Aggregated data for {len(synset_data)} unique synsets.")
 
-        self.save_to_pickle('synset_data', synset_data)
+        save_to_pickle('synset_data', synset_data)
 
     def get_components(self, g, synset_data):
         component_query = """

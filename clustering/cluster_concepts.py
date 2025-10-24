@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 
 from knowledge_bases.abstract_loader import timer
+from tools.config import get_config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -41,7 +42,6 @@ class ConceptClusterer:
         self._store_clusters(cluster_mappings)
         self._coalesce_relationships()
         logging.info("Concept clustering finished")
-        self.builder.benchmarking.to_csv("clustering_benchmark", False)
 
     def _setup_database(self):
         logging.info("Setting up database tables for clustering...")
@@ -193,9 +193,8 @@ class ConceptClusterer:
         logging.info("Relationship coalescing complete.")
 
 def main():
-    with open('../config.yaml', 'r') as f:
-        config = yaml.safe_load(f)
     os.chdir('../')
+    config = get_config()
 
     from build_ontology import OntologyBuilder
     from benchmarking.benchmark import Benchmark
