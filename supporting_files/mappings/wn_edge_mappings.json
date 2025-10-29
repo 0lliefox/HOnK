@@ -37,5 +37,7 @@
     "inflection": {"rel": "formOf", "relNegated":  false},
     "SubwordOf": {"rel": "subwordOf", "relNegated": false},
     "with_pos": {"rel": "class", "relNegated":  false},
-    "with_sense": {"rel": "withSense", "relNegated":  false}
+    "with_sense": {"rel": "withSense", "relNegated":  false},
+    "similar": {"rel": "relatedTo", "relNegated": false},
+    "also": {"rel": "eq", "relNegated": false}
 }

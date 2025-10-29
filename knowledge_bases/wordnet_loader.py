@@ -54,7 +54,7 @@ class WordNetLoader(AbstractLoader):
                     g.parse(filepath, format=file_format)
 
                     logging.info(f"Finished parsing WordNet file. Found {len(g)} triples.")
-                    self.save_to_pickle(filepath, g)
+                    save_to_pickle(filepath, g)
 
                 synset_data = self.get_synsets(g)
                 self.get_components(g, synset_data)

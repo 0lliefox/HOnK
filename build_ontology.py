@@ -11,6 +11,7 @@ from psycopg2._psycopg import AsIs
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from tqdm import tqdm
+from collections import defaultdict
 import time
 
 from benchmarking.benchmark import Benchmark
@@ -177,7 +178,6 @@ class OntologyBuilder:
         if not self.conn: logging.error("No DB connection for Turtle dump"); return
         logging.info(f"Dumping database to Turtle file: {file_path}")
 
-
         g = load_from_pickle('graph.pkl')
         if g is None:
             g = Graph()
@@ -223,14 +223,40 @@ class OntologyBuilder:
                 for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing Relations"):
                     self.add_relation_to_graph(g, start_id, end_id, rel_type, weight)
         else:
+            cluster_to_concepts_map = defaultdict(list)
+            chunk_size = 10000
+
+            with self.conn.cursor(name='fetch_clusters') as cluster_cursor:
+                cluster_cursor.execute("SELECT cluster_id, concept_id FROM clusters")
+                pbar = tqdm(desc="Fetching Cluster Data", unit=" mappings")
+                while True:
+                    rows = cluster_cursor.fetchmany(size=chunk_size)
+                    if not rows:
+                        break
+                    for cluster_id, concept_id in rows:
+                        cluster_to_concepts_map[cluster_id].append(concept_id)
+                    pbar.update(len(rows))
+                pbar.close()
+
+            logging.info(f"Loaded mappings for {len(cluster_to_concepts_map)} clusters.")
+
+            with self.conn.cursor() as count_cursor:
+                count_cursor.execute("SELECT COUNT(*) FROM cluster_relations")
+                total_relations = count_cursor.fetchone()[0]
+
+            declared_base_properties = set()
             with self.conn.cursor(name='cluster_relations') as cursor:
                 cursor.execute("SELECT start_cluster_id, end_cluster_id, relation_type, weight FROM cluster_relations")
-                for start_cluster_id, end_cluster_id, rel_type, weight in tqdm(cursor, desc="Processing Clustered Relations"):
-                    start_ids, end_ids = self.get_concept_from_cluster(start_cluster_id), self.get_concept_from_cluster(end_cluster_id)
+                for start_cluster_id, end_cluster_id, rel_type, weight in tqdm(cursor, total=total_relations, desc="Processing Clustered Relations"):
+                    start_ids = cluster_to_concepts_map.get(start_cluster_id, [])
+                    end_ids = cluster_to_concepts_map.get(end_cluster_id, [])
+
+                    if not start_ids or not end_ids:
+                        continue
 
                     for start_id in start_ids:
                         for end_id in end_ids:
-                            self.add_relation_to_graph(g, start_id, end_id, rel_type, weight)
+                            self.add_relation_to_graph(g, start_id, end_id, rel_type, weight, declared_base_properties)
 
         with self.conn.cursor(name='properties') as cursor:
             cursor.execute("SELECT concept_id, type, value, source FROM properties")
@@ -265,8 +291,8 @@ class OntologyBuilder:
         except Exception as e:
             logging.error(f"Failed to write Turtle file: {e}")
 
-    def add_relation_to_graph(self, g, start_id, end_id, rel_type, weight):
-        if start_id in self.id_to_uri.keys() and end_id in self.id_to_uri.keys():
+    def add_relation_to_graph(self, g, start_id, end_id, rel_type, weight, declared_base_properties):
+        try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
 
             mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
@@ -277,23 +303,34 @@ class OntologyBuilder:
 
             if sub_list_key in self.annotation_property_list:
                 rel_uri = self.annotation_property_list[sub_list_key]
+                new_annotation_instance = False
             else:
                 rel_uri = self._get_safe_uri(f"{rel} {self.prop_id}")
                 self.annotation_property_list[sub_list_key] = rel_uri
                 self.prop_id += 1
+                new_annotation_instance = True
 
-            g.add((self.ns[rel], RDF.type, OWL.AnnotationProperty))
-            g.add((rel_uri, RDF.type, self.ns[rel]))
+            # g.add((self.ns[rel], RDF.type, OWL.AnnotationProperty))
+            # g.add((rel_uri, RDF.type, self.ns[rel]))
 
-            for sub_prop_key, sub_prop_value in sub_property_list.items():
-                if sub_prop_key == 'rel': continue
-                g.add((rel_uri, self.ns[sub_prop_key], sub_prop_value))
+            # for sub_prop_key, sub_prop_value in sub_property_list.items():
+            #     if sub_prop_key == 'rel': continue
+            #     g.add((rel_uri, self.ns[sub_prop_key], sub_prop_value))
 
-            # p_uri = self._get_safe_uri(rel, ns)
-            # all_properties.add((rel_uri, OWL.ObjectProperty))
+            base_prop_uri = self.ns[rel]
+            if base_prop_uri not in declared_base_properties:
+                g.add((base_prop_uri, RDF.type, OWL.AnnotationProperty))
+                declared_base_properties.add(base_prop_uri)
+
+            if new_annotation_instance:
+                g.add((rel_uri, RDF.type, base_prop_uri))
+                g.add((rel_uri, self.ns['is_negated'], Literal(is_negated)))
+                g.add((rel_uri, self.ns['weight'], Literal(float(weight))))
 
             s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
             g.add((s, rel_uri, t))
+        except KeyError:
+            pass
 
     def create_classes(self, g):
         logging.info("Creating ontology classes")
@@ -354,16 +391,11 @@ class OntologyBuilder:
 
     @lru_cache(maxsize=1024)
     def get_concept_from_cluster(self, cluster_id):
-        concepts = []
         with self.conn.cursor() as cursor:
             cursor.execute("SELECT concept_id, cluster_id FROM clusters WHERE cluster_id = %s", [cluster_id])
             concept_ids = [row[0] for row in cursor.fetchall()]
 
-        with self.conn.cursor() as cursor:
-            for concept_id in concept_ids:
-                cursor.execute("SELECT id FROM concepts WHERE id = %s", [concept_id])
-                concepts.append(list(cursor.fetchone())[0])
-        return concepts
+        return concept_ids
 
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
