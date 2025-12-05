@@ -47,7 +47,7 @@ class GeoNamesLoader(AbstractLoader):
                             pos = 'LOC'
 
                         self.id_term_map[n_id] = [name, pos]
-                        current_id = self.get_or_create_concept(name, pos, "GeoNames", cursor)
+                        current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
                             self.add_url(current_id, self.links[n_id], cursor)
@@ -71,7 +71,7 @@ class GeoNamesLoader(AbstractLoader):
                             translations = translations.split(',')
                             for translation in translations:
                                 if name != translation and translation != '':
-                                    self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation, "GeoNames", cursor)
+                                    self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation, cursor)
                 self.conn.commit()
                 save_to_pickle(self.map_cache_filepath, self.id_term_map)
             else:
@@ -80,11 +80,11 @@ class GeoNamesLoader(AbstractLoader):
             for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
                 parent = self.check_id(parent)
                 parent_term, parent_pos = self.id_term_map[parent]
-                parent_db_id = self.get_or_create_concept(parent_term, parent_pos, "GeoNames", cursor)
+                parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
                 for child in children:
                     child = self.check_id(child)
                     child_term, child_pos = self.id_term_map[child]
-                    child_db_id = self.get_or_create_concept(child_term, child_pos, "GeoNames", cursor)
+                    child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
                     self.add_relation(
                         {
                             'id': child_db_id,
@@ -95,7 +95,7 @@ class GeoNamesLoader(AbstractLoader):
                             'term': parent_term
                         },
                         "partOf",
-                        1, "GeoNames", cursor)
+                        1, cursor)
 
             self.conn.commit()
 

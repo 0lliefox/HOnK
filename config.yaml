@@ -1,7 +1,7 @@
 database:
   dbname: 'ontology_db'
   user: 'fox'
-  password: 'drowssap'
+  password: 'password'
   host: 'localhost'
   port: '5432'
 
@@ -11,7 +11,7 @@ general:
   sources: ['wordnet', 'conceptnet', 'wiktionary']
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
-  mode: 'graph'  # graph / db
+  mode: 'db'  # graph / db
 
 local_files:
   supporting_files: 'supporting_files'
@@ -54,8 +54,8 @@ local_files:
 
 turtle_export:
   cache: false
-  normalise_pos: false
-  output_file: 'ontology.nt'
+  normalise_pos: true
+  output_file: 'ontology_clustered.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"
 

@@ -53,15 +53,15 @@ class ParmenidesLoader(AbstractLoader):
                 if path.endswith('.txt'):
                     for line in dep:
                         line = line.strip()
-                        self.get_or_create_concept(line, pos, "Parmenides", cursor)
+                        self.get_or_create_concept(line, pos, cursor)
                     dep.close()
                 elif path.endswith('.json'):
                     lines = json.load(dep)
                     for term, v in lines.items():
                         if not term.startswith("__"):
-                            c_id = self.get_or_create_concept(term, pos, "Parmenides", cursor)
+                            c_id = self.get_or_create_concept(term, pos, cursor)
                             for prop in v:
-                                self.add_property({'id': c_id, 'term': term}, prop, v[prop], "Parmenides", cursor)
+                                self.add_property({'id': c_id, 'term': term}, prop, v[prop], cursor)
                     dep.close()
 
     def list_files(self, folder) -> list[str]:

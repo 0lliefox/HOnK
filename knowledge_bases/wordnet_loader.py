@@ -90,11 +90,12 @@ class WordNetLoader(AbstractLoader):
                             pos_classes = [nltk_pos]
 
                         for pos_class in pos_classes:
-                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, cursor)
+                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class,
+                                                                                   cursor)
                             self.add_relation({
-                                    'id': full_component_db_id,
-                                    'term': full_component_label
-                                },
+                                'id': full_component_db_id,
+                                'term': full_component_label
+                            },
                                 {
                                     'id': component_to_relate_db_id,
                                     'term': component_to_relate
@@ -127,17 +128,20 @@ class WordNetLoader(AbstractLoader):
                                 pos = data['pos']
                             lexical_domain = None
 
-                        lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in data['lemmas'].items()]
-                        for idx, db_id in enumerate(lemma_db_ids):
-                            synset_item_to_db_id[synset_uri, list(data['lemmas'])[idx]] = db_id  # A synset_uri might have multiple db_ids (?)
+                        lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in
+                                        data['lemmas'].items()]
+                        for idx, db_info in enumerate(lemma_db_ids):
+                            db_id, term = db_info
+                            synset_item_to_db_id[synset_uri, list(data['lemmas'])[
+                                idx]] = db_info # A synset_uri might have multiple db_ids (?)
                             self.add_url(db_id, data['lemmas'][list(data['lemmas'])[idx]], cursor)
                             # self.add_undirected(db_id, 'definition', data['definition'], cursor)
 
                             if lexical_domain:
                                 self.add_relation(
                                     {
-                                        'id': db_id[0],
-                                        'term': db_id[1]
+                                        'id': db_id,
+                                        'term': term
                                     },
                                     {
                                         'id': lexical_domain_db_id,
@@ -173,7 +177,8 @@ class WordNetLoader(AbstractLoader):
                             mapping = self.mappings.get(rel_fragment.lower())
                             if not mapping: continue
 
-                            rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap', False)
+                            rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get(
+                                'swap', False)
                             if not rel: continue
 
                             for related_id in related_db_ids:
