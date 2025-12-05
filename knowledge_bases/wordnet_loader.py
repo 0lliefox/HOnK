@@ -15,6 +15,8 @@ from .abstract_loader import AbstractLoader
 class WordNetLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
+        self.source = "WordNet"
+        self.mappings = self.get_mappings(["edge", "pos"])
         try:
             _create_unverified_https_context = ssl._create_unverified_context
         except AttributeError:
@@ -30,7 +32,7 @@ class WordNetLoader(AbstractLoader):
                 logging.info(f"Downloading NLTK's '{nltk_package}'...")
                 nltk.download(nltk_package)
 
-    def _load_data_implementation(self):
+    def load_data(self):
         filepath = self.config['local_files']['wordnet']
         try:
             synset_data = load_from_pickle('synset_data')
@@ -70,7 +72,7 @@ class WordNetLoader(AbstractLoader):
                         component_parts = component_split[0][:-2].split('/')[-1].split('+')
                         component_to_relate = component_parts[int(component_split[1]) - 1]
                         full_component_label = ' '.join(component_parts)
-                        full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', "WordNet", cursor)
+                        full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', cursor)
 
                         tagged_phrase = nltk.pos_tag(word_tokenize(full_component_label))
                         if tagged_phrase[component_index][0].lower() == component_to_relate.lower():
@@ -88,11 +90,24 @@ class WordNetLoader(AbstractLoader):
                             pos_classes = [nltk_pos]
 
                         for pos_class in pos_classes:
-                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, "WordNet", cursor)
-                            self.add_relation(full_component_db_id, component_to_relate_db_id, 'compositeFormWith', 1.0, 'WordNet', cursor)
+                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, cursor)
+                            self.add_relation({
+                                    'id': full_component_db_id,
+                                    'term': full_component_label
+                                },
+                                {
+                                    'id': component_to_relate_db_id,
+                                    'term': component_to_relate
+                                },
+                                'compositeFormWith', 1.0, cursor)
                             if isinstance(pos_classes, dict) and 'properties' in pos_classes[pos_class]:
                                 for prop in pos_classes[pos_class]['properties']:
-                                    self.add_property(component_to_relate_db_id, prop, True, "WordNet", cursor)
+                                    self.add_property(
+                                        {
+                                            'id': component_to_relate_db_id,
+                                            'term': component_to_relate
+                                        },
+                                        prop, True, cursor)
                     else:
                         if data['pos'] == 'phrase':
                             pos = 'Phrase'
@@ -106,25 +121,41 @@ class WordNetLoader(AbstractLoader):
                         if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
                             lexical_pos, lexical_domain = data['lexical_domain'].split('.')
                             pos = self._get_mapped_pos(lexical_pos)
-                            lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, "WordNet", cursor)
+                            lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, cursor)
                         else:
                             if data['phrase_type'] == '':
                                 pos = data['pos']
                             lexical_domain = None
 
-                        lemma_db_ids = [self.get_or_create_concept(term, pos, "WordNet", cursor) for term, uri in data['lemmas'].items()]
+                        lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in data['lemmas'].items()]
                         for idx, db_id in enumerate(lemma_db_ids):
                             synset_item_to_db_id[synset_uri, list(data['lemmas'])[idx]] = db_id  # A synset_uri might have multiple db_ids (?)
-                            self.add_url(db_id, data['lemmas'][list(data['lemmas'])[idx]], 'WordNet', cursor)
-                            # self.add_undirected(db_id, 'definition', data['definition'], 'WordNet', cursor)
+                            self.add_url(db_id, data['lemmas'][list(data['lemmas'])[idx]], cursor)
+                            # self.add_undirected(db_id, 'definition', data['definition'], cursor)
 
                             if lexical_domain:
-                                self.add_relation(db_id, lexical_domain_db_id, 'relatedTo', 1.0, 'WordNet', cursor)
+                                self.add_relation(
+                                    {
+                                        'id': db_id[0],
+                                        'term': db_id[1]
+                                    },
+                                    {
+                                        'id': lexical_domain_db_id,
+                                        'term': lexical_domain
+                                    },
+                                    'relatedTo', 1.0, cursor)
 
                         if len(lemma_db_ids) > 1:
                             for i in range(len(lemma_db_ids)):
                                 for j in range(i + 1, len(lemma_db_ids)):
-                                    self.add_relation(lemma_db_ids[i], lemma_db_ids[j], 'eq', 1.0, 'WordNet', cursor)
+                                    self.add_relation({
+                                        'id': lemma_db_ids[i][0],
+                                        'term': lemma_db_ids[i][1]
+                                    },
+                                        {
+                                            'id': lemma_db_ids[j][0],
+                                            'term': lemma_db_ids[j][1]
+                                        }, 'eq', 1.0, cursor)
 
                 synset_uri_to_db_ids = defaultdict(list)
                 for (synset_uri, lemma), db_id in synset_item_to_db_id.items():
@@ -149,9 +180,27 @@ class WordNetLoader(AbstractLoader):
                                 start_id, end_id = synset_item_to_db_id[l_key], related_id
 
                                 if swap:
-                                    self.add_relation(end_id, start_id, rel, 1.0, 'WordNet', cursor)
+                                    self.add_relation(
+                                        {
+                                            'id': end_id[0],
+                                            'term': end_id[1]
+                                        },
+                                        {
+                                            'id': start_id[0],
+                                            'term': start_id[1]
+                                        },
+                                        rel, 1.0, cursor)
                                 else:
-                                    self.add_relation(start_id, end_id, rel, 1.0, 'WordNet', cursor)
+                                    self.add_relation(
+                                        {
+                                            'id': start_id[0],
+                                            'term': start_id[1]
+                                        },
+                                        {
+                                            'id': end_id[0],
+                                            'term': end_id[1]
+                                        },
+                                        rel, 1.0, cursor)
 
                 self.conn.commit()
             logging.info("Finished loading WordNet data from file.")
@@ -160,7 +209,7 @@ class WordNetLoader(AbstractLoader):
 
     def get_relationships(self, g, synset_data):
         logging.info("Querying for WordNet relationships using targeted queries...")
-        relations_to_query = list(self.mappings.keys())  # TODO: Restrict to just WordNet mappings
+        relations_to_query = list(self.mappings.keys())
         total_relations_found = 0
 
         for rel_fragment in tqdm(relations_to_query, desc="Querying Relation Types"):

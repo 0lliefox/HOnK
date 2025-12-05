@@ -27,5 +27,6 @@
     "with_sense": {"rel": "withSense", "relNegated":  false},
     "alt_of": {"rel": "withSense", "relNegated":  false},
     "meronyms": {"rel": "partOf", "relNegated":  false},
-    "holonyms": {"rel": "partOf", "relNegated":  false, "swap": true}
+    "holonyms": {"rel": "partOf", "relNegated":  false, "swap": true},
+    "troponyms": {"rel":  "formOf", "relNegated":  false, "swap": true}
 }

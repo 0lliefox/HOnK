@@ -12,7 +12,11 @@ from supporting_files.parmenides.classes.ParmenidesBuild import ParmenidesBuild
 
 
 class ParmenidesLoader(AbstractLoader):
-    def _load_data_implementation(self):
+    def __init__(self, builder):
+        super().__init__(builder)
+        self.source = "Parmenides"
+
+    def load_data(self):
         filepath = self.config['local_files']['parmenides']
 
         with self.conn.cursor() as cursor:
@@ -57,7 +61,7 @@ class ParmenidesLoader(AbstractLoader):
                         if not term.startswith("__"):
                             c_id = self.get_or_create_concept(term, pos, "Parmenides", cursor)
                             for prop in v:
-                                self.add_property(c_id, prop, v[prop], "Parmenides", cursor)
+                                self.add_property({'id': c_id, 'term': term}, prop, v[prop], "Parmenides", cursor)
                     dep.close()
 
     def list_files(self, folder) -> list[str]:

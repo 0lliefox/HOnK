@@ -10,7 +10,12 @@ from .abstract_loader import AbstractLoader
 
 
 class WiktionaryLoader(AbstractLoader):
-    def _load_data_implementation(self):
+    def __init__(self, builder):
+        super().__init__(builder)
+        self.source = "Wiktionary"
+        self.edge_mappings = self.get_mappings(["edge"])
+
+    def load_data(self):
         filepath = self.config['local_files']['wiktionary']
         logging.info(f"Loading Wiktionary data: '{filepath}'")
 
@@ -76,16 +81,15 @@ class WiktionaryLoader(AbstractLoader):
                     continue
 
                 for pos in found_poses:
-                    main_concept_id = self.get_or_create_concept(term, pos, "Wiktionary", cursor)
-                    if not main_concept_id:
+                    main_concept_id = self.get_or_create_concept(term, pos, cursor)
+                    if not main_concept_id and self.mode == 'db':
                         continue
 
                     # if definitions:
                     #     full_definition = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(definitions))
-                    #     self.add_undirected(main_concept_id, 'definition', full_definition, 'Wiktionary', cursor)
+                    #     self.add_undirected(main_concept_id, 'definition', full_definition, cursor)
 
-                    classes = ['synonyms', 'related', 'derived', 'hyponyms', 'hypernyms', 'meronyms', 'holonyms']
-                    for class_type in classes:
+                    for class_type in list(self.edge_mappings.keys()):
                         for c_item in [s_obj.get('word') for s_obj in data.get(class_type, []) if s_obj.get('word')]:
                             if class_type in {'related', 'derived'}:
                                 c_item_pos = word_to_pos.get(c_item, [])
@@ -93,12 +97,21 @@ class WiktionaryLoader(AbstractLoader):
                                 c_item_pos = [pos]
 
                             for c_pos in c_item_pos:
-                                c_id = self.get_or_create_concept(c_item, c_pos, "Wiktionary", cursor)
+                                c_id = self.get_or_create_concept(c_item, c_pos, cursor)
                                 if c_id:
-                                    self.add_relation(main_concept_id, c_id, class_type, 1.0, 'Wiktionary', cursor)
+                                    self.add_relation(
+                                        {
+                                            'id': main_concept_id,
+                                            'term': term
+                                        },
+                                        {
+                                            'id': c_id,
+                                            'term': c_item
+                                        },
+                                        class_type, 1.0, cursor)
 
                     for prop in found_props:
-                        self.add_property(main_concept_id, prop, True, 'Wiktionary', cursor)
+                        self.add_property({'id': main_concept_id, 'term': term}, prop, True, cursor)
 
         self.conn.commit()
         logging.info("Finished loading Wiktionary data from file.")

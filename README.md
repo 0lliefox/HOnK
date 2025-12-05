@@ -46,6 +46,12 @@ Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?t
 #### WordNet
 The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo.3739540), as an input for ConceptNet, therefore used here to ensure the best clustering possible.
 
+#### DBpedia
+The artifacts found for [en-dbpedia-enriched-with-wikidata-dbpedia](https://databus.dbpedia.org/dbpedia-enterprise/en-dbpedia-enriched-with-wikidata-dbpedia) from 2025-08-21 were used, with [truthy dump](https://dumps.wikimedia.org/wikidatawiki/entities/) from 2025-10-24.
+
+#### GeoNames
+
+
 [//]: # (```bash)
 
 [//]: # (curl "http://ldf.fi/wordnet/data?graph=http://ldf.fi/wordnet/wn31" --output supporting_files/wordnet.ttl)

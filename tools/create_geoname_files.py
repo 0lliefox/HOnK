@@ -1,5 +1,7 @@
 import json
 
+from tqdm import tqdm
+
 # From GeoNames hierarchy and alternate names table, create mappings to use when adding to ontology
 if __name__ == '__main__':
     hierarchy = {}
@@ -17,21 +19,30 @@ if __name__ == '__main__':
         f.write(json.dumps(hierarchy))
 
     alternates = {}
+    links = {}
     with open('geonames/alternateNamesV2.csv') as f:
         lines = f.readlines()
-        for line in lines:
+        for line in tqdm(lines):
             try:
                 alt_id, geo_id, code = line.strip().split('\t')[:3]
-                if code not in {'link', 'wkdt'}:
-                    if alt_id not in alternates:
-                        alternates[alt_id] = geo_id
+                if code in {'wkdt', 'link'}:
+                    if code == 'wkdt':
+                        wiki_code = line.strip().split('\t')[3:][0]
+                        link = f"https://wikidata.org/entity/{wiki_code}"
                     else:
-                        alternates[alt_id].append(geo_id)
+                        link = line.strip().split('\t')[3:][0]
+
+                    links[geo_id] = link
+                else:
+                    alternates[alt_id] = geo_id
             except Exception as e:
                 print(e, line)
 
     with open('geonames/alternates_map.json', 'w') as f:
         f.write(json.dumps(alternates))
+
+    with open('geonames/geo_links.json', 'w') as f:
+        f.write(json.dumps(links))
 
     features = {}
     with open('geonames/feature_codes.csv') as f:

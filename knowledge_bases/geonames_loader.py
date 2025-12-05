@@ -11,6 +11,7 @@ from tools.pickling import load_from_pickle, save_to_pickle
 class GeoNamesLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
+        self.source = "GeoNames"
         self.map_cache_filepath = f"{self.config['local_files']['cache']}/geonames_map.pkl"
         self.id_term_map = load_from_pickle(self.map_cache_filepath)
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
@@ -19,8 +20,10 @@ class GeoNamesLoader(AbstractLoader):
             self.ignore_names = f.readlines()
         with open(self.config['local_files']['geonames_feature_codes'], 'r') as f:
             self.feature_codes = json.load(f)
+        with open(self.config['local_files']['geonames_links'], 'r') as f:
+            self.links = json.load(f)
 
-    def _load_data_implementation(self):
+    def load_data(self):
         filepath = self.config['local_files']['geonames']
         hierarchy_filepath = self.config['local_files']['geonames_hierarchy']
         with open(hierarchy_filepath, 'r') as f:
@@ -46,17 +49,29 @@ class GeoNamesLoader(AbstractLoader):
                         self.id_term_map[n_id] = [name, pos]
                         current_id = self.get_or_create_concept(name, pos, "GeoNames", cursor)
 
+                        if n_id in self.links:
+                            self.add_url(current_id, self.links[n_id], cursor)
+
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
                             feature_instance = self.feature_codes[f"{feature_class}.{feature_code}"]
-                            feature_db_id = self.get_or_create_concept(feature_instance, "Noun", "GeoNames", cursor)
-                            self.add_relation(current_id, feature_db_id, "instanceOf", 1, "GeoNames", cursor)
+                            feature_db_id = self.get_or_create_concept(feature_instance, "Noun", cursor)
+                            self.add_relation(
+                                {
+                                    'id': current_id,
+                                    'term': name
+                                },
+                                {
+                                    'id': feature_db_id,
+                                    'term': feature_instance
+                                },
+                                "instanceOf", 1, cursor)
 
                         if len(translations) > 0:
                             translations = translations.split(',')
                             for translation in translations:
                                 if name != translation and translation != '':
-                                    self.add_property(current_id, 'alternativeOf', translation, "GeoNames", cursor)
+                                    self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation, "GeoNames", cursor)
                 self.conn.commit()
                 save_to_pickle(self.map_cache_filepath, self.id_term_map)
             else:
@@ -64,11 +79,23 @@ class GeoNamesLoader(AbstractLoader):
 
             for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
                 parent = self.check_id(parent)
-                parent_db_id = self.get_or_create_concept(self.id_term_map[parent][0], self.id_term_map[parent][1], "GeoNames", cursor)
+                parent_term, parent_pos = self.id_term_map[parent]
+                parent_db_id = self.get_or_create_concept(parent_term, parent_pos, "GeoNames", cursor)
                 for child in children:
                     child = self.check_id(child)
-                    child_db_id = self.get_or_create_concept(self.id_term_map[child][0], self.id_term_map[child][1], "GeoNames", cursor)
-                    self.add_relation(child_db_id, parent_db_id, "partOf", 1, "GeoNames", cursor)
+                    child_term, child_pos = self.id_term_map[child]
+                    child_db_id = self.get_or_create_concept(child_term, child_pos, "GeoNames", cursor)
+                    self.add_relation(
+                        {
+                            'id': child_db_id,
+                            'term': child_term
+                        },
+                        {
+                            'id': parent_db_id,
+                            'term': parent_term
+                        },
+                        "partOf",
+                        1, "GeoNames", cursor)
 
             self.conn.commit()
 

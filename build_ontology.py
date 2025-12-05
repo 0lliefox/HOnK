@@ -17,7 +17,9 @@ import time
 from benchmarking.benchmark import Benchmark
 from clustering.cluster_concepts import ConceptClusterer
 from knowledge_bases import ConceptNetLoader
+from knowledge_bases.dbpedia_loader import DBpediaLoader
 from tools.config import get_config
+from tools.database_utilities import dump_database, restore_database
 from tools.pickling import save_to_pickle, load_from_pickle
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,9 +34,11 @@ class OntologyBuilder:
     def __init__(self, config, run_id = 0, benchmarking = None):
         self.run_id = run_id
         self.config = config
+        self.mode = self.config['general']['mode']
         self.db_params = config['database']
         self.conn = None
         self.ns = Namespace(self.config['turtle_export']['base_uri'])
+        self.normalise_pos = config['turtle_export']['normalise_pos']
 
         sources = self.config['general']['sources']
         mapping_types = ["edge", "pos"]
@@ -43,7 +47,7 @@ class OntologyBuilder:
             k.lower(): v
             for source in sources
             for m_type in mapping_types
-            for k, v in self._load_mappings(config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
+            for k, v in self.load_mappings(config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
         }
 
         self.lang_code_map = {'en': 'eng'}
@@ -64,7 +68,7 @@ class OntologyBuilder:
         self.annotation_property_list = {}
         self.prop_id = 1
 
-        self.should_cluster = self.config['clustering']
+        self.should_cluster = self.config['clustering']['enabled']
 
         # Rejected classes
         with open(self.config['local_files']['rejected_classes'], 'r') as f:
@@ -83,7 +87,7 @@ class OntologyBuilder:
                 keys.extend(self.get_all_keys(value))
         return keys
 
-    def _load_mappings(self, filepath):
+    def load_mappings(self, filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
             return {k.lower(): v for k, v in data.items()}
@@ -162,66 +166,70 @@ class OntologyBuilder:
                 raise e
 
     def build(self):
-        ParmenidesLoader(self).load_data()
-        GeoNamesLoader(self).load_data()
-        WordNetLoader(self).load_data()
-        ConceptNetLoader(self).load_data()
-        WiktionaryLoader(self).load_data()
+        ParmenidesLoader(self).load_data_with_timer()
+        GeoNamesLoader(self).load_data_with_timer()
+        # dump_database(self.db_params, '.cache/ontology_geonames_backup.sql')
+        WordNetLoader(self).load_data_with_timer()
+        ConceptNetLoader(self).load_data_with_timer()
+        WiktionaryLoader(self).load_data_with_timer()
+        # dump_database(self.db_params, '.cache/ontology_all_minus_dbpedia_backup.sql')
+        # DBpediaLoader(self).load_data_with_timer()
         logging.info("Ontology build process finished")
 
-    def _get_safe_uri(self, term):
+    def get_safe_uri(self, term):
         return URIRef(self.ns + quote(term)) if re.search(r'[^a-zA-Z0-9_-]', term) else self.ns[term]
 
-    def dump_to_turtle(self, file_path):
+    def build_graph(self, file_path):
         start = time.time()
 
         if not self.conn: logging.error("No DB connection for Turtle dump"); return
         logging.info(f"Dumping database to Turtle file: {file_path}")
 
-        g = load_from_pickle('graph.pkl')
-        if g is None:
-            g = Graph()
-            g.bind(self.config['turtle_export']['base_prefix'], self.ns)
-            g.bind("owl", OWL)
-            g.bind("rdfs", RDFS)
-            g.bind("xsd", XSD)
+        # g = load_from_pickle('graph.pkl')
+        # if g is None:
+        g = Graph()
+        g.bind(self.config['turtle_export']['base_prefix'], self.ns)
+        g.bind("owl", OWL)
+        g.bind("rdfs", RDFS)
+        g.bind("xsd", XSD)
 
-            # Setup classes from JSON
-            self.create_classes(g)
+        # Setup classes from JSON
+        self.create_classes(g)
 
-            # Add logical functions
-            ParmenidesLoader.add_logical_functions(self.config, g)
+        # Add logical functions
+        # ParmenidesLoader.add_logical_functions(self.config, g)
 
         all_properties = set()
 
-        self.id_to_uri = load_from_pickle('id_to_uri.pkl')
-        if self.id_to_uri is None:
-            self.id_to_uri = {}
-            with self.conn.cursor() as count_cursor:
-                count_cursor.execute("SELECT COUNT(*) FROM concepts")
-                total_concepts = count_cursor.fetchone()[0]
+        # self.id_to_uri = load_from_pickle('id_to_uri.pkl')
+        # if self.id_to_uri is None:
+        self.id_to_uri = {}
+        with self.conn.cursor() as count_cursor:
+            count_cursor.execute("SELECT COUNT(*) FROM concepts")
+            total_concepts = count_cursor.fetchone()[0]
 
-            with self.conn.cursor(name='concepts') as cursor:
-                cursor.execute("SELECT id, term, part_of_speech, source FROM concepts")
-                for cid, term, pos, source in tqdm(cursor, total=total_concepts, desc="Processing Concepts"):
-                    if pos.lower() in self.rejected_classes:
-                        continue
+        with self.conn.cursor(name='concepts') as cursor:
+            cursor.execute("SELECT id, term, part_of_speech, source FROM concepts")
+            for cid, term, pos, source in tqdm(cursor, total=total_concepts, desc="Processing Concepts"):
+                if pos.lower() in self.rejected_classes:
+                    continue
 
-                    uri = self._get_safe_uri(term)
-                    self.id_to_uri[cid] = uri
+                uri = self.get_safe_uri(term)
+                self.id_to_uri[cid] = uri
 
-                    for i_pos in self.equivalent_classes.get(pos, [pos]):
-                        g.add((uri, RDF.type, self.ns[i_pos]))
-                    g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
+                for i_pos in self.equivalent_classes.get(pos, [pos]):
+                    g.add((uri, RDF.type, self.ns[i_pos]))
+                g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
 
-            save_to_pickle('graph.pkl', g)
-            save_to_pickle('id_to_uri.pkl', self.id_to_uri)
+            # save_to_pickle('graph.pkl', g)
+            # save_to_pickle('id_to_uri.pkl', self.id_to_uri)
 
         if not self.should_cluster:
+            declared_base_properties = set()
             with self.conn.cursor(name='relations') as cursor:
                 cursor.execute("SELECT start_concept_id, end_concept_id, relation_type, weight, source FROM relations")
                 for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing Relations"):
-                    self.add_relation_to_graph(g, start_id, end_id, rel_type, weight)
+                    self.add_relation_to_graph(g, start_id, end_id, rel_type, weight, declared_base_properties)
         else:
             cluster_to_concepts_map = defaultdict(list)
             chunk_size = 10000
@@ -262,9 +270,9 @@ class OntologyBuilder:
             cursor.execute("SELECT concept_id, type, value, source FROM properties")
             for concept_id, prop_type, value, source in tqdm(cursor, desc="Processing Properties"):
                 if concept_id in self.id_to_uri:
-                    concept_id = self.id_to_uri[concept_id]
-                    prop_uri = self._get_safe_uri(prop_type)
-                    g.add((concept_id, prop_uri, Literal(value)))
+                    concept_uri = self.id_to_uri[concept_id]
+                    prop_uri = self.get_safe_uri(prop_type)
+                    g.add((concept_uri, prop_uri, Literal(value)))
                     all_properties.add((prop_uri, OWL.DatatypeProperty))
 
         for prop_uri, prop_type in tqdm(all_properties, desc="Adding Properties"):
@@ -272,18 +280,24 @@ class OntologyBuilder:
 
         self.add_pos_tag_classes(g)
 
+        end = time.time()
+        self.benchmarking.add_row(self.run_id, f"Graph building", end - start)
+        self.serialise_graph(file_path, file_path.split('.')[-1], g)
+
+    def serialise_graph(self, file_path, ont_format, g):
         try:
+            start = time.time()
             logging.info("Serialising ontology")
-            ont_format = file_path.split('.')[-1]
             g.serialize(destination=file_path, format=ont_format)
             logging.info(f"Successfully saved ontology to '{file_path}'")
 
             end = time.time()
-            self.benchmarking.add_row(self.run_id, f"NT dumping", end - start)
+            self.benchmarking.add_row(self.run_id, f"Graph dumping", end - start)
 
             if ont_format == 'nt':
                 logging.info(f"Converting '{file_path}' to .ttl")
-                result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True, text=True, check=True)
+                result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True,
+                                        text=True, check=True)
                 output_file_path = file_path.replace('.nt', '.ttl')
                 with open(output_file_path, 'w') as f:
                     f.write(result.stdout)
@@ -295,7 +309,11 @@ class OntologyBuilder:
         try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
 
-            mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
+            if self.normalise_pos:
+                mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
+            else:
+                mapping = {'rel': rel_type, 'relNegated': False, 'swap': False}
+
             rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
 
             sub_property_list = {'rel': rel, 'is_negated': Literal(is_negated), 'weight': Literal(weight)}
@@ -305,7 +323,7 @@ class OntologyBuilder:
                 rel_uri = self.annotation_property_list[sub_list_key]
                 new_annotation_instance = False
             else:
-                rel_uri = self._get_safe_uri(f"{rel} {self.prop_id}")
+                rel_uri = self.get_safe_uri(f"{rel} {self.prop_id}")
                 self.annotation_property_list[sub_list_key] = rel_uri
                 self.prop_id += 1
                 new_annotation_instance = True
@@ -360,7 +378,7 @@ class OntologyBuilder:
 
         new_triples = set()
         for pos_tag, mapping in tqdm(self.pos_tag_mappings.items(), desc="Processing POS tagging"):
-            pos_uri = self._get_safe_uri(pos_tag)
+            pos_uri = self.get_safe_uri(pos_tag)
             g.add((pos_uri, RDFS.subClassOf, self.ns['POSTag']))
 
             if "classes" not in mapping:
@@ -370,7 +388,7 @@ class OntologyBuilder:
                 class_uri = self.ns[class_name]
 
                 required_property_uris = [
-                    (self._get_safe_uri(prop), Literal(True))
+                    (self.get_safe_uri(prop), Literal(True))
                     for prop in class_details.get("properties", [])
                 ]
 
@@ -408,13 +426,15 @@ def main(iterations = 1):
         benchmarking = Benchmark("timing")
         for i in range(iterations):
             builder = OntologyBuilder(config, i, benchmarking)
+            # restore_database(config['database'], '.cache/ontology_clusters_backup.sql')
             builder.build()
 
-            if builder.should_cluster:
-                clusterer = ConceptClusterer(builder, config)
-                clusterer.run()
+            if builder.mode == 'db':
+                if builder.should_cluster:
+                    clusterer = ConceptClusterer(builder, config)
+                    clusterer.run()
 
-            builder.dump_to_turtle(config['turtle_export']['output_file'])
+                builder.build_graph(config['turtle_export']['output_file'])
         benchmarking.to_csv()
     except (psycopg2.Error, ConnectionRefusedError) as e:
         print(f"\nA database error occurred: {e}")

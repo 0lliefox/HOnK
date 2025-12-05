@@ -1,4 +1,5 @@
 from knowledge_bases.abstract_loader import AbstractLoader
+from knowledge_bases.dbpedia_loader import DBpediaLoader
 from knowledge_bases.parmenides_loader import ParmenidesLoader
 from knowledge_bases.wordnet_loader import WordNetLoader
 from knowledge_bases.conceptnet_loader import ConceptNetLoader
@@ -9,5 +10,6 @@ __all__ = [
     "WordNetLoader",
     "ConceptNetLoader",
     "WiktionaryLoader",
-    "ParmenidesLoader"
+    "ParmenidesLoader",
+    "DBpediaLoader"
 ]

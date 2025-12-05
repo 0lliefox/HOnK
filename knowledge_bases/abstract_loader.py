@@ -5,6 +5,8 @@ import time
 from abc import abstractmethod, ABC
 from functools import lru_cache, wraps
 
+from rdflib import Graph, OWL, RDFS, XSD, Literal, RDF
+
 
 def timer(func):
     @wraps(func)
@@ -29,25 +31,57 @@ class AbstractLoader(ABC):
         self.builder = builder
         self.config = builder.config
         self.conn = builder.conn
-        self.mappings = builder.full_mappings
+        self.mode = builder.mode
+        self.source = None
+        self.mappings = self.get_mappings(["edge", "pos"])
+        self.g = self.init_graph()
+
+    def init_graph(self):
+        g = Graph()
+        g.bind(self.config['turtle_export']['base_prefix'], self.builder.ns)
+        g.bind("owl", OWL)
+        g.bind("rdfs", RDFS)
+        g.bind("xsd", XSD)
+
+        return g
+
+    def get_mappings(self, mapping_types):
+        if self.source:
+            return {
+                k.lower(): v
+                for source in [self.source.lower()]
+                for m_type in mapping_types
+                for k, v in self.builder.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
+            }
+        return None
 
     @timer
-    def load_data(self):
-        self._load_data_implementation()
+    def load_data_with_timer(self):
+        self.load_data()
+        if self.mode == 'graph':
+            self.builder.serialise_graph(f"{self.source}.ttl", "ttl", self.g)
 
     @abstractmethod
-    def _load_data_implementation(self):
+    def load_data(self):
         pass
 
     def _is_valid_term_for_language(self, lang):
         return self.config['general']['language'] == lang
 
     def _get_mapped_pos(self, pos_tag):
-        return self.builder.full_mappings.get(pos_tag, pos_tag)
+        if self.config['turtle_export']['normalise_pos']:
+            return self.builder.full_mappings.get(pos_tag, pos_tag)
+        else:
+            return pos_tag
+
+    def add_concept_to_graph(self, term, pos):
+        uri = self.builder.get_safe_uri(term)
+        self.g.add((uri, RDF.type, self.builder.ns[pos]))
+        self.g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
 
     @lru_cache(maxsize=1024)
-    def get_or_create_concept(self, term, pos, source, cursor=None):
-        term, pos = term.replace('_', ' ').replace('"',''), self._get_mapped_pos(pos)
+    def add_or_get_concept_from_db(self, term, pos, cursor=None):
+        term, pos = term.replace('_', ' ').replace('"', ''), self._get_mapped_pos(pos)
 
         if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
             term = term.strip()
@@ -60,7 +94,7 @@ class AbstractLoader(ABC):
                            VALUES (%s, %s, %s)
                            ON CONFLICT (term, part_of_speech) DO NOTHING
                            RETURNING id;
-                           """, (term, pos, source))
+                           """, (term, pos, self.source))
             result = cursor.fetchone()
             if result:
                 # if standalone: self.conn.commit()
@@ -72,21 +106,55 @@ class AbstractLoader(ABC):
         finally:
             if standalone: cursor.close()
 
-    def add_relation(self, start_id, end_id, rel_type, weight, source, cursor):
+    def get_or_create_concept(self, term, pos, cursor=None):
+        if self.mode == 'db':
+            return self.add_or_get_concept_from_db(term, pos, cursor)
+        elif self.mode == 'graph':
+            self.add_concept_to_graph(term, pos)
+        return None
+
+    def add_relation_to_graph(self, start, end, rel_type):
+        self.g.add(
+            (
+                self.builder.get_safe_uri(start),
+                self.builder.get_safe_uri(rel_type),
+                self.builder.get_safe_uri(end)
+            )
+        )
+
+    def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
         if start_id == end_id: return
         cursor.execute(
             "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
-            (start_id, end_id, rel_type, weight, source)
+            (start_id, end_id, rel_type, weight, self.source)
         )
 
-    def add_property(self, c_id, c_type, c_value, source, cursor):
+    def add_relation(self, start, end, rel_type, weight, cursor):
+        if self.mode == 'db':
+            self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
+        elif self.mode == 'graph':
+            self.add_relation_to_graph(start['term'], end['term'], rel_type)
+
+    def add_property_to_graph(self, term, c_type, c_value):
+        prop_uri = self.builder.get_safe_uri(c_type)
+        self.g.add((self.builder.get_safe_uri(term), prop_uri, Literal(c_value)))
+        self.g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
+
+    def add_property_to_db(self, c_id, c_type, c_value, cursor):
         cursor.execute(
             "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
-            (c_id, c_type, c_value, source)
+            (c_id, c_type, c_value, self.source)
         )
 
-    def add_url(self, c_id, e_url, source, cursor):
-        cursor.execute(
-            "INSERT INTO urls (concept_id, external_url, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, external_url) DO NOTHING",
-            (c_id, e_url, source)
-        )
+    def add_property(self, concept, c_type, c_value, cursor):
+        if self.mode == 'db':
+            self.add_property_to_db(concept['id'], c_type, c_value, cursor)
+        elif self.mode == 'graph':
+            self.add_property_to_graph(concept['term'], c_type, c_value)
+
+    def add_url(self, c_id, e_url, cursor):
+        if self.mode == 'db':
+            cursor.execute(
+                "INSERT INTO urls (concept_id, external_url, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, external_url) DO NOTHING",
+                (c_id, e_url, self.source)
+            )

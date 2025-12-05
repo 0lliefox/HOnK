@@ -11,6 +11,7 @@ general:
   sources: ['wordnet', 'conceptnet', 'wiktionary']
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
+  mode: 'graph'  # graph / db
 
 local_files:
   supporting_files: 'supporting_files'
@@ -36,6 +37,15 @@ local_files:
   geonames_alternates: 'supporting_files/kb/GeoNames/alternates_map.json'
   geonames_ignore: 'supporting_files/kb/GeoNames/ignored_places.txt'
   geonames_feature_codes: 'supporting_files/kb/GeoNames/feature_map.json'
+  geonames_links: 'supporting_files/kb/GeoNames/geo_links.json'
+
+  dbpedia_labels: 'supporting_files/kb/dbpedia/dbpedia_labels_en_filtered.ttl'
+  dbpedia_types: 'supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=rdf_props=type.ttl'
+  dbpedia_ignored_uris: 'supporting_files/kb/dbpedia/ignored_uris.txt'
+  dbpedia_properties: 'supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=wdt_props=all.ttl'
+  wikidata_property_labels: 'supporting_files/kb/dbpedia/dbpedia_props.csv'
+  wikidata_labels: 'supporting_files/kb/dbpedia/latest-truthy-en-labels-only.nt'
+  wikidata_allowed_ids: 'supporting_files/kb/dbpedia/allowed_wiki_ids.txt'
 
   ontology_classes: 'supporting_files/mappings/ontology_classes.json'
   rejected_classes: 'supporting_files/mappings/ignored_classes.json'
@@ -44,6 +54,7 @@ local_files:
 
 turtle_export:
   cache: false
+  normalise_pos: false
   output_file: 'ontology.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"

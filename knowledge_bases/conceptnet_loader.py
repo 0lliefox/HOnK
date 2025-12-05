@@ -66,7 +66,11 @@ class Relation:
 
 
 class ConceptNetLoader(AbstractLoader):
-    def _load_data_implementation(self):
+    def __init__(self, builder):
+        super().__init__(builder)
+        self.source = "ConceptNet"
+
+    def load_data(self):
         filepath = self.config['local_files']['conceptnet']
         lang = self.config['general']['language']
         logging.info(f"Loading ConceptNet data from local file: '{filepath}'...")
@@ -85,26 +89,30 @@ class ConceptNetLoader(AbstractLoader):
 
                         # Use the POS extracted by the Relation class
                         start_pos = self._get_mapped_pos(relation.startPOS)
-                        start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, "ConceptNet", cursor)
+                        start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, cursor)
 
                         if self.is_url(relation):
                             self.add_url(
                                 start_concept_id,
                                 relation.end,
-                                'ConceptNet',
                                 cursor
                             )
                         else:
                             end_pos = self._get_mapped_pos(relation.endPOS)
-                            end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, "ConceptNet", cursor)
+                            end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, cursor)
 
-                            if start_concept_id and end_concept_id:
+                            if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
                                 self.add_relation(
-                                    start_concept_id,
-                                    end_concept_id,
+                                    {
+                                        'id': start_concept_id,
+                                        'term': relation.surfaceStart
+                                    },
+                                    {
+                                        'id': end_concept_id,
+                                        'term': relation.surfaceEnd
+                                     },
                                     relation.rel,
                                     float(relation.weight),
-                                    'ConceptNet',
                                     cursor
                                 )
                     self.conn.commit()
