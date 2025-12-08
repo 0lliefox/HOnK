@@ -1,11 +1,11 @@
 import logging
-import os
-import pickle
 import time
 from abc import abstractmethod, ABC
 from functools import lru_cache, wraps
 
 from rdflib import Graph, OWL, RDFS, XSD, Literal, RDF
+
+from tools.pickling import PickleManager
 
 
 def timer(func):
@@ -16,10 +16,14 @@ def timer(func):
         else:
             class_name = self.__class__.__name__
         logging.info(f"Starting execution of {class_name}...")
-        start_time = time.time()
+        self._start_time = time.time()
+        self._paused_time = 0
+        self._is_paused = False
+
         result = func(self, *args, **kwargs)
+
         end_time = time.time()
-        duration = end_time - start_time
+        duration = end_time - self._start_time - self._paused_time
         logging.info(f"Finished execution of {class_name} in {duration:.2f} seconds.")
         self.builder.benchmarking.add_row(self.builder.run_id, class_name, duration)
         return result
@@ -35,6 +39,22 @@ class AbstractLoader(ABC):
         self.source = None
         self.mappings = self.get_mappings(["edge", "pos"])
         self.g = self.init_graph()
+
+        self._start_time = 0
+        self._paused_time = 0
+        self._pause_start_time = 0
+        self._is_paused = False
+        self.pickle_manager = PickleManager(self.builder.should_cache, self.pause_timer, self.resume_timer)
+
+    def pause_timer(self):
+        if not self._is_paused:
+            self._pause_start_time = time.time()
+            self._is_paused = True
+
+    def resume_timer(self):
+        if self._is_paused:
+            self._paused_time += time.time() - self._pause_start_time
+            self._is_paused = False
 
     def init_graph(self):
         g = Graph()
@@ -65,10 +85,10 @@ class AbstractLoader(ABC):
     def load_data(self):
         pass
 
-    def _is_valid_term_for_language(self, lang):
+    def does_term_matches_language(self, lang):
         return self.config['general']['language'] == lang
 
-    def _get_mapped_pos(self, pos_tag):
+    def get_mapped_pos(self, pos_tag):
         if self.config['turtle_export']['normalise_pos']:
             return self.builder.full_mappings.get(pos_tag, pos_tag)
         else:
@@ -81,7 +101,7 @@ class AbstractLoader(ABC):
 
     @lru_cache(maxsize=1024)
     def add_or_get_concept_from_db(self, term, pos, cursor=None):
-        term, pos = term.replace('_', ' ').replace('"', ''), self._get_mapped_pos(pos)
+        term, pos = term.replace('_', ' ').replace('"', ''), self.get_mapped_pos(pos)
 
         if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
             term = term.strip()

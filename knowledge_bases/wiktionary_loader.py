@@ -5,7 +5,6 @@ import re
 
 from tqdm import tqdm
 
-from tools.pickling import save_to_pickle, load_from_pickle
 from .abstract_loader import AbstractLoader
 
 
@@ -19,12 +18,12 @@ class WiktionaryLoader(AbstractLoader):
         filepath = self.config['local_files']['wiktionary']
         logging.info(f"Loading Wiktionary data: '{filepath}'")
 
-        entries = load_from_pickle(filepath)
+        entries = self.pickle_manager.load(filepath)
         if not entries:
             with open(filepath, 'r', encoding='utf-8') as f:
                 entries = json.load(f)
 
-            save_to_pickle(filepath, entries)
+            self.pickle_manager.save(filepath, entries)
 
         word_to_pos = {
             key: {self._get_mapped_pos(item['pos']) for item in group}

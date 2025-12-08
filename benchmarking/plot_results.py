@@ -156,8 +156,8 @@ class ResultsPlotter:
         self.plot_object.save(
             plot_filename,
             dpi=dpi,
-            width=12,
-            height=8,
+            width=10,
+            height=6,
             units='in',
             verbose=False
         )

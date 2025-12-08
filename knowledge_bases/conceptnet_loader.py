@@ -88,7 +88,7 @@ class ConceptNetLoader(AbstractLoader):
                             continue
 
                         # Use the POS extracted by the Relation class
-                        start_pos = self._get_mapped_pos(relation.startPOS)
+                        start_pos = self.get_mapped_pos(relation.startPOS)
                         start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, cursor)
 
                         if self.is_url(relation):
@@ -98,7 +98,7 @@ class ConceptNetLoader(AbstractLoader):
                                 cursor
                             )
                         else:
-                            end_pos = self._get_mapped_pos(relation.endPOS)
+                            end_pos = self.get_mapped_pos(relation.endPOS)
                             end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, cursor)
 
                             if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
