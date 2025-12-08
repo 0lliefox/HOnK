@@ -8,7 +8,6 @@ from nltk import word_tokenize
 from rdflib import Graph
 from tqdm import tqdm
 
-from tools.pickling import load_from_pickle, save_to_pickle
 from .abstract_loader import AbstractLoader
 
 
@@ -35,10 +34,10 @@ class WordNetLoader(AbstractLoader):
     def load_data(self):
         filepath = self.config['local_files']['wordnet']
         try:
-            synset_data = load_from_pickle('synset_data')
+            synset_data = self.pickle_manager.load('synset_data')
             if not synset_data:
                 logging.info(f"Loading WordNet data from file: '{filepath}'...")
-                g = load_from_pickle(filepath)
+                g = self.pickle_manager.load(filepath)
                 if not g:
                     g = Graph()
                     logging.info("Parsing WordNet file (this may take a few minutes)...")
@@ -56,7 +55,7 @@ class WordNetLoader(AbstractLoader):
                     g.parse(filepath, format=file_format)
 
                     logging.info(f"Finished parsing WordNet file. Found {len(g)} triples.")
-                    save_to_pickle(filepath, g)
+                    self.pickle_manager.save(filepath, g)
 
                 synset_data = self.get_synsets(g)
                 self.get_components(g, synset_data)
@@ -241,7 +240,7 @@ class WordNetLoader(AbstractLoader):
         logging.info(f"Found {total_relations_found} total relationship rows across all types.")
         logging.info(f"Aggregated data for {len(synset_data)} unique synsets.")
 
-        save_to_pickle('synset_data', synset_data)
+        self.pickle_manager.save('synset_data', synset_data)
 
     def get_components(self, g, synset_data):
         component_query = """

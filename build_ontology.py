@@ -4,6 +4,7 @@ import re
 import subprocess
 from functools import lru_cache
 from urllib.parse import quote
+import argparse
 
 import psycopg2
 import yaml
@@ -20,7 +21,6 @@ from knowledge_bases import ConceptNetLoader
 from knowledge_bases.dbpedia_loader import DBpediaLoader
 from tools.config import get_config
 from tools.database_utilities import dump_database, restore_database
-from tools.pickling import save_to_pickle, load_from_pickle
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -35,6 +35,7 @@ class OntologyBuilder:
         self.run_id = run_id
         self.config = config
         self.mode = self.config['general']['mode']
+        self.should_cache = self.config['general']['should_cache']
         self.db_params = config['database']
         self.conn = None
         self.ns = Namespace(self.config['turtle_export']['base_uri'])
@@ -104,21 +105,25 @@ class OntologyBuilder:
         with self.conn.cursor() as cursor:
             try:
                 if self.config['general']['clear_db_on_start']:
-                    user_input = input("Are you sure you want to clear the database? [y/n]")
+                    confirm_clear_db = self.config['general'].get('confirm_clear_db', True)
+                    if confirm_clear_db:
+                        user_input = input("Are you sure you want to clear the database? [y/n] ")
+                        if user_input.lower() != 'y':
+                            logging.info("Database clear aborted by user.")
+                            return
+                    
+                    tables_to_delete = self.config['general']['tables_to_delete']
+                    sources_to_delete = self.config['general']['source_to_delete']
 
-                    if user_input == 'y':
-                        tables_to_delete = self.config['general']['tables_to_delete']
-                        sources_to_delete = self.config['general']['source_to_delete']
-
-                        if len(self.config['general']['source_to_delete']) == 0:
-                            logging.info(f"Clearing existing tables ({', '.join(tables_to_delete)}) for all sources")
-                            for table in tables_to_delete:
-                                cursor.execute("DROP TABLE IF EXISTS %s CASCADE", [AsIs(table)])
-                        else:
-                            logging.info(f"Clearing existing tables ({', '.join(tables_to_delete)}) for sources: {self.config['general']['source_to_delete']}")
-                            for table in tables_to_delete:
-                                for source in sources_to_delete:
-                                    cursor.execute("DELETE FROM %s WHERE source = %s", [AsIs(table), source])
+                    if not sources_to_delete:
+                        logging.info(f"Clearing existing tables ({', '.join(tables_to_delete)}) for all sources")
+                        for table in tables_to_delete:
+                            cursor.execute("DROP TABLE IF EXISTS %s CASCADE", [AsIs(table)])
+                    else:
+                        logging.info(f"Clearing existing tables ({', '.join(tables_to_delete)}) for sources: {sources_to_delete}")
+                        for table in tables_to_delete:
+                            for source in sources_to_delete:
+                                cursor.execute("DELETE FROM %s WHERE source = %s", [AsIs(table), source])
 
                 # Create tables
                 cursor.execute('''
@@ -418,8 +423,8 @@ class OntologyBuilder:
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
-def main(iterations = 1):
-    config = get_config()
+def main(config_file='config.yaml', iterations=1):
+    config = get_config(config_file)
 
     builder = None
     try:
@@ -444,4 +449,8 @@ def main(iterations = 1):
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Build the ontology.')
+    parser.add_argument('--config', dest='config_file', default='config.yaml',
+                        help='The configuration file to use.')
+    args = parser.parse_args()
+    main(args.config_file)

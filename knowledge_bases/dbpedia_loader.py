@@ -7,7 +7,6 @@ from functools import lru_cache
 from tqdm import tqdm
 from rdflib import Graph
 
-from tools.pickling import save_to_pickle, load_from_pickle
 from .abstract_loader import AbstractLoader
 from collections import defaultdict
 
@@ -47,7 +46,7 @@ class DBpediaLoader(AbstractLoader):
         )
 
         # Stream parse Wikidata labels file
-        wikidata_id_to_label = load_from_pickle('wikidata_labels.pkl')
+        wikidata_id_to_label = self.pickle_manager.load('wikidata_labels.pkl')
         if not wikidata_id_to_label:
             wikidata_id_to_label = {}
             logging.info(f"Streaming Wikidata labels file to build lookup map...")
@@ -59,20 +58,20 @@ class DBpediaLoader(AbstractLoader):
                         wd_label = match.group(2).replace('\\"', '"').replace('\\\\', '\\')
                         wikidata_id_to_label[wd_uri] = wd_label
             logging.info(f"Built lookup map with {len(wikidata_id_to_label)} Wikidata labels.")
-            save_to_pickle('wikidata_labels.pkl', wikidata_id_to_label)
+            self.pickle_manager.save('wikidata_labels.pkl', wikidata_id_to_label)
         return wikidata_id_to_label
 
     def get_concepts(self):
-        g = load_from_pickle('dbpedia_labels_graph.pkl')
+        g = self.pickle_manager.load('dbpedia_labels_graph.pkl')
         if not g:
             g = Graph()
             logging.info(f"Parsing DBpedia labels file: '{self.labels_file}' (may take time)...")
             g.parse(self.labels_file, format='turtle')
             logging.info(f"Finished parsing DBpedia labels. Total triples: {len(g)}")
-            save_to_pickle('dbpedia_labels_graph.pkl', g)
+            self.pickle_manager.save('dbpedia_labels_graph.pkl', g)
 
         # Extract labels
-        concept_data = load_from_pickle('dbpedia_concepts.pkl')
+        concept_data = self.pickle_manager.load('dbpedia_concepts.pkl')
         if not concept_data:
             query = f"""
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -95,7 +94,7 @@ class DBpediaLoader(AbstractLoader):
                     'label': str(row.label),
                     'properties': {}
                 }
-            save_to_pickle('dbpedia_concepts.pkl', concept_data)
+            self.pickle_manager.save('dbpedia_concepts.pkl', concept_data)
         return concept_data
 
     def get_types(self, concept_data):
@@ -106,7 +105,7 @@ class DBpediaLoader(AbstractLoader):
         )
 
         # Types file must be streamed due to large file size cannot load graph into memory
-        concept_types = load_from_pickle('dbpedia_types.pkl')
+        concept_types = self.pickle_manager.load('dbpedia_types.pkl')
         if not concept_types:
             concept_types = defaultdict(set)  # Store {concept_uri: {type_uri1, type_uri2,...}}
             logging.info(f"Streaming DBpedia types file...")
@@ -120,12 +119,12 @@ class DBpediaLoader(AbstractLoader):
                             if type_uri not in self.ignored_uris:
                                 concept_types[concept_uri].add(type_uri)
             logging.info(f"Extracted types for {len(concept_types)} concepts.")
-            save_to_pickle('dbpedia_types.pkl', concept_types)
+            self.pickle_manager.save('dbpedia_types.pkl', concept_types)
         return concept_types
 
     def get_properties(self, concept_data):
         # Properties
-        properties_map = load_from_pickle('wikidata_props.pkl')
+        properties_map = self.pickle_manager.load('wikidata_props.pkl')
         if not properties_map:
             properties_map = {}
             with open(self.wikidata_property_labels, 'r', encoding='utf-8') as f:
