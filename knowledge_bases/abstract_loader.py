@@ -79,7 +79,7 @@ class AbstractLoader(ABC):
     def load_data_with_timer(self):
         self.load_data()
         if self.mode == 'graph':
-            self.builder.serialise_graph(f"{self.source}.ttl", "ttl", self.g)
+            self.builder.serialise_graph(f"{self.source}_{self.config['turtle_export']['output_file']}", f"{self.config['turtle_export']['output_file'].split('.')[-1]}", self.g)
 
     @abstractmethod
     def load_data(self):

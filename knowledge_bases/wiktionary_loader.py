@@ -26,7 +26,7 @@ class WiktionaryLoader(AbstractLoader):
             self.pickle_manager.save(filepath, entries)
 
         word_to_pos = {
-            key: {self._get_mapped_pos(item['pos']) for item in group}
+            key: {self.get_mapped_pos(item['pos']) for item in group}
             for key, group in itertools.groupby(sorted(entries, key=lambda x: x['word']), key=lambda x: x['word'])
         }
         with self.conn.cursor() as cursor:
@@ -34,13 +34,13 @@ class WiktionaryLoader(AbstractLoader):
                 term = data.get('word')
                 lang = data.get('lang_code')
 
-                if not term or not self._is_valid_term_for_language(lang):
+                if not term or not self.does_term_matches_language(lang):
                     continue
 
                 found_poses = set()
                 found_props = set()
                 pos = data.get('pos')
-                standardised_pos = self._get_mapped_pos(pos)
+                standardised_pos = self.get_mapped_pos(pos)
                 searchable_classes = {}
 
                 if standardised_pos in list(self.builder.lemma_mappings.keys()):

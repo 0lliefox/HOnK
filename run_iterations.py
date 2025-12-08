@@ -6,12 +6,12 @@ import os
 import build_ontology
 
 
-def run_script(config):
+def run_script(config, run_id):
     with open('temp_config.yaml', 'w') as f:
         yaml.dump(config, f)
     
     try:
-        build_ontology.main('temp_config.yaml')
+        build_ontology.main('temp_config.yaml', run_id=run_id)
     finally:
         os.remove('temp_config.yaml')
 
@@ -84,7 +84,7 @@ def main():
             iteration_config['general'] = {}
         iteration_config['general']['confirm_clear_db'] = False
 
-        run_script(iteration_config)
+        run_script(iteration_config, i)
 
 if __name__ == '__main__':
     main()

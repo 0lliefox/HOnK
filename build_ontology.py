@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import subprocess
 from functools import lru_cache
@@ -292,6 +293,11 @@ class OntologyBuilder:
     def serialise_graph(self, file_path, ont_format, g):
         try:
             start = time.time()
+            file_path = f"ontologies/{file_path}"
+
+            if not os.path.isdir('ontologies'):
+                os.mkdir('ontologies')
+
             logging.info("Serialising ontology")
             g.serialize(destination=file_path, format=ont_format)
             logging.info(f"Successfully saved ontology to '{file_path}'")
@@ -423,14 +429,15 @@ class OntologyBuilder:
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
-def main(config_file='config.yaml', iterations=1):
+def main(config_file='config.yaml', iterations=1, run_id=None):
     config = get_config(config_file)
 
     builder = None
     try:
         benchmarking = Benchmark("timing")
         for i in range(iterations):
-            builder = OntologyBuilder(config, i, benchmarking)
+            run_id = i if run_id is None else run_id
+            builder = OntologyBuilder(config, run_id, benchmarking)
             # restore_database(config['database'], '.cache/ontology_clusters_backup.sql')
             builder.build()
 

@@ -112,15 +112,15 @@ class WordNetLoader(AbstractLoader):
                         if data['pos'] == 'phrase':
                             pos = 'Phrase'
                             if data['phrase_type']:
-                                pos = self._get_mapped_pos(data['phrase_type'])
+                                pos = self.get_mapped_pos(data['phrase_type'])
                         elif data['lexical_domain'] == '':
-                            pos = self._get_mapped_pos(data['pos'])
+                            pos = self.get_mapped_pos(data['pos'])
                         else:
-                            pos = self._get_mapped_pos(data['lexical_domain'])
+                            pos = self.get_mapped_pos(data['lexical_domain'])
 
                         if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
                             lexical_pos, lexical_domain = data['lexical_domain'].split('.')
-                            pos = self._get_mapped_pos(lexical_pos)
+                            pos = self.get_mapped_pos(lexical_pos)
                             lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, cursor)
                         else:
                             if data['phrase_type'] == '':
