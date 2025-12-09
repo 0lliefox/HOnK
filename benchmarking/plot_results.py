@@ -18,11 +18,11 @@ class ResultsPlotter:
         self.plot_object = None
         self.phase_columns = [
             'build_adj_list',
-            'floyd_warshall',
+            'transitive_closure',
             'build_clusters_from_adj',
             'add_unclustered_concepts',
-            '_store_clusters',
-            '_coalesce_relationships'
+            'store_clusters_in_db',
+            'coalesce_relationships'
         ]
 
         self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
@@ -169,10 +169,12 @@ class ResultsPlotter:
         self.save_plot(plot_filename)
 
 
-if __name__ == "__main__":
+def main():
     file_path = 'results/clustering_benchmark.csv'
 
     plotter = ResultsPlotter(file_path)
     plotter.run()
 
 
+if __name__ == "__main__":
+    main()

@@ -12,7 +12,7 @@ general:
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
   mode: 'db'  # graph / db
-  should_cache: false
+  should_cache: true
 
 local_files:
   supporting_files: 'supporting_files'
@@ -54,6 +54,7 @@ local_files:
   pos_tag_classes: 'supporting_files/mappings/pos_tag_mappings.json'
 
 turtle_export:
+  convert: true
   normalise_pos: true
   output_file: 'ontology.nt'
   base_uri: "https://logds.github.io/parmenides#"

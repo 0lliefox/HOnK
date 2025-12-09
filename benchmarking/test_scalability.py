@@ -6,6 +6,7 @@ import yaml
 from psycopg2._psycopg import AsIs
 
 from benchmarking.benchmark import Benchmark
+from benchmarking.plot_results import ResultsPlotter
 from clustering.cluster_concepts import ConceptClusterer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -165,6 +166,10 @@ def main():
 
     os.chdir('../')
     run_experiment(config, TEST_FRACTIONS)
+
+    file_path = 'results/clustering_benchmark.csv'
+    plotter = ResultsPlotter(file_path)
+    plotter.run()
 
 
 if __name__ == "__main__":

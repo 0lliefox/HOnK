@@ -35,12 +35,19 @@ class OntologyBuilder:
     def __init__(self, config, run_id = 0, benchmarking = None):
         self.run_id = run_id
         self.config = config
-        self.mode = self.config['general']['mode']
-        self.should_cache = self.config['general']['should_cache']
+        self.mode = self.config['general']['mode']  # db / graph
+        self.should_cache = self.config['general']['should_cache']  # Should the pipeline pickle at certain stages
+
+        # Initialise database
         self.db_params = config['database']
         self.conn = None
+        self._connect_db()
+        self._setup_database()
+
+        # Serialisation
         self.ns = Namespace(self.config['turtle_export']['base_uri'])
         self.normalise_pos = config['turtle_export']['normalise_pos']
+        self.convert = self.config['turtle_export']['convert']  # Should the pipeline convert from .nt to .ttl
 
         sources = self.config['general']['sources']
         mapping_types = ["edge", "pos"]
@@ -51,11 +58,6 @@ class OntologyBuilder:
             for m_type in mapping_types
             for k, v in self.load_mappings(config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
         }
-
-        self.lang_code_map = {'en': 'eng'}
-        self.wordnet_lang = self.lang_code_map.get(config['general']['language'], 'eng')
-        self._connect_db()
-        self._setup_database()
 
         # Class mappings
         with open(self.config['local_files']['ontology_classes'], 'r') as f:
@@ -68,7 +70,7 @@ class OntologyBuilder:
 
         self.equivalent_classes = {}  # Map of classes that should be added to a concept as equivalent classes
         self.annotation_property_list = {}
-        self.prop_id = 1
+        self.prop_id = 1  # Starting ID for reified relationships
 
         self.should_cluster = self.config['clustering']['enabled']
 
@@ -305,7 +307,7 @@ class OntologyBuilder:
             end = time.time()
             self.benchmarking.add_row(self.run_id, f"Graph dumping", end - start)
 
-            if ont_format == 'nt':
+            if ont_format == 'nt' and self.convert:
                 logging.info(f"Converting '{file_path}' to .ttl")
                 result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True,
                                         text=True, check=True)
@@ -429,16 +431,15 @@ class OntologyBuilder:
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
-def main(config_file='config.yaml', iterations=1, run_id=None):
+def main(config_file='config.yaml', iterations=1, run_id=None, benchmarking=None):
     config = get_config(config_file)
 
     builder = None
     try:
-        benchmarking = Benchmark("timing")
+        benchmarking = Benchmark("timing") if benchmarking is None else benchmarking
         for i in range(iterations):
             run_id = i if run_id is None else run_id
             builder = OntologyBuilder(config, run_id, benchmarking)
-            # restore_database(config['database'], '.cache/ontology_clusters_backup.sql')
             builder.build()
 
             if builder.mode == 'db':

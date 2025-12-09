@@ -13,6 +13,7 @@ class WiktionaryLoader(AbstractLoader):
         super().__init__(builder)
         self.source = "Wiktionary"
         self.edge_mappings = self.get_mappings(["edge"])
+        self.cached_lemma_data = {} # Cache for pre-compiled regex patterns and class names
 
     def load_data(self):
         filepath = self.config['local_files']['wiktionary']
@@ -41,23 +42,51 @@ class WiktionaryLoader(AbstractLoader):
                 found_props = set()
                 pos = data.get('pos')
                 standardised_pos = self.get_mapped_pos(pos)
-                searchable_classes = {}
+                
+                current_lemma_data = self.cached_lemma_data.get(standardised_pos)
 
-                if standardised_pos in list(self.builder.lemma_mappings.keys()):
-                    lemmas = self.builder.lemma_mappings[standardised_pos]
-                    all_class_names = self.builder.get_all_keys(lemmas['classes'])
-                    all_properties = lemmas['properties']
+                if not current_lemma_data:
+                    if standardised_pos in self.builder.lemma_mappings:
+                        lemmas = self.builder.lemma_mappings[standardised_pos]
+                        all_class_names = self.builder.get_all_keys(lemmas['classes'])
+                        all_properties = lemmas['properties']
 
-                    searchable_classes = {
-                        re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', class_name).lower(): class_name
-                        for class_name in all_class_names
-                    }
+                        searchable_classes = []
+                        for class_name in all_class_names:
+                            search_term = re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', class_name).lower()
+                            pattern = r'\b' + re.escape(search_term)
+                            searchable_classes.append((re.compile(pattern, re.IGNORECASE), class_name))
+                        
+                        searchable_properties = []
+                        for prop_name in all_properties:
+                            pattern = r'\b' + re.escape(prop_name)
+                            searchable_properties.append(re.compile(pattern, re.IGNORECASE))
 
+                        current_lemma_data = {
+                            'searchable_classes': searchable_classes,
+                            'searchable_properties': searchable_properties,
+                            'all_properties': all_properties # Keep original for post-processing
+                        }
+                        self.cached_lemma_data[standardised_pos] = current_lemma_data
+                    else:
+                        # If standardised_pos is not in lemma_mappings, we still need to cache this fact
+                        current_lemma_data = {
+                            'searchable_classes': [],
+                            'searchable_properties': [],
+                            'all_properties': []
+                        }
+                        self.cached_lemma_data[standardised_pos] = current_lemma_data
+                
+                searchable_classes = current_lemma_data['searchable_classes']
+                searchable_properties = current_lemma_data['searchable_properties']
+                all_properties = current_lemma_data['all_properties']
+
+                if searchable_classes: # Only extract if there are classes to search for
                     categories = data.get('categories', [])
                     self.extract_classes(categories, found_poses, searchable_classes)
 
                     tags = data.get('tags', [])
-                    self.extract_properties(categories + tags, found_props, all_properties)
+                    self.extract_properties(categories + tags, found_props, searchable_properties, all_properties)
                 else:
                     found_poses.add(standardised_pos)
 
@@ -117,16 +146,17 @@ class WiktionaryLoader(AbstractLoader):
 
     def extract_classes(self, categories, found_poses, searchable_classes):
         for category in categories:
-            for search_term, original_class_name in searchable_classes.items():
-                if self.match_class_name(search_term, category):
+            for pattern, original_class_name in searchable_classes:
+                if pattern.search(category):
                     found_poses.add(original_class_name)
 
-    def extract_properties(self, categories, found_props, searchable_properties):
+    def extract_properties(self, categories, found_props, searchable_properties, all_properties):
         if searchable_properties:
             for category in categories:
-                for search_prop in searchable_properties:
-                    if self.match_class_name(search_prop, category):
-                        found_props.add(search_prop)
+                for idx, pattern in enumerate(searchable_properties):
+                    if pattern.search(category):
+                        found_props.add(all_properties[idx])
+
         if 'participle' in found_props:
             if 'present' in found_props:
                 found_props.add('present participle')
@@ -136,8 +166,3 @@ class WiktionaryLoader(AbstractLoader):
                 found_props.add('past participle')
                 found_props.remove('past')
                 found_props.remove('participle')
-
-    def match_class_name(self, search_term, category_string):
-        safe_search_term = re.escape(search_term)
-        pattern = r'\b' + safe_search_term
-        return re.search(pattern, category_string, re.IGNORECASE) is not None

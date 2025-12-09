@@ -1,19 +1,10 @@
 import yaml
-import subprocess
 import copy
 import os
 
 import build_ontology
+from benchmarking.benchmark import Benchmark
 
-
-def run_script(config, run_id):
-    with open('temp_config.yaml', 'w') as f:
-        yaml.dump(config, f)
-    
-    try:
-        build_ontology.main('temp_config.yaml', run_id=run_id)
-    finally:
-        os.remove('temp_config.yaml')
 
 def main():
     with open('config.yaml', 'r') as f:
@@ -28,6 +19,7 @@ def main():
                 'enabled': 'true'
             },
             'turtle_export': {
+                'convert': 'false',
                 'normalise_pos': 'true',
                 'output_file': 'ontology_norm_graph.nt'
             },
@@ -40,6 +32,7 @@ def main():
                 'enabled': 'true'
             },
             'turtle_export': {
+                'convert': 'false',
                 'normalise_pos': 'false',
                 'output_file': 'ontology_orig_graph.nt'
             },
@@ -52,6 +45,7 @@ def main():
                 'enabled': 'true'
             },
             'turtle_export': {
+                'convert': 'false',
                 'normalise_pos': 'true',
                 'output_file': 'ontology_norm_db_clust.nt'
             },
@@ -64,12 +58,40 @@ def main():
                 'enabled': 'false'
             },
             'turtle_export': {
+                'convert': 'false',
                 'normalise_pos': 'true',
                 'output_file': 'ontology_norm_db_unclust.nt'
             },
         },
+        {
+            'general': {
+                'mode': 'db'
+            },
+            'clustering': {
+                'enabled': 'true'
+            },
+            'turtle_export': {
+                'convert': 'false',
+                'normalise_pos': 'true',
+                'output_file': 'ontology_norm_db_clust.ttl'
+            },
+        },
+        {
+            'general': {
+                'mode': 'db'
+            },
+            'clustering': {
+                'enabled': 'false'
+            },
+            'turtle_export': {
+                'convert': 'false',
+                'normalise_pos': 'true',
+                'output_file': 'ontology_norm_db_unclust.ttl'
+            },
+        },
     ]
 
+    benchmarking = Benchmark("timing")
     for i, variation in enumerate(variations):
         print(f"Running iteration {i+1}/{len(variations)}")
 
@@ -84,7 +106,13 @@ def main():
             iteration_config['general'] = {}
         iteration_config['general']['confirm_clear_db'] = False
 
-        run_script(iteration_config, i)
+        with open('temp_config.yaml', 'w') as f:
+            yaml.dump(iteration_config, f)
+
+        try:
+            build_ontology.main('temp_config.yaml', run_id=i, benchmarking=benchmarking)
+        finally:
+            os.remove('temp_config.yaml')
 
 if __name__ == '__main__':
     main()

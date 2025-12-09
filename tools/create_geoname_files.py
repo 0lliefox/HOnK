@@ -23,16 +23,18 @@ if __name__ == '__main__':
     with open('geonames/alternateNamesV2.csv') as f:
         lines = f.readlines()
         for line in tqdm(lines):
+            link = None
             try:
                 alt_id, geo_id, code = line.strip().split('\t')[:3]
                 if code in {'wkdt', 'link'}:
                     if code == 'wkdt':
                         wiki_code = line.strip().split('\t')[3:][0]
-                        link = f"https://wikidata.org/entity/{wiki_code}"
+                        # link = f"https://wikidata.org/entity/{wiki_code}"
                     else:
                         link = line.strip().split('\t')[3:][0]
 
-                    links[geo_id] = link
+                    if link and link not in {'https://elandjamaica.nla.gov.jm/elandjamaica/interactivemap.aspx'} and 'wiki' in link:
+                        links[geo_id] = link
                 else:
                     alternates[alt_id] = geo_id
             except Exception as e:

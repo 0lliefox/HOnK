@@ -37,13 +37,13 @@ class ConceptClusterer:
     @timer
     def run(self):
         logging.info("Starting clustering...")
-        self._setup_database()
-        cluster_mappings = self._find_and_store_clusters()
-        self._store_clusters(cluster_mappings)
-        self._coalesce_relationships()
+        self.setup_database()
+        cluster_mappings = self.find_and_store_clusters()
+        self.store_clusters_in_db(cluster_mappings)
+        self.coalesce_relationships()
         logging.info("Concept clustering finished")
 
-    def _setup_database(self):
+    def setup_database(self):
         logging.info("Setting up database tables for clustering...")
         with self.conn.cursor() as cursor:
             for table in [self.tables['clusters'], self.tables['cluster_relations']]:
@@ -73,7 +73,7 @@ class ConceptClusterer:
             self.conn.commit()
         logging.info("Clustering tables are set up.")
 
-    def _find_and_store_clusters(self):
+    def find_and_store_clusters(self):
         cache_path = f"{self.config['local_files']['cache']}/adj_list.json"
         with self.conn.cursor() as cursor:
             # Adjacency list
@@ -82,7 +82,7 @@ class ConceptClusterer:
                 json.dump(db, f, ensure_ascii=False, indent=4)
 
             # Transitive closure (Floyd Warshall)
-            self.floyd_warshall(db)
+            self.transitive_closure(db)
 
             # Build clusters
             cluster_mappings, visited_nodes = self.build_clusters_from_adj(db)
@@ -141,7 +141,7 @@ class ConceptClusterer:
         return cluster_mappings, visited_nodes
 
     @timer
-    def floyd_warshall(self, adjacency_db):
+    def transitive_closure(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
         for i in tqdm(adjacency_db.keys(), desc="Floyd Warshall"):
             adjacency_list = adjacency_db[i]
@@ -160,7 +160,7 @@ class ConceptClusterer:
             adjacency_db[i] = adjacency_list
 
     @timer
-    def _store_clusters(self, cluster_mappings):
+    def store_clusters_in_db(self, cluster_mappings):
         with self.conn.cursor() as cursor:
             logging.info(f"  - Storing {len(cluster_mappings)} concept to cluster mappings...")
             psycopg2.extras.execute_values(cursor, f"INSERT INTO {AsIs(self.tables['clusters'])} (concept_id, cluster_id) VALUES %s",
@@ -168,7 +168,7 @@ class ConceptClusterer:
             self.conn.commit()
 
     @timer
-    def _coalesce_relationships(self):
+    def coalesce_relationships(self):
         # Join clusters table from cluster ID to start_concept_id and end_concept_id from relations table
         logging.info("Coalescing relationships between clusters...")
         with self.conn.cursor() as cursor:
