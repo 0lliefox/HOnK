@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from plotnine import (
-    ggplot, aes, geom_line, geom_point,
+    ggplot, aes, geom_line, geom_point, geom_errorbar,
     scale_y_log10, scale_color_brewer, scale_shape_manual,
     labs, theme_minimal, theme, element_text
 )
@@ -17,12 +17,12 @@ class ResultsPlotter:
         self.melted_data = None
         self.plot_object = None
         self.phase_columns = [
-            'build_adj_list',
-            'transitive_closure',
-            'build_clusters_from_adj',
-            'add_unclustered_concepts',
-            'store_clusters_in_db',
-            'coalesce_relationships'
+            'Build adjacency list',
+            'Transitive closure',
+            'Build clusters from adjacency list',
+            'Add unclustered concepts',
+            'Store clusters in DB',
+            'Coalesce relationships'
         ]
 
         self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
@@ -36,17 +36,56 @@ class ResultsPlotter:
         print("\nData Info:")
         self.data.info()
 
-        self.data = self.data.rename(columns={'id': 'Percentage'})
-        self.x_data = self.data['Percentage'].values
+        self.data = self.data.rename(columns={
+            'id': 'Percentage',
+            'build_adj_list': 'Build adjacency list',
+            'build_clusters_from_adj': 'Build clusters from adjacency list',
+            'transitive_closure': 'Transitive closure',
+            'add_unclustered_concepts': 'Add unclustered concepts',
+            'store_clusters_in_db': 'Store clusters in DB',
+            'coalesce_relationships': 'Coalesce relationships'
+        })
         self.data['Total'] = self.data[self.phase_columns].sum(axis=1)
 
-        columns_to_melt = self.phase_columns + ['Total']
-        self.melted_data = self.data.melt(
+        columns_to_process = self.phase_columns + ['Total']
+
+        # Group by Percentage and calculate mean and std
+        grouped_data = self.data.groupby('Percentage')
+        mean_data = grouped_data[columns_to_process].mean().reset_index()
+        std_data = grouped_data[columns_to_process].std().reset_index()
+
+        # Melt data for plotting
+        melted_mean = mean_data.melt(
             id_vars=['Percentage'],
-            value_vars=columns_to_melt,
+            value_vars=columns_to_process,
             var_name='Phase',
             value_name='Time'
         )
+
+        melted_std = std_data.melt(
+            id_vars=['Percentage'],
+            value_vars=columns_to_process,
+            var_name='Phase',
+            value_name='Std'
+        )
+
+        self.melted_data = pd.merge(melted_mean, melted_std, on=['Percentage', 'Phase'])
+
+        # Replace NaN in Std with 0, which can happen for single-entry groups
+        self.melted_data['Std'] = self.melted_data['Std'].fillna(0)
+
+        self.melted_data['ymin'] = self.melted_data['Time'] - self.melted_data['Std']
+        self.melted_data['ymax'] = self.melted_data['Time'] + self.melted_data['Std']
+        
+        # Clip ymin for log scale
+        self.melted_data['ymin'] = self.melted_data['ymin'].clip(lower=1e-9)
+
+        # self.melted_data['Phase'] = self.melted_data['Phase'].str.replace('_', ' ').str.capitalize()
+
+
+        # For curve fitting, use the mean data
+        self.data = mean_data
+        self.x_data = self.data['Percentage'].values
 
     def analyze_curve_fit(self):
         """Analyzes and prints the top 3 best-fit curve types for each phase."""
@@ -91,13 +130,15 @@ class ResultsPlotter:
             x_fit = x[valid_indices]
             y_fit_data = y[valid_indices]
 
+            display_name = phase.replace('_', ' ').title()
+
             if len(x_fit) < 3:
-                print(f"{phase:<25} -> Skipping (Not enough valid data points)")
+                print(f"{display_name:<25} -> Skipping (Not enough valid data points)")
                 continue
 
             ss_tot = np.sum((y_fit_data - np.mean(y_fit_data)) ** 2)
             if ss_tot == 0:
-                print(f"{phase:<25} -> Constant (All values are identical)")
+                print(f"{display_name:<25} -> Constant (All values are identical)")
                 continue
 
             all_fits = []
@@ -115,13 +156,13 @@ class ResultsPlotter:
                     continue
 
             if not all_fits:
-                print(f"{phase:<25} -> No models could be successfully fitted.")
+                print(f"{display_name:<25} -> No models could be successfully fitted.")
                 continue
 
             # Sort by R² value, descending
             all_fits.sort(key=lambda f: f["r2"], reverse=True)
 
-            print(f"{phase:<25}")
+            print(f"{display_name:<25}")
             for i, fit in enumerate(all_fits[:3]):
                 print(f"  {i + 1}. {fit['model']:<25} (R² = {fit['r2']:.4f})")
 
@@ -130,13 +171,14 @@ class ResultsPlotter:
 
         self.plot_object = (
                 ggplot(self.melted_data, aes(x='Percentage', y='Time', color='Phase', shape='Phase'))
+                + geom_errorbar(aes(ymin='ymin', ymax='ymax'), width=2, alpha=0.5)
                 + geom_line()
                 + geom_point(size=3)
                 + scale_y_log10()
                 + scale_color_brewer(type='qual', palette='Dark2')
                 + scale_shape_manual(values=markers)
                 + labs(
-            title='Phase Execution Times vs. Dataset Percentage',
+            title='Comparison of Phase Execution Times for Clustering Pipeline',
             x='Dataset Percentage (%)',
             y='Time (seconds, log scale)'
         )

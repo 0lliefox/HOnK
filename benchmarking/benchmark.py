@@ -42,7 +42,7 @@ class Benchmark:
                     previous_row[phase] = 0.0
         self.data.append(new_row)
 
-    def to_csv(self, filename='benchmark_results', data_length=True) -> None:
+    def to_csv(self, filename='benchmark_results', data_length=True, append=False) -> None:
         if not self.data:
             print("No data to export.")
             return
@@ -52,11 +52,15 @@ class Benchmark:
         if not os.path.isdir('benchmarking/results'):
             os.mkdir('benchmarking/results')
 
+        file_exists = os.path.isfile(filename)
+        mode = 'a' if append else 'w'
+
         try:
-            with open(filename, 'w', newline='') as csvfile:
+            with open(filename, mode, newline='') as csvfile:
                 header = ['id'] + self.phase_names
                 writer = csv.DictWriter(csvfile, fieldnames=header)
-                writer.writeheader()
+                if not file_exists or not append:
+                    writer.writeheader()
                 for row in self.data:
                     full_row = {'id': row['id']}
                     for phase in self.phase_names:
@@ -65,3 +69,6 @@ class Benchmark:
             print(f"Data successfully written to {filename}")
         except Exception as e:
             print(f"An error occurred while writing to CSV: {e}")
+        finally:
+            # Clear data after writing to avoid duplicate entries on subsequent calls
+            self.data.clear()

@@ -29,7 +29,11 @@ class GeoNamesLoader(AbstractLoader):
             hierarchy = json.load(f)
 
         with self.conn.cursor() as cursor:
-            if not self.id_term_map:
+            # Check if GeoNames data exists in the database
+            cursor.execute("SELECT 1 FROM concepts WHERE source = 'GeoNames' LIMIT 1;")
+            geonames_data_exists = cursor.fetchone() is not None
+
+            if not self.id_term_map or not geonames_data_exists:
                 self.id_term_map = {}
                 with open(filepath, 'r') as f:
                     reader = csv.reader(f, delimiter='\t')

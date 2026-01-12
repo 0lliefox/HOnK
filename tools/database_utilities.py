@@ -116,6 +116,48 @@ def restore_database(db_config, backup_file_path):
             env.pop('PGPASSWORD', None)
 
 
+def append_from_sql(db_config, sql_file_path):
+    if not os.path.exists(sql_file_path):
+        logging.error(f"Error: SQL file not found at '{sql_file_path}'")
+        return False
+
+    logging.info(f"Appending data to '{db_config['dbname']}' from '{sql_file_path}'...")
+
+    env = os.environ.copy()
+    if 'password' in db_config and db_config['password']:
+        env['PGPASSWORD'] = db_config['password']
+
+    command = [
+        'psql',
+        '-h', db_config['host'],
+        '-p', str(db_config['port']),
+        '-U', db_config['user'],
+        '-d', db_config['dbname'],
+        '-f', sql_file_path,
+        '--quiet',
+        '--single-transaction'
+    ]
+
+    try:
+        process = subprocess.run(command, capture_output=True, text=True, check=True, env=env)
+        logging.info(f"Data appended successfully from '{sql_file_path}'.")
+        return True
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error during data append. Return code: {e.returncode}")
+        logging.error(f"Command executed: {' '.join(command)}")
+        logging.error(f"Error output:\n{e.stderr}")
+        return False
+    except FileNotFoundError:
+        logging.error("Error: 'psql' command not found. Make sure PostgreSQL client tools are installed and in your PATH.")
+        return False
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during append: {e}")
+        return False
+    finally:
+        if 'PGPASSWORD' in env:
+            del env['PGPASSWORD']
+
+
 if __name__ == "__main__":
     try:
         with open('../config.yaml', 'r') as f:

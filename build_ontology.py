@@ -70,7 +70,7 @@ class OntologyBuilder:
 
         self.equivalent_classes = {}  # Map of classes that should be added to a concept as equivalent classes
         self.annotation_property_list = {}
-        self.prop_id = 1  # Starting ID for reified relationships
+        self.prop_id = {}  # Starting ID for reified relationships
 
         self.should_cluster = self.config['clustering']['enabled']
 
@@ -175,12 +175,12 @@ class OntologyBuilder:
 
     def build(self):
         ParmenidesLoader(self).load_data_with_timer()
-        GeoNamesLoader(self).load_data_with_timer()
-        # dump_database(self.db_params, '.cache/ontology_geonames_backup.sql')
-        WordNetLoader(self).load_data_with_timer()
         ConceptNetLoader(self).load_data_with_timer()
         WiktionaryLoader(self).load_data_with_timer()
-        # dump_database(self.db_params, '.cache/ontology_all_minus_dbpedia_backup.sql')
+        WordNetLoader(self).load_data_with_timer()
+        GeoNamesLoader(self).load_data_with_timer()
+        # dump_database(self.db_params, '.cache/ontology_all_minus_geonames_backup.sql')
+        # restore_database(self.db_params, '.cache/ontology_all_minus_geonames_backup.sql')
         # DBpediaLoader(self).load_data_with_timer()
         logging.info("Ontology build process finished")
 
@@ -336,9 +336,10 @@ class OntologyBuilder:
                 rel_uri = self.annotation_property_list[sub_list_key]
                 new_annotation_instance = False
             else:
-                rel_uri = self.get_safe_uri(f"{rel} {self.prop_id}")
+                counter = self.prop_id.get(rel, 0)
+                rel_uri = self.get_safe_uri(f"{rel} {counter}")
                 self.annotation_property_list[sub_list_key] = rel_uri
-                self.prop_id += 1
+                self.prop_id[rel] = counter if counter == 0 else counter + 1
                 new_annotation_instance = True
 
             # g.add((self.ns[rel], RDF.type, OWL.AnnotationProperty))

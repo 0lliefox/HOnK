@@ -13,79 +13,85 @@ def main():
     variations = [
         {
             'general': {
-                'mode': 'graph'
+                'mode': 'graph',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'true'
+                'enabled': True
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'true',
+                'convert': False,
+                'normalise_pos': True,
                 'output_file': 'ontology_norm_graph.nt'
             },
         },
         {
             'general': {
-                'mode': 'graph'
+                'mode': 'graph',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'true'
+                'enabled': True
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'false',
+                'convert': False,
+                'normalise_pos': False,
                 'output_file': 'ontology_orig_graph.nt'
             },
         },
         {
             'general': {
-                'mode': 'db'
+                'mode': 'db',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'true'
+                'enabled': True
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'true',
+                'convert': False,
+                'normalise_pos': True,
                 'output_file': 'ontology_norm_db_clust.nt'
             },
         },
         {
             'general': {
-                'mode': 'db'
+                'mode': 'db',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'false'
+                'enabled': False
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'true',
+                'convert': False,
+                'normalise_pos': True,
                 'output_file': 'ontology_norm_db_unclust.nt'
             },
         },
         {
             'general': {
-                'mode': 'db'
+                'mode': 'db',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'true'
+                'enabled': True
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'true',
+                'convert': False,
+                'normalise_pos': True,
                 'output_file': 'ontology_norm_db_clust.ttl'
             },
         },
         {
             'general': {
-                'mode': 'db'
+                'mode': 'db',
+                'should_cache': False
             },
             'clustering': {
-                'enabled': 'false'
+                'enabled': False
             },
             'turtle_export': {
-                'convert': 'false',
-                'normalise_pos': 'true',
+                'convert': False,
+                'normalise_pos': True,
                 'output_file': 'ontology_norm_db_unclust.ttl'
             },
         },

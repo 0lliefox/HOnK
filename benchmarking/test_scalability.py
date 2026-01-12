@@ -1,5 +1,6 @@
 import logging
 import os
+import argparse
 
 import psycopg2
 import yaml
@@ -145,7 +146,7 @@ def run_experiment(config, fractions):
             logging.info(f"Running test for {id_percentage}% ({concept_count} concepts)")
 
             clusterer.run()
-            mock_builder.benchmarking.to_csv("clustering_benchmark", False)
+            mock_builder.benchmarking.to_csv("clustering_benchmark", data_length=False, append=True)
 
             drop_subset_tables(conn)
     except psycopg2.Error as e:
@@ -160,17 +161,20 @@ def run_experiment(config, fractions):
             logging.info("Database connection closed.")
 
 
-def main():
+def main(num_runs=1):
     with open('../config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
     os.chdir('../')
-    run_experiment(config, TEST_FRACTIONS)
+    
+    for i in range(num_runs):
+        run_experiment(config, TEST_FRACTIONS)
 
+    os.chdir('benchmarking')
     file_path = 'results/clustering_benchmark.csv'
     plotter = ResultsPlotter(file_path)
     plotter.run()
 
 
 if __name__ == "__main__":
-    main()
+    main(8)
