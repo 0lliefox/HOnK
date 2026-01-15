@@ -1,13 +1,19 @@
+import argparse
+import json
+import logging
+import os
 import pandas as pd
 import numpy as np
-from plotnine import (
-    ggplot, aes, geom_line, geom_point, geom_errorbar,
-    scale_y_log10, scale_color_brewer, scale_shape_manual,
-    labs, theme_minimal, theme, element_text
-)
+import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+from plotnine import (
+    ggplot, aes, geom_line, geom_point, geom_errorbar, geom_bar,
+    scale_y_log10, scale_color_brewer, scale_shape_manual, scale_fill_brewer,
+    labs, theme_minimal, theme, element_text, position_dodge
+)
 from scipy.optimize import curve_fit
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class ResultsPlotter:
 
@@ -25,9 +31,15 @@ class ResultsPlotter:
             'Coalesce relationships'
         ]
 
-        self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
-        self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
-        self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+        # Font setup - fallback if files don't exist
+        try:
+            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
+            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
+            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+        except:
+            self.font = fm.FontProperties(size=11)
+            self.bold_font = fm.FontProperties(weight='bold', size=11)
+            self.title_font = fm.FontProperties(weight='bold', size=14)
 
     def load_and_process_data(self):
         self.data = pd.read_csv(self.file_path)
@@ -79,9 +91,6 @@ class ResultsPlotter:
         
         # Clip ymin for log scale
         self.melted_data['ymin'] = self.melted_data['ymin'].clip(lower=1e-9)
-
-        # self.melted_data['Phase'] = self.melted_data['Phase'].str.replace('_', ' ').str.capitalize()
-
 
         # For curve fitting, use the mean data
         self.data = mean_data
@@ -211,11 +220,231 @@ class ResultsPlotter:
         self.save_plot(plot_filename)
 
 
-def main():
-    file_path = 'results/clustering_benchmark.csv'
+class BenchmarkComparator:
+    def __init__(self, file1: str, file2: str, output_dir: str = '.'):
+        self.file1 = file1
+        self.file2 = file2
+        self.output_dir = output_dir
+        self.phases = [
+            'ParmenidesLoader',
+            'ConceptNetLoader',
+            'WiktionaryLoader',
+            'WordNetLoader',
+            'GeoNamesLoader',
+            'Graph building',
+            'Graph dumping'
+        ]
+        
+        # Font setup
+        try:
+            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
+            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
+            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+        except:
+            self.font = fm.FontProperties(size=11)
+            self.bold_font = fm.FontProperties(weight='bold', size=11)
+            self.title_font = fm.FontProperties(weight='bold', size=14)
 
-    plotter = ResultsPlotter(file_path)
-    plotter.run()
+    def run(self):
+        logging.info(f"Comparing benchmarks: {self.file1} vs {self.file2}")
+        
+        df1 = pd.read_csv(self.file1)
+        df2 = pd.read_csv(self.file2)
+        
+        # Filter for available phases
+        available_phases = [p for p in self.phases if p in df1.columns and p in df2.columns]
+        if not available_phases:
+            logging.error("No matching phases found in both CSV files.")
+            return
+
+        # Calculate mean and std for each phase
+        def get_stats(df, label):
+            stats = []
+            for phase in available_phases:
+                mean_val = df[phase].mean()
+                std_val = df[phase].std() if len(df) > 1 else 0
+                stats.append({
+                    'Phase': phase,
+                    'Dataset': label,
+                    'Time': mean_val,
+                    'Std': std_val
+                })
+            return pd.DataFrame(stats)
+
+        label1 = os.path.basename(self.file1).replace('.csv', '')
+        label2 = os.path.basename(self.file2).replace('.csv', '')
+        
+        stats1 = get_stats(df1, label1)
+        stats2 = get_stats(df2, label2)
+        
+        combined_data = pd.concat([stats1, stats2])
+        
+        # Calculate ymin/ymax for error bars
+        combined_data['ymin'] = combined_data['Time'] - combined_data['Std']
+        combined_data['ymax'] = combined_data['Time'] + combined_data['Std']
+        combined_data['ymin'] = combined_data['ymin'].clip(lower=0)
+
+        # Create plot
+        plot = (
+            ggplot(combined_data, aes(x='Phase', y='Time', fill='Dataset'))
+            + geom_bar(stat='identity', position=position_dodge(width=0.9), width=0.8)
+            + geom_errorbar(aes(ymin='ymin', ymax='ymax'), position=position_dodge(width=0.9), width=0.25)
+            + scale_fill_brewer(type='qual', palette='Set1')
+            + labs(
+                title='Comparison of Build Phase Execution Times',
+                x='Phase',
+                y='Time (seconds)'
+            )
+            + theme_minimal()
+            + theme(
+                plot_title=element_text(fontproperties=self.title_font, ha='center'),
+                axis_title_x=element_text(fontproperties=self.bold_font),
+                axis_title_y=element_text(fontproperties=self.bold_font),
+                axis_text_x=element_text(fontproperties=self.font, angle=45, ha='right'),
+                legend_title=element_text(fontproperties=self.bold_font),
+                legend_text=element_text(fontproperties=self.font),
+                legend_position='bottom'
+            )
+        )
+        
+        output_path = os.path.join(self.output_dir, 'benchmark_comparison.png')
+        plot.save(output_path, dpi=300, width=12, height=8, units='in', verbose=False)
+        logging.info(f"Saved comparison plot to '{output_path}'")
+
+
+# --- Graph Comparison Plotting Functions ---
+
+def plot_pos_distribution(data, output_dir):
+    logging.info("Generating POS distribution plot...")
+    
+    g1_name = data['g1_name']
+    g2_name = data['g2_name']
+    pos1 = data['g1_pos']
+    pos2 = data['g2_pos']
+    
+    all_pos = set(pos1.keys()).union(set(pos2.keys()))
+    # Sort by total frequency
+    sorted_pos = sorted(all_pos, key=lambda p: pos1.get(p, 0) + pos2.get(p, 0), reverse=True)[:10]
+    
+    labels = [str(p).split('/')[-1].split('#')[-1] for p in sorted_pos]
+    
+    total1 = sum(pos1.values())
+    total2 = sum(pos2.values())
+    
+    freq1 = [pos1.get(p, 0) / total1 if total1 > 0 else 0 for p in sorted_pos]
+    freq2 = [pos2.get(p, 0) / total2 if total2 > 0 else 0 for p in sorted_pos]
+    
+    x = np.arange(len(labels))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    rects1 = ax.bar(x - width/2, freq1, width, label=g1_name)
+    rects2 = ax.bar(x + width/2, freq2, width, label=g2_name)
+    
+    ax.set_ylabel('Relative Frequency')
+    ax.set_title('Top 10 Syntactic Tag Distribution')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha='right')
+    ax.legend()
+    
+    plt.subplots_adjust(bottom=0.2)
+    
+    output_path = os.path.join(output_dir, 'pos_distribution.png')
+    plt.savefig(output_path)
+    logging.info(f"Saved '{output_path}'")
+
+def plot_relation_correlation(data, output_dir):
+    logging.info("Generating relation correlation plot...")
+    
+    g1_name = data['g1_name']
+    g2_name = data['g2_name']
+    g1_rels = data['g1_relations']
+    overlap_rels = data['overlap_relations']
+    
+    total_g1_rels = sum(g1_rels.values())
+    
+    rel_freqs = []
+    recalls = []
+    labels = []
+    
+    for rel, count in g1_rels.items():
+        if total_g1_rels > 0:
+            freq = count / total_g1_rels
+            # overlap_rels might not have all keys
+            overlap_count = overlap_rels.get(rel, 0)
+            recall = overlap_count / count if count > 0 else 0
+            
+            rel_freqs.append(freq)
+            recalls.append(recall)
+            labels.append(str(rel).split('/')[-1].split('#')[-1])
+    
+    if not rel_freqs:
+        logging.warning("No relation data to plot.")
+        return
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(rel_freqs, recalls, alpha=0.5)
+    
+    # Annotate top 5 most frequent
+    sorted_indices = np.argsort(rel_freqs)[::-1]
+    for i in sorted_indices[:5]:
+        if i < len(labels):
+            ax.annotate(labels[i], (rel_freqs[i], recalls[i]))
+        
+    ax.set_xlabel(f'Relative Frequency in {g1_name}')
+    ax.set_ylabel(f'Recall in Overlap ({g1_name} $\cap$ {g2_name})')
+    ax.set_title('Relation Frequency vs. Recall in Overlap')
+    ax.grid(True)
+    
+    fig.tight_layout()
+    output_path = os.path.join(output_dir, 'relation_correlation.png')
+    plt.savefig(output_path)
+    logging.info(f"Saved '{output_path}'")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Plotting utility for benchmarks.")
+    
+    # Argument for graph comparison mode
+    parser.add_argument("--comparison-data", help="Path to the JSON data file for graph comparison plots")
+    parser.add_argument("--output-dir", default=".", help="Directory to save comparison plots")
+    
+    # Argument for comparing two benchmark CSVs
+    parser.add_argument("--compare-csvs", nargs=2, help="Paths to two CSV files to compare (e.g., timing_A.csv timing_B.csv)")
+    
+    # Argument for scalability benchmark mode (default if no comparison data)
+    parser.add_argument("--scalability-csv", default='results/clustering_benchmark.csv', help="Path to scalability benchmark CSV")
+
+    args = parser.parse_args()
+
+    if args.comparison_data:
+        # Graph Comparison Mode
+        if not os.path.exists(args.comparison_data):
+            logging.error(f"Comparison data file not found: {args.comparison_data}")
+            return
+            
+        with open(args.comparison_data, 'r') as f:
+            data = json.load(f)
+            
+        plot_pos_distribution(data, args.output_dir)
+        plot_relation_correlation(data, args.output_dir)
+    elif args.compare_csvs:
+        # Benchmark Comparison Mode
+        file1, file2 = args.compare_csvs
+        if not os.path.exists(file1) or not os.path.exists(file2):
+            logging.error("One or both CSV files not found.")
+            return
+        
+        comparator = BenchmarkComparator(file1, file2, args.output_dir)
+        comparator.run()
+    else:
+        # Scalability Benchmark Mode
+        if not os.path.exists(args.scalability_csv):
+            logging.warning(f"Scalability CSV not found at {args.scalability_csv}. Skipping scalability plot.")
+            return
+
+        plotter = ResultsPlotter(args.scalability_csv)
+        plotter.run()
 
 
 if __name__ == "__main__":

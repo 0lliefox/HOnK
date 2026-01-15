@@ -46,8 +46,8 @@ class WiktionaryLoader(AbstractLoader):
                 current_lemma_data = self.cached_lemma_data.get(standardised_pos)
 
                 if not current_lemma_data:
-                    if standardised_pos in self.builder.lemma_mappings:
-                        lemmas = self.builder.lemma_mappings[standardised_pos]
+                    if standardised_pos in self.cc_graph.lemma_mappings:
+                        lemmas = self.cc_graph.lemma_mappings[standardised_pos]
                         all_class_names = self.builder.get_all_keys(lemmas['classes'])
                         all_properties = lemmas['properties']
 

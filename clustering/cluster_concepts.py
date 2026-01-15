@@ -66,10 +66,10 @@ class ConceptClusterer:
                             end_cluster_id VARCHAR(10) NOT NULL,
                             relation_type TEXT NOT NULL,
                             weight REAL,
-                            source TEXT,
-                            PRIMARY KEY (start_cluster_id, end_cluster_id, relation_type)
+                            source TEXT
                             );
                         """)
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_cluster_relations_start ON {AsIs(self.tables['cluster_relations'])}(start_cluster_id);")
             self.conn.commit()
         logging.info("Clustering tables are set up.")
 
@@ -81,7 +81,7 @@ class ConceptClusterer:
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(db, f, ensure_ascii=False, indent=4)
 
-            # Transitive closure (Floyd Warshall)
+            # Transitive closure
             self.transitive_closure(db)
 
             # Build clusters
@@ -143,7 +143,7 @@ class ConceptClusterer:
     @timer
     def transitive_closure(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
-        for i in tqdm(adjacency_db.keys(), desc="Floyd Warshall"):
+        for i in tqdm(adjacency_db.keys(), desc="Transitive closure"):
             adjacency_list = adjacency_db[i]
             j_idx = 0
             while j_idx < len(adjacency_list):
@@ -184,9 +184,7 @@ class ConceptClusterer:
                                  JOIN
                              {AsIs(self.tables['clusters'])} AS c1 ON r.start_concept_id = c1.concept_id
                                  JOIN
-                             {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id
-                        WHERE c1.cluster_id != c2.cluster_id
-                        ON CONFLICT (start_cluster_id, end_cluster_id, relation_type) DO NOTHING;
+                             {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id;
                         """)
             self.conn.commit()
             logging.info(f"  - {cursor.rowcount} new cluster relationships were created.")
@@ -205,4 +203,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

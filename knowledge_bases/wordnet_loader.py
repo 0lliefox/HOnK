@@ -83,8 +83,8 @@ class WordNetLoader(AbstractLoader):
                                     nltk_pos = tag
                                     break
 
-                        if 'classes' in self.builder.pos_tag_mappings[nltk_pos]:
-                            pos_classes = self.builder.pos_tag_mappings[nltk_pos]['classes']
+                        if 'classes' in self.cc_graph.pos_tag_mappings[nltk_pos]:
+                            pos_classes = self.cc_graph.pos_tag_mappings[nltk_pos]['classes']
                         else:
                             pos_classes = [nltk_pos]
 
@@ -133,7 +133,7 @@ class WordNetLoader(AbstractLoader):
                             db_id, term = db_info
                             synset_item_to_db_id[synset_uri, list(data['lemmas'])[
                                 idx]] = db_info # A synset_uri might have multiple db_ids (?)
-                            self.add_url(db_id, data['lemmas'][list(data['lemmas'])[idx]], cursor)
+                            self.add_url({'id': db_id, 'term': term}, data['lemmas'][list(data['lemmas'])[idx]], cursor)
                             # self.add_undirected(db_id, 'definition', data['definition'], cursor)
 
                             if lexical_domain:

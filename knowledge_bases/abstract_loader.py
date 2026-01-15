@@ -1,11 +1,18 @@
 import logging
+import os
 import time
 from abc import abstractmethod, ABC
 from functools import lru_cache, wraps
 
-from rdflib import Graph, OWL, RDFS, XSD, Literal, RDF
+import psutil
+from rdflib import OWL, Literal
 
 from tools.pickling import PickleManager
+
+
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)
 
 
 def timer(func):
@@ -15,7 +22,10 @@ def timer(func):
             class_name = func.__name__
         else:
             class_name = self.__class__.__name__
-        logging.info(f"Starting execution of {class_name}...")
+        
+        start_mem = get_memory_usage()
+        logging.info(f"Starting execution of {class_name}... (Memory: {start_mem:.2f} MB)")
+        
         self._start_time = time.time()
         self._paused_time = 0
         self._is_paused = False
@@ -23,9 +33,15 @@ def timer(func):
         result = func(self, *args, **kwargs)
 
         end_time = time.time()
+        end_mem = get_memory_usage()
         duration = end_time - self._start_time - self._paused_time
-        logging.info(f"Finished execution of {class_name} in {duration:.2f} seconds.")
+        mem_diff = end_mem - start_mem
+        
+        logging.info(f"Finished execution of {class_name} in {duration:.2f} seconds. (Memory change: {mem_diff:+.2f} MB, Final: {end_mem:.2f} MB)")
+        
         self.builder.benchmarking.add_row(self.builder.run_id, class_name, duration)
+        self.builder.benchmarking.add_row(self.builder.run_id, f"{class_name}_memory_mb", end_mem)
+        
         return result
     return wrapper
 
@@ -38,7 +54,9 @@ class AbstractLoader(ABC):
         self.mode = builder.mode
         self.source = None
         self.mappings = self.get_mappings(["edge", "pos"])
-        self.g = self.init_graph()
+        self.cc_graph = self.builder.cc_graph
+        self.g = self.cc_graph.g
+        self.ns = self.cc_graph.ns
 
         self._start_time = 0
         self._paused_time = 0
@@ -56,30 +74,19 @@ class AbstractLoader(ABC):
             self._paused_time += time.time() - self._pause_start_time
             self._is_paused = False
 
-    def init_graph(self):
-        g = Graph()
-        g.bind(self.config['turtle_export']['base_prefix'], self.builder.ns)
-        g.bind("owl", OWL)
-        g.bind("rdfs", RDFS)
-        g.bind("xsd", XSD)
-
-        return g
-
     def get_mappings(self, mapping_types):
         if self.source:
             return {
                 k.lower(): v
                 for source in [self.source.lower()]
                 for m_type in mapping_types
-                for k, v in self.builder.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
+                for k, v in self.cc_graph.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
             }
         return None
 
     @timer
     def load_data_with_timer(self):
         self.load_data()
-        if self.mode == 'graph':
-            self.builder.serialise_graph(f"{self.source}_{self.config['turtle_export']['output_file']}", f"{self.config['turtle_export']['output_file'].split('.')[-1]}", self.g)
 
     @abstractmethod
     def load_data(self):
@@ -90,31 +97,33 @@ class AbstractLoader(ABC):
 
     def get_mapped_pos(self, pos_tag):
         if self.config['turtle_export']['normalise_pos']:
-            return self.builder.full_mappings.get(pos_tag, pos_tag)
+            return self.cc_graph.full_mappings.get(pos_tag, pos_tag)
         else:
             return pos_tag
 
-    def add_concept_to_graph(self, term, pos):
-        uri = self.builder.get_safe_uri(term)
-        self.g.add((uri, RDF.type, self.builder.ns[pos]))
-        self.g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
-
     @lru_cache(maxsize=1024)
     def add_or_get_concept_from_db(self, term, pos, cursor=None):
-        term, pos = term.replace('_', ' ').replace('"', ''), self.get_mapped_pos(pos)
-
-        if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
-            term = term.strip()
-
         standalone = cursor is None
         if standalone: cursor = self.conn.cursor()
         try:
-            cursor.execute("""
-                           INSERT INTO concepts (term, part_of_speech, source)
-                           VALUES (%s, %s, %s)
-                           ON CONFLICT (term, part_of_speech) DO NOTHING
-                           RETURNING id;
-                           """, (term, pos, self.source))
+            if not self.config['general']['unique_source']:
+                cursor.execute("""
+                   INSERT INTO concepts (term, part_of_speech, source)
+                   VALUES (%s, %s, %s)
+                   ON CONFLICT (term, part_of_speech) DO NOTHING
+                   RETURNING id;
+                   """,
+                   (term, pos, self.source)
+               )
+            else:
+                cursor.execute("""
+                   INSERT INTO concepts (term, part_of_speech, source)
+                   VALUES (%s, %s, %s)
+                   ON CONFLICT (term, part_of_speech, source) DO NOTHING
+                   RETURNING id;
+                   """,
+                   (term, pos, self.source)
+                )
             result = cursor.fetchone()
             if result:
                 # if standalone: self.conn.commit()
@@ -127,54 +136,61 @@ class AbstractLoader(ABC):
             if standalone: cursor.close()
 
     def get_or_create_concept(self, term, pos, cursor=None):
+        term, pos = term.replace('_', ' ').replace('"', ''), self.get_mapped_pos(pos) if self.cc_graph.normalise_pos else pos
+
+        if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
+            term = term.strip()
+
         if self.mode == 'db':
             return self.add_or_get_concept_from_db(term, pos, cursor)
         elif self.mode == 'graph':
-            self.add_concept_to_graph(term, pos)
+            self.cc_graph.add_concept_to_graph(term, pos)
         return None
-
-    def add_relation_to_graph(self, start, end, rel_type):
-        self.g.add(
-            (
-                self.builder.get_safe_uri(start),
-                self.builder.get_safe_uri(rel_type),
-                self.builder.get_safe_uri(end)
-            )
-        )
 
     def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
         if start_id == end_id: return
-        cursor.execute(
-            "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
-            (start_id, end_id, rel_type, weight, self.source)
-        )
+
+        if not self.config['general']['unique_source']:
+            cursor.execute(
+                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
+                (start_id, end_id, rel_type, weight, self.source)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type, source) DO NOTHING",
+                (start_id, end_id, rel_type, weight, self.source)
+            )
 
     def add_relation(self, start, end, rel_type, weight, cursor):
         if self.mode == 'db':
             self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
         elif self.mode == 'graph':
-            self.add_relation_to_graph(start['term'], end['term'], rel_type)
-
-    def add_property_to_graph(self, term, c_type, c_value):
-        prop_uri = self.builder.get_safe_uri(c_type)
-        self.g.add((self.builder.get_safe_uri(term), prop_uri, Literal(c_value)))
-        self.g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
+            self.cc_graph.add_relation_to_graph(start['term'], end['term'], rel_type, weight)
 
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
-        cursor.execute(
-            "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
-            (c_id, c_type, c_value, self.source)
-        )
+        if not self.config['general']['unique_source']:
+            cursor.execute(
+                "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
+                (c_id, c_type, c_value, self.source)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value, source) DO NOTHING",
+                (c_id, c_type, c_value, self.source)
+            )
 
     def add_property(self, concept, c_type, c_value, cursor):
         if self.mode == 'db':
             self.add_property_to_db(concept['id'], c_type, c_value, cursor)
         elif self.mode == 'graph':
-            self.add_property_to_graph(concept['term'], c_type, c_value)
+            self.cc_graph.add_property_to_graph(c_type, c_value, term=concept['term'])
 
-    def add_url(self, c_id, e_url, cursor):
+    def add_url(self, concept, e_url, cursor):
         if self.mode == 'db':
             cursor.execute(
                 "INSERT INTO urls (concept_id, external_url, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, external_url) DO NOTHING",
-                (c_id, e_url, self.source)
+                (concept['id'], e_url, self.source)
             )
+        elif self.mode == 'graph':
+            concept_uri = self.cc_graph.get_safe_uri(concept['term'])
+            self.g.add((concept_uri, OWL.sameAs, Literal(e_url)))

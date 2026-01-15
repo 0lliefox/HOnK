@@ -18,7 +18,8 @@ dependencies = [
     "nltk",
     "pandas",
     "matplotlib",
-    "plotnine"
+    "plotnine",
+    "psutil"
 ]
 
 [project.scripts]

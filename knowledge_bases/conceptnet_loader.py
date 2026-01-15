@@ -93,7 +93,7 @@ class ConceptNetLoader(AbstractLoader):
 
                         if self.is_url(relation):
                             self.add_url(
-                                start_concept_id,
+                                {'id': start_concept_id, 'term': relation.surfaceStart},
                                 relation.end,
                                 cursor
                             )

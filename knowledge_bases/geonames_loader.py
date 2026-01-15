@@ -11,8 +11,14 @@ class GeoNamesLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
         self.source = "GeoNames"
+
+        # Check if GeoNames data exists in the database
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM concepts WHERE source = 'GeoNames' LIMIT 1;")
+            self.geonames_data_exists = cursor.fetchone() is not None
+
         self.map_cache_filepath = f"{self.config['local_files']['cache']}/geonames_map.pkl"
-        self.id_term_map = self.pickle_manager.load(self.map_cache_filepath)
+        self.id_term_map = self.pickle_manager.load(self.map_cache_filepath) if self.geonames_data_exists else {}
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
@@ -29,11 +35,7 @@ class GeoNamesLoader(AbstractLoader):
             hierarchy = json.load(f)
 
         with self.conn.cursor() as cursor:
-            # Check if GeoNames data exists in the database
-            cursor.execute("SELECT 1 FROM concepts WHERE source = 'GeoNames' LIMIT 1;")
-            geonames_data_exists = cursor.fetchone() is not None
-
-            if not self.id_term_map or not geonames_data_exists:
+            if not self.id_term_map or not self.geonames_data_exists or self.mode == 'graph':
                 self.id_term_map = {}
                 with open(filepath, 'r') as f:
                     reader = csv.reader(f, delimiter='\t')
@@ -53,7 +55,7 @@ class GeoNamesLoader(AbstractLoader):
                         current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
-                            self.add_url(current_id, self.links[n_id], cursor)
+                            self.add_url({'id': current_id, 'term': name}, self.links[n_id], cursor)
 
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
