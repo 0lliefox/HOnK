@@ -18,7 +18,7 @@ def get_memory_usage():
 def timer(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if self.__class__.__name__ == 'ConceptClusterer':
+        if 'ConceptClusterer' in self.__class__.__name__:
             class_name = func.__name__
         else:
             class_name = self.__class__.__name__
@@ -152,12 +152,16 @@ class AbstractLoader(ABC):
 
         if not self.config['general']['unique_source']:
             cursor.execute(
-                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
+                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
+                "VALUES (%s, %s, %s, %s, %s) "
+                "ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
                 (start_id, end_id, rel_type, weight, self.source)
             )
         else:
             cursor.execute(
-                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (start_concept_id, end_concept_id, relation_type, source) DO NOTHING",
+                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
+                "VALUES (%s, %s, %s, %s, %s) "
+                "ON CONFLICT (start_concept_id, end_concept_id, relation_type, source) DO NOTHING",
                 (start_id, end_id, rel_type, weight, self.source)
             )
 
@@ -170,12 +174,16 @@ class AbstractLoader(ABC):
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
         if not self.config['general']['unique_source']:
             cursor.execute(
-                "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value) DO NOTHING",
+                "INSERT INTO properties (concept_id, type, value, source) "
+                "VALUES (%s, %s, %s, %s) "
+                "ON CONFLICT (concept_id, type, value) DO NOTHING",
                 (c_id, c_type, c_value, self.source)
             )
         else:
             cursor.execute(
-                "INSERT INTO properties (concept_id, type, value, source) VALUES (%s, %s, %s, %s) ON CONFLICT (concept_id, type, value, source) DO NOTHING",
+                "INSERT INTO properties (concept_id, type, value, source) "
+                "VALUES (%s, %s, %s, %s) "
+                "ON CONFLICT (concept_id, type, value, source) DO NOTHING",
                 (c_id, c_type, c_value, self.source)
             )
 
@@ -187,10 +195,20 @@ class AbstractLoader(ABC):
 
     def add_url(self, concept, e_url, cursor):
         if self.mode == 'db':
-            cursor.execute(
-                "INSERT INTO urls (concept_id, external_url, source) VALUES (%s, %s, %s) ON CONFLICT (concept_id, external_url) DO NOTHING",
-                (concept['id'], e_url, self.source)
-            )
+            if not self.config['general']['unique_source']:
+                cursor.execute(
+                    "INSERT INTO urls (concept_id, external_url, source) "
+                    "VALUES (%s, %s, %s) "
+                    "ON CONFLICT (concept_id, external_url) DO NOTHING",
+                    (concept['id'], e_url, self.source)
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO urls (concept_id, external_url, source) "
+                    "VALUES (%s, %s, %s) "
+                    "ON CONFLICT (concept_id, external_url, source) DO NOTHING",
+                    (concept['id'], e_url, self.source)
+                )
         elif self.mode == 'graph':
             concept_uri = self.cc_graph.get_safe_uri(concept['term'])
             self.g.add((concept_uri, OWL.sameAs, Literal(e_url)))

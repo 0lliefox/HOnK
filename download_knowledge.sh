@@ -1,11 +1,11 @@
 #!/bin/bash
-#echo "Downloading Commonsense Knowledge Bases..."
-#curl "https://files.de-1.osf.io/v1/resources/8mqs4/providers/osfstorage/?view_only=282c38027c8043d5abd76a98001c31fa&zip=" --output supporting_files/commonsense.zip
-#echo "Commonsense downloaded, please extract the 'commonsense.zip' within supporting_files, and extract edges.csv.gz within 'ConceptNet' folder"
+#echo "Downloading Knowledge Bases..."
+#curl "https://files.de-1.osf.io/v1/resources/8mqs4/providers/osfstorage/?view_only=282c38027c8043d5abd76a98001c31fa&zip=" --output supporting_files/knowledge.zip
+#echo "Knowledge downloaded, please extract the 'knowledge.zip' within supporting_files, and extract edges.csv.gz within 'ConceptNet' folder"
 
 URL="https://files.de-1.osf.io/v1/resources/8mqs4/providers/osfstorage/69398348ba8775a8380a33f2/?zip="
 DOWNLOAD_DIR="supporting_files"
-ZIP_FILE="$DOWNLOAD_DIR/commonsense.zip"
+ZIP_FILE="$DOWNLOAD_DIR/knowledge.zip"
 EXTRACT_DIR="$DOWNLOAD_DIR/kb"
 
 echo "Creating directory: $DOWNLOAD_DIR"
@@ -71,4 +71,4 @@ echo "Cleaning up empty folders"
 find "$EXTRACT_DIR" -mindepth 1 -type d -empty -delete
 echo "Cleanup complete"
 
-echo "Commonsense downloaded"
+echo "Knowledge downloaded"

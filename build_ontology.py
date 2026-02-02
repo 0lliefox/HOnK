@@ -187,7 +187,7 @@ class OntologyBuilder:
         start = time.time()
 
         if not self.conn: logging.error("No DB connection for Turtle dump"); return
-        logging.info(f"Dumping database to Turtle file: {file_path}")
+        logging.info(f"Building graph for Turtle file: {file_path}")
 
         with self.conn.cursor() as count_cursor:
             count_cursor.execute("SELECT COUNT(*) FROM concepts")
@@ -278,44 +278,40 @@ class OntologyBuilder:
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
 
-def main(config_file='config.yaml', iterations=1, run_id=None, benchmarking=None):
+def run_process(config, run_id, benchmarking):
+    builder = OntologyBuilder(config, run_id, benchmarking)
+    builder.build()
+
+    output_file = config['turtle_export']['output_file']
+    if builder.mode == 'db':
+        if builder.should_cluster:
+            clusterer = ConceptClusterer(builder, config)
+            clusterer.run()
+
+        builder.build_graph_from_db(output_file)
+    elif builder.mode == 'graph':
+        final_g = builder.cc_graph.g
+
+        if builder.should_cluster:
+            clusterer = GraphConceptClusterer(builder, final_g)
+            final_g = clusterer.run()
+
+        builder.cc_graph.add_pos_tag_classes(final_g)
+        builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
+
+    benchmarking.to_csv(filename='benchmark_db_unique', data_length=False, append=True)
+    builder.close()
+
+def main(config_file='config.yaml', run_id=0, benchmarking=None):
     config = get_config(config_file)
+    benchmarking = Benchmark("timing") if benchmarking is None else benchmarking
 
-    builder = None
-    try:
-        benchmarking = Benchmark("timing") if benchmarking is None else benchmarking
-        for i in range(iterations):
-            run_id = i if run_id is None else run_id
-            builder = OntologyBuilder(config, run_id, benchmarking)
-            builder.build()
-
-            output_file = config['turtle_export']['output_file']
-            if builder.mode == 'db':
-                if builder.should_cluster:
-                    clusterer = ConceptClusterer(builder, config)
-                    clusterer.run()
-
-                builder.build_graph_from_db(output_file)
-            elif builder.mode == 'graph':
-                final_g = builder.cc_graph.g
-
-                if builder.should_cluster:
-                    clusterer = GraphConceptClusterer(builder, final_g)
-                    final_g = clusterer.run()
-
-                builder.cc_graph.add_pos_tag_classes(final_g)
-                builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
-
-        benchmarking.to_csv()
-    except (psycopg2.Error, ConnectionRefusedError) as e:
-        print(f"\nA database error occurred: {e}")
-    finally:
-        if builder:
-            builder.close()
+    run_process(config, run_id, benchmarking)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Build the ontology.')
     parser.add_argument('--config', dest='config_file', default='config.yaml', help='The configuration file to use.')
+    parser.add_argument('--run-id', type=int, default=None, help='Run ID for benchmarking.')
     args = parser.parse_args()
-    main(args.config_file)
+    main(args.config_file, args.run_id)

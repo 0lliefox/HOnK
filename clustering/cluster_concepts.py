@@ -184,7 +184,8 @@ class ConceptClusterer:
                                  JOIN
                              {AsIs(self.tables['clusters'])} AS c1 ON r.start_concept_id = c1.concept_id
                                  JOIN
-                             {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id;
+                             {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id
+                        WHERE c1.cluster_id != c2.cluster_id;
                         """)
             self.conn.commit()
             logging.info(f"  - {cursor.rowcount} new cluster relationships were created.")

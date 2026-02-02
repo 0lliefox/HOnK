@@ -1,5 +1,5 @@
-# Commonsense Combiner (Ontology Builder)
-Project for combining multiple commonsense knowledge bases into one, single ontology, to aid research in achieving better type resolution for work carried out in [LaSSI](https://github.com/LogDS/LaSSI).
+# HOnK (Hub Ontology for Knowledge)
+Project for combining multiple knowledge bases into one, single ontology, to aid research in achieving better type resolution for work carried out in [LaSSI](https://github.com/LogDS/LaSSI).
 
 ## Setting Up
 ### 1.  Database (PostgreSQL)
@@ -34,7 +34,7 @@ For this particular research, the following Knowledge Bases (KBs) were used, thi
 
 The script below can be used, which will download and extract the files in the correct format: 
 ```bash
-./download_commonsense.sh
+./download_knowledge.sh
 ```
 Files used in our experiments can be found at OSF.io here: https://osf.io/8mqs4/?view_only=282c38027c8043d5abd76a98001c31fa, or can be retrieved manually using the methods below:
 #### ConceptNet

@@ -42,7 +42,7 @@ class Benchmark:
                     previous_row[phase] = 0.0
         self.data.append(new_row)
 
-    def to_csv(self, filename='benchmark_results', data_length=True, append=False) -> None:
+    def to_csv(self, filename='benchmark_results', data_length=True, append=True) -> None:
         if not self.data:
             print("No data to export.")
             return

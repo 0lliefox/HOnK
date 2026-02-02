@@ -3,7 +3,6 @@ from collections import defaultdict
 from tqdm import tqdm
 from rdflib import Graph, URIRef, OWL, RDF
 
-from clustering.cluster_concepts import ConceptClusterer
 from knowledge_bases.abstract_loader import timer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -16,13 +15,11 @@ class GraphConceptClusterer:
 
     @timer
     def run(self):
-        logging.info("Starting graph-based clustering...")
-        
         # 1. Build Adjacency List from owl:sameAs
         adj_list = self.build_adj_list()
         
         # 2. Transitive Closure
-        ConceptClusterer.transitive_closure(adj_list)
+        self.transitive_closure(adj_list)
         
         # 3. Build Clusters (Pick Representatives)
         self.build_clusters(adj_list)
@@ -47,9 +44,31 @@ class GraphConceptClusterer:
         return {k: list(v) for k, v in adj_list.items()}
 
     @timer
+    def transitive_closure(self, adjacency_db):
+        logging.info("  - Calculating transitive closure on adjacency list...")
+        for i in tqdm(adjacency_db.keys(), desc="Transitive closure"):
+            adjacency_list = adjacency_db[i]
+            j_idx = 0
+            while j_idx < len(adjacency_list):
+                j = adjacency_list[j_idx]
+                adjacency_list_j = adjacency_db[j]
+                k_idx = 0
+                while k_idx < len(adjacency_list_j):
+                    k = adjacency_list_j[k_idx]
+                    if i != k and k not in adjacency_list:
+                        adjacency_list.append(k)
+                    k_idx += 1
+                j_idx += 1
+                adjacency_db[j] = adjacency_list_j
+            adjacency_db[i] = adjacency_list
+
+    @timer
     def build_clusters(self, db):
         logging.info("  - Building clusters and picking representatives...")
         visited_nodes = set()
+
+        # Pre-fetch nodes with rdf:type to identify internal concepts
+        internal_concepts = set(self.g.subjects(RDF.type, None))
 
         for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
             if key_node in visited_nodes:
@@ -61,18 +80,20 @@ class GraphConceptClusterer:
             if not cluster_nodes.isdisjoint(visited_nodes):
                 continue
 
-            # Pick a representative for the cluster
-            # Heuristic: Pick the shortest URI, or alphabetically first
-            # Converting to string to sort ensures determinism
-            sorted_nodes = sorted(list(cluster_nodes), key=lambda n: str(n))
-            representative = sorted_nodes[0]
+            candidates = list(cluster_nodes)
+            
+            def sort_key(n):
+                is_internal = n in internal_concepts
+                s = str(n)
+                return (not is_internal, len(s), s) # False < True, so internal comes first
+            
+            candidates.sort(key=sort_key)
+            representative = candidates[0]
             
             for node in cluster_nodes:
                 if node != representative:
                     self.cluster_mappings[node] = representative
                 visited_nodes.add(node)
-        
-        # Singleton clusters don't need mapping (they map to themselves implicitly)
 
     @timer
     def coalesce_relationships(self):
@@ -88,9 +109,7 @@ class GraphConceptClusterer:
                 
             new_s = self.cluster_mappings.get(s, s)
             new_o = self.cluster_mappings.get(o, o)
-            
-            # If a new triple is formed (i.e., at least one of s or o was mapped)
-            # and it's not a self-loop
+
             if (new_s != s or new_o != o) and new_s != new_o:
                 new_triples.append((new_s, p, new_o))
         
