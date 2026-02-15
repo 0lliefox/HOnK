@@ -11,9 +11,11 @@ general:
   sources: ['wordnet', 'conceptnet', 'wiktionary']
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
-  mode: 'db'  # graph / db
+  confirm_clear_db: false
+  mode: 'graph'  # graph / db
   should_cache: true
   unique_source: false
+  show_stats: true
 
 local_files:
   supporting_files: 'supporting_files'
@@ -55,11 +57,11 @@ local_files:
   pos_tag_classes: 'supporting_files/mappings/pos_tag_mappings.json'
 
 turtle_export:
-  convert: true
+  convert: false
   normalise_pos: true
-  output_file: 'ontology.nt'
+  output_file: 'ontology_graph_clustered_test.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"
 
 clustering:
-  enabled: true
+  enabled: True

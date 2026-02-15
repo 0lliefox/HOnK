@@ -14,6 +14,8 @@ class CCGraph:
     def __init__(self, config):
         self.config = config
         self.ns = Namespace(self.config['turtle_export']['base_uri'])
+        self.mode = config['general']['mode']
+        self.should_cluster = config['clustering']['enabled']
 
         self.equivalent_classes = {}  # Map of classes that should be added to a concept as equivalent classes
         self.id_to_uri = {}
@@ -105,13 +107,16 @@ class CCGraph:
             self.g.add((uri, RDF.type, self.ns[i_pos]))
         self.g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
 
-    def add_relation_to_graph(self, start_id, end_id, rel_type, weight):
+    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None):
         try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
         except KeyError as e:
             if isinstance(start_id, int):
                 return
             start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
+
+        if start_uri == end_uri:
+            return
 
         if self.normalise_pos:
             mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False, 'swap': False})
@@ -120,17 +125,35 @@ class CCGraph:
 
         rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
 
-        sub_property_list = {'rel': rel, 'is_negated': Literal(is_negated), 'weight': Literal(weight)}
+        if swap:
+            final_source_pos = target_pos
+            final_target_pos = source_pos
+        else:
+            final_source_pos = source_pos
+            final_target_pos = target_pos
+
+        # Ensure weight is a float for schema
+        weight = float(weight)
+
+        sub_property_list = {
+            'rel': rel,
+            'is_negated': Literal(is_negated),
+            'weight': Literal(weight)
+        }
+        if self.mode == 'graph' and self.should_cluster:
+            sub_property_list['source_pos'] = Literal(final_source_pos)
+            sub_property_list['target_pos'] = Literal(final_target_pos)
+
         sub_list_key = frozenset(sub_property_list.items())
 
         if sub_list_key in self.annotation_property_list:
             rel_uri = self.annotation_property_list[sub_list_key]
             new_annotation_instance = False
         else:
-            counter = self.prop_id.get(rel, 1)
+            counter = self.prop_id.get(rel, 0) + 1
             rel_uri = self.get_safe_uri(f"{rel}{counter}")
             self.annotation_property_list[sub_list_key] = rel_uri
-            self.prop_id[rel] = counter if counter == 1 else counter + 1
+            self.prop_id[rel] = counter
             new_annotation_instance = True
 
         base_prop_uri = self.ns[rel]
@@ -141,7 +164,13 @@ class CCGraph:
         if new_annotation_instance:
             self.g.add((rel_uri, RDF.type, base_prop_uri))
             self.g.add((rel_uri, self.ns['is_negated'], Literal(is_negated)))
-            self.g.add((rel_uri, self.ns['weight'], Literal(float(weight))))
+            self.g.add((rel_uri, self.ns['weight'], Literal(weight)))
+
+            if self.mode == 'graph' and self.should_cluster:
+                if final_source_pos:
+                    self.g.add((rel_uri, self.ns['source_pos'], Literal(final_source_pos)))
+                if final_target_pos:
+                    self.g.add((rel_uri, self.ns['target_pos'], Literal(final_target_pos)))
 
         s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
         self.g.add((s, rel_uri, t))
@@ -156,6 +185,13 @@ class CCGraph:
 
         if concept_uri is not None:
             prop_uri = self.get_safe_uri(c_type)
+
+            if isinstance(c_value, str):
+                if c_value.lower() == "true":
+                    c_value = True
+                elif c_value.lower() == "false":
+                    c_value = False
+
             self.g.add((concept_uri, prop_uri, Literal(c_value)))
             self.g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
 

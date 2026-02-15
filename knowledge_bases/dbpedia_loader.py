@@ -30,11 +30,15 @@ class DBpediaLoader(AbstractLoader):
             self.allowed_ids = f.readlines()
 
 
-    def load_data(self):
+    def parse_data(self):
         wikidata_id_to_label = self.get_wikidata_ids()
         concept_data = self.get_concepts()
         concept_types = self.get_types(concept_data)
         # concept_data = self.get_properties(concept_data)
+        return wikidata_id_to_label, concept_data, concept_types
+
+    def store_data(self, data):
+        wikidata_id_to_label, concept_data, concept_types = data
         self.insert_concepts_to_db(concept_data, concept_types, wikidata_id_to_label)
         logging.info("Finished loading DBpedia")
 
@@ -152,7 +156,7 @@ class DBpediaLoader(AbstractLoader):
                 pos = 'Concept'
                 concept_id = self.get_or_create_concept(term, pos, 'DBpedia', cursor)
                 if concept_id:
-                    self.add_url(concept_id, concept_uri, cursor)
+                    self.add_url(concept_id, concept_uri, cursor, pos)
 
                     # if 'properties' in data:
                     #     for prop, values in data['properties'].items():

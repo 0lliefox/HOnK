@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import threading
 from abc import abstractmethod, ABC
 from functools import lru_cache, wraps
 
@@ -18,29 +19,53 @@ def get_memory_usage():
 def timer(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if 'ConceptClusterer' in self.__class__.__name__:
-            class_name = func.__name__
+        class_name = self.__class__.__name__
+        method_name = func.__name__
+        
+        if 'ConceptClusterer' in class_name:
+            identifier = method_name
         else:
-            class_name = self.__class__.__name__
+            identifier = f"{class_name}.{method_name}"
         
         start_mem = get_memory_usage()
-        logging.info(f"Starting execution of {class_name}... (Memory: {start_mem:.2f} MB)")
+        logging.info(f"Starting execution of {identifier}... (Memory: {start_mem:.2f} MB)")
         
+        peak_memory = [start_mem]
+        stop_event = threading.Event()
+
+        def monitor():
+            while not stop_event.is_set():
+                current_mem = get_memory_usage()
+                if current_mem > peak_memory[0]:
+                    peak_memory[0] = current_mem
+                time.sleep(0.1)
+        
+        t = threading.Thread(target=monitor)
+        t.start()
+
         self._start_time = time.time()
         self._paused_time = 0
         self._is_paused = False
 
-        result = func(self, *args, **kwargs)
+        try:
+            result = func(self, *args, **kwargs)
+        finally:
+            stop_event.set()
+            t.join()
 
         end_time = time.time()
+        
+        # Check final memory
         end_mem = get_memory_usage()
+        if end_mem > peak_memory[0]:
+            peak_memory[0] = end_mem
+
         duration = end_time - self._start_time - self._paused_time
-        mem_diff = end_mem - start_mem
         
-        logging.info(f"Finished execution of {class_name} in {duration:.2f} seconds. (Memory change: {mem_diff:+.2f} MB, Final: {end_mem:.2f} MB)")
+        logging.info(f"Finished execution of {identifier} in {duration:.2f} seconds. (Peak Memory: {peak_memory[0]:.2f} MB)")
         
-        self.builder.benchmarking.add_row(self.builder.run_id, class_name, duration)
-        self.builder.benchmarking.add_row(self.builder.run_id, f"{class_name}_memory_mb", end_mem)
+        self.builder.benchmarking.add_row(self.builder.run_id, identifier, duration)
+        self.builder.benchmarking.add_row(self.builder.run_id, f"{identifier}_peak_memory_mb", peak_memory[0])
         
         return result
     return wrapper
@@ -50,8 +75,8 @@ class AbstractLoader(ABC):
     def __init__(self, builder):
         self.builder = builder
         self.config = builder.config
-        self.conn = builder.conn
         self.mode = builder.mode
+        self.conn = builder.conn if self.mode == 'db' else None
         self.source = None
         self.mappings = self.get_mappings(["edge", "pos"])
         self.cc_graph = self.builder.cc_graph
@@ -84,12 +109,24 @@ class AbstractLoader(ABC):
             }
         return None
 
+    def load_data(self):
+        data = self._parse_data_timed()
+        self._store_data_timed(data)
+
     @timer
-    def load_data_with_timer(self):
-        self.load_data()
+    def _parse_data_timed(self):
+        return self.parse_data()
+
+    @timer
+    def _store_data_timed(self, data):
+        self.store_data(data)
 
     @abstractmethod
-    def load_data(self):
+    def parse_data(self):
+        pass
+
+    @abstractmethod
+    def store_data(self, data):
         pass
 
     def does_term_matches_language(self, lang):
@@ -136,10 +173,8 @@ class AbstractLoader(ABC):
             if standalone: cursor.close()
 
     def get_or_create_concept(self, term, pos, cursor=None):
-        term, pos = term.replace('_', ' ').replace('"', ''), self.get_mapped_pos(pos) if self.cc_graph.normalise_pos else pos
-
-        if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
-            term = term.strip()
+        term = self.normalise_term(term)
+        pos = self.get_mapped_pos(pos) if self.cc_graph.normalise_pos else pos
 
         if self.mode == 'db':
             return self.add_or_get_concept_from_db(term, pos, cursor)
@@ -147,14 +182,26 @@ class AbstractLoader(ABC):
             self.cc_graph.add_concept_to_graph(term, pos)
         return None
 
-    def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
-        if start_id == end_id: return
+    def add_relation(self, start, end, rel_type, weight, cursor):
+        start_term = self.normalise_term(start['term'])
+        end_term = self.normalise_term(end['term'])
+        start_pos = start['pos']
+        end_pos = end['pos']
 
+        # Unnecessary to add relation between same terms (e.g. A isRelated A), we know that already?
+        if start_term != end_term:
+            if self.mode == 'db':
+                if start['id'] != end['id']:
+                    self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
+            elif self.mode == 'graph':
+                self.cc_graph.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
+
+    def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
         if not self.config['general']['unique_source']:
             cursor.execute(
                 "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
                 "VALUES (%s, %s, %s, %s, %s) "
-                "ON CONFLICT (start_concept_id, end_concept_id, relation_type) DO NOTHING",
+                "ON CONFLICT (start_concept_id, end_concept_id, relation_type, weight) DO NOTHING",
                 (start_id, end_id, rel_type, weight, self.source)
             )
         else:
@@ -165,11 +212,11 @@ class AbstractLoader(ABC):
                 (start_id, end_id, rel_type, weight, self.source)
             )
 
-    def add_relation(self, start, end, rel_type, weight, cursor):
+    def add_property(self, concept, c_type, c_value, cursor):
         if self.mode == 'db':
-            self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
+            self.add_property_to_db(concept['id'], c_type, c_value, cursor)
         elif self.mode == 'graph':
-            self.cc_graph.add_relation_to_graph(start['term'], end['term'], rel_type, weight)
+            self.cc_graph.add_property_to_graph(c_type, c_value, term=self.normalise_term(concept['term']))
 
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
         if not self.config['general']['unique_source']:
@@ -187,28 +234,32 @@ class AbstractLoader(ABC):
                 (c_id, c_type, c_value, self.source)
             )
 
-    def add_property(self, concept, c_type, c_value, cursor):
-        if self.mode == 'db':
-            self.add_property_to_db(concept['id'], c_type, c_value, cursor)
-        elif self.mode == 'graph':
-            self.cc_graph.add_property_to_graph(c_type, c_value, term=concept['term'])
+    def add_url(self, concept, e_url, cursor, pos):
+        if self.builder.should_cluster:
+            if self.mode == 'db':
+                if not self.config['general']['unique_source']:
+                    cursor.execute(
+                        "INSERT INTO urls (concept_id, external_url, source) "
+                        "VALUES (%s, %s, %s) "
+                        "ON CONFLICT (concept_id, external_url) DO NOTHING",
+                        (concept['id'], e_url, self.source)
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO urls (concept_id, external_url, source) "
+                        "VALUES (%s, %s, %s) "
+                        "ON CONFLICT (concept_id, external_url, source) DO NOTHING",
+                        (concept['id'], e_url, self.source)
+                    )
+            elif self.mode == 'graph':
+                concept_uri = self.cc_graph.get_safe_uri(self.normalise_term(concept['term']))
+                self.g.add((concept_uri, self.ns.hasURL, Literal(f"{e_url}=={pos}")))
 
-    def add_url(self, concept, e_url, cursor):
-        if self.mode == 'db':
-            if not self.config['general']['unique_source']:
-                cursor.execute(
-                    "INSERT INTO urls (concept_id, external_url, source) "
-                    "VALUES (%s, %s, %s) "
-                    "ON CONFLICT (concept_id, external_url) DO NOTHING",
-                    (concept['id'], e_url, self.source)
-                )
-            else:
-                cursor.execute(
-                    "INSERT INTO urls (concept_id, external_url, source) "
-                    "VALUES (%s, %s, %s) "
-                    "ON CONFLICT (concept_id, external_url, source) DO NOTHING",
-                    (concept['id'], e_url, self.source)
-                )
-        elif self.mode == 'graph':
-            concept_uri = self.cc_graph.get_safe_uri(concept['term'])
-            self.g.add((concept_uri, OWL.sameAs, Literal(e_url)))
+    @lru_cache(maxsize=1024)
+    def normalise_term(self, term):
+        term = term.replace('_', ' ').replace('"', '')
+
+        if term != ' ':  # ' ' is added as 'Punctuation', so keeping this
+            term = term.strip()
+
+        return term

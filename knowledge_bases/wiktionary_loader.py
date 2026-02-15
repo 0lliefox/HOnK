@@ -15,7 +15,7 @@ class WiktionaryLoader(AbstractLoader):
         self.edge_mappings = self.get_mappings(["edge"])
         self.cached_lemma_data = {} # Cache for pre-compiled regex patterns and class names
 
-    def load_data(self):
+    def parse_data(self):
         filepath = self.config['local_files']['wiktionary']
         logging.info(f"Loading Wiktionary data: '{filepath}'")
 
@@ -26,11 +26,15 @@ class WiktionaryLoader(AbstractLoader):
 
             self.pickle_manager.save(filepath, entries)
 
+        return entries
+
+    def store_data(self, entries):
         word_to_pos = {
             key: {self.get_mapped_pos(item['pos']) for item in group}
             for key, group in itertools.groupby(sorted(entries, key=lambda x: x['word']), key=lambda x: x['word'])
         }
-        with self.conn.cursor() as cursor:
+
+        def iterate_over_file(cursor=None):
             for data in tqdm(entries, desc="Processing Wiktionary Entries"):
                 term = data.get('word')
                 lang = data.get('lang_code')
@@ -42,7 +46,7 @@ class WiktionaryLoader(AbstractLoader):
                 found_props = set()
                 pos = data.get('pos')
                 standardised_pos = self.get_mapped_pos(pos)
-                
+
                 current_lemma_data = self.cached_lemma_data.get(standardised_pos)
 
                 if not current_lemma_data:
@@ -56,7 +60,7 @@ class WiktionaryLoader(AbstractLoader):
                             search_term = re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', class_name).lower()
                             pattern = r'\b' + re.escape(search_term)
                             searchable_classes.append((re.compile(pattern, re.IGNORECASE), class_name))
-                        
+
                         searchable_properties = []
                         for prop_name in all_properties:
                             pattern = r'\b' + re.escape(prop_name)
@@ -65,7 +69,7 @@ class WiktionaryLoader(AbstractLoader):
                         current_lemma_data = {
                             'searchable_classes': searchable_classes,
                             'searchable_properties': searchable_properties,
-                            'all_properties': all_properties # Keep original for post-processing
+                            'all_properties': all_properties  # Keep original for post-processing
                         }
                         self.cached_lemma_data[standardised_pos] = current_lemma_data
                     else:
@@ -76,12 +80,12 @@ class WiktionaryLoader(AbstractLoader):
                             'all_properties': []
                         }
                         self.cached_lemma_data[standardised_pos] = current_lemma_data
-                
+
                 searchable_classes = current_lemma_data['searchable_classes']
                 searchable_properties = current_lemma_data['searchable_properties']
                 all_properties = current_lemma_data['all_properties']
 
-                if searchable_classes: # Only extract if there are classes to search for
+                if searchable_classes:  # Only extract if there are classes to search for
                     categories = data.get('categories', [])
                     self.extract_classes(categories, found_poses, searchable_classes)
 
@@ -126,22 +130,31 @@ class WiktionaryLoader(AbstractLoader):
 
                             for c_pos in c_item_pos:
                                 c_id = self.get_or_create_concept(c_item, c_pos, cursor)
-                                if c_id:
+                                if (c_id and self.mode == 'db') or self.mode == 'graph':
                                     self.add_relation(
                                         {
                                             'id': main_concept_id,
-                                            'term': term
+                                            'term': term,
+                                            'pos': pos
                                         },
                                         {
                                             'id': c_id,
-                                            'term': c_item
+                                            'term': c_item,
+                                            'pos': c_pos
                                         },
                                         class_type, 1.0, cursor)
 
                     for prop in found_props:
                         self.add_property({'id': main_concept_id, 'term': term}, prop, True, cursor)
 
-        self.conn.commit()
+        if self.mode == 'db':
+            with self.conn.cursor() as cursor:
+                iterate_over_file(cursor)
+
+                self.conn.commit()
+        else:
+            iterate_over_file()
+
         logging.info("Finished loading Wiktionary data from file.")
 
     def extract_classes(self, categories, found_poses, searchable_classes):

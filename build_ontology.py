@@ -1,20 +1,19 @@
+import argparse
 import logging
 import os
 import subprocess
-import argparse
+import time
+from collections import defaultdict
 
 import psycopg2
 from psycopg2._psycopg import AsIs
 from tqdm import tqdm
-from collections import defaultdict
-import time
 
 from benchmarking.benchmark import Benchmark
 from clustering.cluster_concepts import ConceptClusterer
-from clustering.graph_cluster_concepts import GraphConceptClusterer
+from clustering.cluster_graph_concepts import ConceptGraphClusterer
 from knowledge_bases import ConceptNetLoader
 from tools.config import get_config
-from tools.database_utilities import dump_database
 from tools.graph_funcs import CCGraph
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,10 +32,11 @@ class OntologyBuilder:
         self.should_cache = self.config['general']['should_cache']  # Should the pipeline pickle/load from pickles at certain stages
 
         # Initialise database
-        self.db_params = config['database']
-        self.conn = None
-        self._connect_db()
-        self._setup_database()
+        if self.mode == 'db':
+            self.db_params = config['database']
+            self.conn = None
+            self._connect_db()
+            self._setup_database()
 
         # Serialisation
         self.cc_graph = CCGraph(config)
@@ -69,7 +69,7 @@ class OntologyBuilder:
     def _setup_database(self):
         with self.conn.cursor() as cursor:
             try:
-                if self.config['general']['clear_db_on_start']:
+                if self.config['general']['clear_db_on_start'] and self.mode == 'db':
                     confirm_clear_db = self.config['general'].get('confirm_clear_db', True)
                     if confirm_clear_db:
                         user_input = input("Are you sure you want to clear the database? [y/n] ")
@@ -109,7 +109,7 @@ class OntologyBuilder:
                            relation_type    TEXT    NOT NULL,
                            weight           REAL,
                            source           TEXT,
-                           UNIQUE (start_concept_id, end_concept_id, relation_type)
+                           UNIQUE (start_concept_id, end_concept_id, relation_type, weight)
                        );
                        CREATE TABLE IF NOT EXISTS properties
                        (
@@ -175,12 +175,12 @@ class OntologyBuilder:
                 raise e
 
     def build(self):
-        ParmenidesLoader(self).load_data_with_timer()
-        ConceptNetLoader(self).load_data_with_timer()
-        WiktionaryLoader(self).load_data_with_timer()
-        WordNetLoader(self).load_data_with_timer()
-        GeoNamesLoader(self).load_data_with_timer()
-        # DBpediaLoader(self).load_data_with_timer()
+        ParmenidesLoader(self).load_data()
+        ConceptNetLoader(self).load_data()
+        WiktionaryLoader(self).load_data()
+        WordNetLoader(self).load_data()
+        GeoNamesLoader(self).load_data()
+        # DBpediaLoader(self).load_data()
         logging.info("Ontology build process finished")
 
     def build_graph_from_db(self, file_path):
@@ -261,6 +261,9 @@ class OntologyBuilder:
             g.serialize(destination=file_path, format=ont_format)
             logging.info(f"Successfully saved ontology to '{file_path}'")
 
+            if self.config['general'].get('show_stats', False):
+                logging.info(f"Final graph contains {len(g)} triples.")
+
             end = time.time()
             self.benchmarking.add_row(self.run_id, f"Graph dumping", end - start)
 
@@ -293,14 +296,16 @@ def run_process(config, run_id, benchmarking):
         final_g = builder.cc_graph.g
 
         if builder.should_cluster:
-            clusterer = GraphConceptClusterer(builder, final_g)
+            clusterer = ConceptGraphClusterer(builder, config)
             final_g = clusterer.run()
 
         builder.cc_graph.add_pos_tag_classes(final_g)
         builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
 
-    benchmarking.to_csv(filename='benchmark_db_unique', data_length=False, append=True)
-    builder.close()
+    benchmarking.to_csv(filename=f'benchmark_{output_file.split(".")[0]}', data_length=False, append=True)
+
+    if builder.mode == 'db':
+        builder.close()
 
 def main(config_file='config.yaml', run_id=0, benchmarking=None):
     config = get_config(config_file)

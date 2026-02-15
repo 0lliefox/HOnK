@@ -19,7 +19,8 @@ dependencies = [
     "pandas",
     "matplotlib",
     "plotnine",
-    "psutil"
+    "psutil",
+    "pytest"
 ]
 
 [project.scripts]

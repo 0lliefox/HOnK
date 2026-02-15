@@ -13,12 +13,15 @@ class GeoNamesLoader(AbstractLoader):
         self.source = "GeoNames"
 
         # Check if GeoNames data exists in the database
-        with self.conn.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM concepts WHERE source = 'GeoNames' LIMIT 1;")
-            self.geonames_data_exists = cursor.fetchone() is not None
+        if self.mode == 'db':
+            with self.conn.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM concepts WHERE source = 'GeoNames' LIMIT 1;")
+                self.geonames_data_exists = cursor.fetchone() is not None
+        else:
+            self.geonames_data_exists = False
 
         self.map_cache_filepath = f"{self.config['local_files']['cache']}/geonames_map.pkl"
-        self.id_term_map = self.pickle_manager.load(self.map_cache_filepath) if self.geonames_data_exists else {}
+        self.id_term_map = self.mode == 'db' and self.pickle_manager.load(self.map_cache_filepath) if self.geonames_data_exists else {}
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
@@ -28,19 +31,33 @@ class GeoNamesLoader(AbstractLoader):
         with open(self.config['local_files']['geonames_links'], 'r') as f:
             self.links = json.load(f)
 
-    def load_data(self):
+    def parse_data(self):
         filepath = self.config['local_files']['geonames']
         hierarchy_filepath = self.config['local_files']['geonames_hierarchy']
         with open(hierarchy_filepath, 'r') as f:
             hierarchy = json.load(f)
 
-        with self.conn.cursor() as cursor:
-            if not self.id_term_map or not self.geonames_data_exists or self.mode == 'graph':
-                self.id_term_map = {}
-                with open(filepath, 'r') as f:
-                    reader = csv.reader(f, delimiter='\t')
+        if self.mode == 'graph' or not self.geonames_data_exists:
+            self.id_term_map = {}
+            f = open(filepath, 'r')
+            reader = csv.reader(f, delimiter='\t')
+            return (f, reader, hierarchy)
+
+        return None
+
+    def store_data(self, data):
+        if data is None:
+            return
+
+        file_handle, reader, hierarchy = data
+
+        try:
+            def iterate_over_file(cursor=None):
+                # reader is an iterator (if not None)
+                if reader:
                     for line in tqdm(reader, desc="Processing GeoNames"):
-                        n_id, name, _, translations, _, _, feature_class, feature_code  = line[:8] # https://download.geonames.org/export/dump/readme.txt
+                        n_id, name, _, translations, _, _, feature_class, feature_code = line[
+                            :8]  # https://download.geonames.org/export/dump/readme.txt
 
                         if name in self.ignore_names:
                             continue
@@ -55,7 +72,7 @@ class GeoNamesLoader(AbstractLoader):
                         current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
-                            self.add_url({'id': current_id, 'term': name}, self.links[n_id], cursor)
+                            self.add_url({'id': current_id, 'term': name}, self.links[n_id], cursor, pos)
 
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
@@ -64,11 +81,13 @@ class GeoNamesLoader(AbstractLoader):
                             self.add_relation(
                                 {
                                     'id': current_id,
-                                    'term': name
+                                    'term': name,
+                                    'pos': pos
                                 },
                                 {
                                     'id': feature_db_id,
-                                    'term': feature_instance
+                                    'term': feature_instance,
+                                    'pos': "Noun"
                                 },
                                 "instanceOf", 1, cursor)
 
@@ -77,38 +96,48 @@ class GeoNamesLoader(AbstractLoader):
                             for translation in translations:
                                 if name != translation and translation != '':
                                     self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation, cursor)
-                self.conn.commit()
-                self.pickle_manager.save(self.map_cache_filepath, self.id_term_map)
+
+                    self.pickle_manager.save(self.map_cache_filepath, self.id_term_map)
+
+                for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
+                    parent = self.check_id(parent)
+                    if parent and parent in self.id_term_map:
+                        parent_term, parent_pos = self.id_term_map[parent]
+                        parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
+                        for child in children:
+                            child = self.check_id(child)
+                            if child and child in self.id_term_map:
+                                child_term, child_pos = self.id_term_map[child]
+                                child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
+                                self.add_relation(
+                                    {
+                                        'id': child_db_id,
+                                        'term': child_term,
+                                        'pos': child_pos
+                                    },
+                                    {
+                                        'id': parent_db_id,
+                                        'term': parent_term,
+                                        'pos': parent_pos
+                                    },
+                                    "partOf",
+                                    1, cursor)
+
+            if self.mode == 'db':
+                with self.conn.cursor() as cursor:
+                    iterate_over_file(cursor)
+                    self.conn.commit()
             else:
-                logging.info(f"Loading ID map from pickle file {filepath}")
-
-            for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
-                parent = self.check_id(parent)
-                parent_term, parent_pos = self.id_term_map[parent]
-                parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
-                for child in children:
-                    child = self.check_id(child)
-                    child_term, child_pos = self.id_term_map[child]
-                    child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
-                    self.add_relation(
-                        {
-                            'id': child_db_id,
-                            'term': child_term
-                        },
-                        {
-                            'id': parent_db_id,
-                            'term': parent_term
-                        },
-                        "partOf",
-                        1, cursor)
-
-            self.conn.commit()
+                iterate_over_file()
+        finally:
+            if file_handle:
+                file_handle.close()
 
     def check_id(self, c_id):
-        # while loop as first alternate to geoname ID might not be in GeoName table
+        # while loop as first alternate to geoname ID might not be in GeoNames table
         while c_id not in self.id_term_map:
             if c_id not in self.alternate_names:
-                logging.error(f"Could not find alternative name {c_id}")
+                # logging.error(f"Could not find alternative name {c_id}")
                 return None
             else:
                 c_id = self.alternate_names[c_id]

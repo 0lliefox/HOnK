@@ -16,35 +16,39 @@ class ParmenidesLoader(AbstractLoader):
         super().__init__(builder)
         self.source = "Parmenides"
 
-    def load_data(self):
+    def parse_data(self):
         filepath = self.config['local_files']['parmenides']
+        logging.info(f"Loading Parmenides from '{filepath}'")
+        
+        data = {
+            'pronouns': self.list_files('/pronouns'),
+            'verbs': self.list_files('/verbs'),
+            'concepts': self.list_files('/concepts'),
+            'prepositions': self.list_files('/prepositions'),
+            'measures': self.list_files('/measures'),
+            'wh': self.list_files('/wh'),
+            'predeterminers': self.list_files('/predeterminers')
+        }
+        return data
 
-        with self.conn.cursor() as cursor:
-            logging.info(f"Loading Parmenides from '{filepath}'")
+    def store_data(self, data):
+        def iterate_over_files(cursor=None):
+            self.create_concepts(data['pronouns'], cursor, True)
+            self.create_concepts(data['verbs'], cursor, True)
+            self.create_concepts(data['concepts'], cursor, False)
+            self.create_concepts(data['prepositions'], cursor, True)
+            self.create_concepts(data['measures'], cursor, False)
+            self.create_concepts(data['wh'], cursor, True)
+            self.create_concepts(data['predeterminers'], cursor, True)
 
-            all_pronouns = self.list_files('/pronouns')
-            self.create_concepts(all_pronouns, cursor, True)
+        if self.mode == 'db':
+            with self.conn.cursor() as cursor:
+                iterate_over_files(cursor)
 
-            all_verbs = self.list_files('/verbs')
-            self.create_concepts(all_verbs, cursor, True)
-
-            all_concepts = self.list_files('/concepts')
-            self.create_concepts(all_concepts, cursor, False)
-
-            all_prepositions = self.list_files('/prepositions')
-            self.create_concepts(all_prepositions, cursor, True)
-
-            all_measures = self.list_files('/measures')
-            self.create_concepts(all_measures, cursor, False)
-
-            all_wh = self.list_files('/wh')
-            self.create_concepts(all_wh, cursor, True)
-
-            all_predeterminers = self.list_files('/predeterminers')
-            self.create_concepts(all_predeterminers, cursor, True)
-
-            self.conn.commit()
-            logging.info(f"Finished processing Parmenides")
+                self.conn.commit()
+        else:
+            iterate_over_files()
+        logging.info(f"Finished processing Parmenides")
 
     def create_concepts(self, file_paths, cursor, trim):
         for path in file_paths:

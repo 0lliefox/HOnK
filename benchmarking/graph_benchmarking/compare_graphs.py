@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import csv
 import subprocess
+import re
 from collections import Counter
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -37,7 +38,7 @@ class GraphComparator:
             'g1': [],
             'g2': []
         }
-        
+        self.num_of_unique_samples = 20
         self.temp_dir = tempfile.mkdtemp()
 
     def __del__(self):
@@ -71,7 +72,7 @@ class GraphComparator:
         degree_counts = Counter()
         
         triple_count = 0
-        
+
         with open(path, 'r', encoding='utf-8', errors='replace') as f_in, \
              open(nodes_path, 'w', encoding='utf-8') as f_nodes, \
              open(edges_path, 'w', encoding='utf-8') as f_edges, \
@@ -83,19 +84,18 @@ class GraphComparator:
                 if not line or line.startswith('#'):
                     continue
                 
-                # Fast split for N-Triples
                 try:
-                    # Find first space
                     idx1 = line.find(' ')
                     if idx1 == -1: continue
                     s = line[:idx1]
                     
-                    # Find second space
                     idx2 = line.find(' ', idx1 + 1)
                     if idx2 == -1: continue
                     p = line[idx1+1:idx2]
+
+                    # Normalise predicate to handle equivalent IDs (e.g. isA230 == isA)
+                    p = re.sub(r'\d+>$', '>', p)
                     
-                    # Find last dot
                     idx3 = line.rfind(' .')
                     if idx3 == -1: 
                         # Fallback if no space before dot
@@ -104,6 +104,9 @@ class GraphComparator:
                         else:
                             continue
                     o = line[idx2+1:idx3].strip()
+
+                    if s.startswith('<') and s.endswith('>'):
+                         s = re.sub(r'\d+>$', '>', s)
                     
                     triple_count += 1
                     
@@ -223,24 +226,24 @@ class GraphComparator:
                     line1 = f1.readline()
                     line2 = f2.readline()
                 elif line1 < line2:
-                    if len(self.unique_samples['g1']) < 5 and not is_bnode_triple(line1):
+                    if len(self.unique_samples['g1']) < self.num_of_unique_samples and not is_bnode_triple(line1):
                         self.unique_samples['g1'].append(line1.strip().replace('\t', ' '))
                     line1 = f1.readline()
                 else:
-                    if len(self.unique_samples['g2']) < 5 and not is_bnode_triple(line2):
+                    if len(self.unique_samples['g2']) < self.num_of_unique_samples and not is_bnode_triple(line2):
                         self.unique_samples['g2'].append(line2.strip().replace('\t', ' '))
                     line2 = f2.readline()
-                
-                if len(self.unique_samples['g1']) >= 5 and len(self.unique_samples['g2']) >= 5:
+
+                if len(self.unique_samples['g1']) >= self.num_of_unique_samples and len(self.unique_samples['g2']) >= self.num_of_unique_samples:
                     break
             
             # Fill remaining if needed
-            while line1 and len(self.unique_samples['g1']) < 5:
+            while line1 and len(self.unique_samples['g1']) < self.num_of_unique_samples:
                 if not is_bnode_triple(line1):
                     self.unique_samples['g1'].append(line1.strip().replace('\t', ' '))
                 line1 = f1.readline()
             
-            while line2 and len(self.unique_samples['g2']) < 5:
+            while line2 and len(self.unique_samples['g2']) < self.num_of_unique_samples:
                 if not is_bnode_triple(line2):
                     self.unique_samples['g2'].append(line2.strip().replace('\t', ' '))
                 line2 = f2.readline()
@@ -347,7 +350,7 @@ class GraphComparator:
     % X column automatically wraps text; r is for right-aligned numbers
     \\begin{{tabularx}}{{\\linewidth}}{{@{{}} X r r r r r r r @{{}}}}
         \\toprule
-        \\textbf{{Dataset}} & \\textbf{{\\#Triples}} & \\textbf{{\\#Nodes}} & \\textbf{{\\#Relations}} & \\textbf{{\\#POS}} & \\textbf{{Density}} & \\textbf{{Degree}} & \\textbf{{Entropy}}  \\\\
+        \\textbf{{Dataset}} & \\textbf{{\\#Triples}} & \\textbf{{\\#Nodes}} & \\textbf{{\\#Relations}} & \\textbf{{\\#\\gls{{pos}}}} & \\textbf{{Density}} & \\textbf{{Degree}} & \\textbf{{Entropy}}  \\\\
         \\midrule
         {g1_name_latex} & {fmt(s1['triples'])} & {fmt(s1['nodes'])} & {fmt(s1['relations'])} & {fmt(s1['pos_tags'])} & {fmt_density(s1['density'])} & {fmt(s1['degree'])} & {fmt(s1['entropy'])} \\\\
         % Add some vertical space to separate the rows clearly

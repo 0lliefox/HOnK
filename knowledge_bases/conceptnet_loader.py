@@ -31,7 +31,7 @@ class Relation:
         #     d["data"] = json.loads(d["data"].replace('\\\\"', '\\"'))
 
         # self.relation_id = d["relation_id"]
-        self.rel = d["rel"].replace("/r/", "").replace("dbpedia/", "")
+        self.rel = d["rel"].replace("/r/", "")
         self.start = d["start"]
         self.end = d["end"]
         self.data = json.loads(d['data'])
@@ -70,57 +70,81 @@ class ConceptNetLoader(AbstractLoader):
         super().__init__(builder)
         self.source = "ConceptNet"
 
-    def load_data(self):
+    def parse_data(self):
         filepath = self.config['local_files']['conceptnet']
-        lang = self.config['general']['language']
         logging.info(f"Loading ConceptNet data from local file: '{filepath}'...")
 
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                reader = csv.reader(f, delimiter='\t')
-
-                with self.conn.cursor() as cursor:
-                    for row in tqdm(reader, desc="Processing ConceptNet Edges"):
-                        relation = Relation(row)
-
-                        is_url = self.is_url(relation)
-                        if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (is_url and relation.lang != lang) or (is_url and '#' in relation.end) or (relation.surfaceStart == ''):
-                            continue
-
-                        # Use the POS extracted by the Relation class
-                        start_pos = self.get_mapped_pos(relation.startPOS)
-                        start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, cursor)
-
-                        if self.is_url(relation):
-                            self.add_url(
-                                {'id': start_concept_id, 'term': relation.surfaceStart},
-                                relation.end,
-                                cursor
-                            )
-                        else:
-                            end_pos = self.get_mapped_pos(relation.endPOS)
-                            end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, cursor)
-
-                            if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
-                                self.add_relation(
-                                    {
-                                        'id': start_concept_id,
-                                        'term': relation.surfaceStart
-                                    },
-                                    {
-                                        'id': end_concept_id,
-                                        'term': relation.surfaceEnd
-                                     },
-                                    relation.rel,
-                                    float(relation.weight),
-                                    cursor
-                                )
-                    self.conn.commit()
-            logging.info("Finished loading ConceptNet data from file.")
+            f = open(filepath, 'r', encoding='utf-8')
+            reader = csv.reader(f, delimiter='\t')
+            return (f, reader)
         except FileNotFoundError:
             logging.error(f"ConceptNet file not found at '{filepath}'")
-        # except Exception as e:
-        #     logging.error(f"An error occurred: {e}")
+            return None
+
+    def store_data(self, data):
+        if data is None:
+            return
+
+        file_handle, reader = data
+        lang = self.config['general']['language']
+
+        try:
+            def iterate_over_file(cursor=None):
+                for row in tqdm(reader, desc="Processing ConceptNet Edges"):
+                    relation = Relation(row)
+
+                    # According to documentation, /dbpedia relations should be removed (https://github.com/commonsense/conceptnet5/wiki/Relations)
+                    if "/dbpedia" in relation.rel:
+                        continue
+
+                    is_url = self.is_url(relation)
+                    if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (
+                            is_url and relation.lang != lang) or (is_url and '#' in relation.end) or (
+                            relation.surfaceStart == ''):
+                        continue
+
+                    # Use the POS extracted by the Relation class
+                    start_pos = self.get_mapped_pos(relation.startPOS)
+                    start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, cursor)
+
+                    if self.is_url(relation):
+                        self.add_url(
+                            {'id': start_concept_id, 'term': relation.surfaceStart},
+                            relation.end,
+                            cursor,
+                            start_pos
+                        )
+                    else:
+                        end_pos = self.get_mapped_pos(relation.endPOS)
+                        end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, cursor)
+
+                        if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
+                            self.add_relation(
+                                {
+                                    'id': start_concept_id,
+                                    'term': relation.surfaceStart,
+                                    'pos': start_pos
+                                },
+                                {
+                                    'id': end_concept_id,
+                                    'term': relation.surfaceEnd,
+                                    'pos': end_pos
+                                },
+                                relation.rel,
+                                float(relation.weight),
+                                cursor
+                            )
+
+            if self.mode == 'db':
+                with self.conn.cursor() as cursor:
+                    iterate_over_file(cursor)
+                    self.conn.commit()
+            else:
+                iterate_over_file()
+        finally:
+            file_handle.close()
+
 
     def is_url(self, relation):
         return relation.rel == 'ExternalURL'

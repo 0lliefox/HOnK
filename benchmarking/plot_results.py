@@ -8,12 +8,14 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from plotnine import (
     ggplot, aes, geom_line, geom_point, geom_errorbar, geom_bar,
-    scale_y_log10, scale_color_brewer, scale_shape_manual, scale_fill_brewer,
-    labs, theme_minimal, theme, element_text, position_dodge
+    scale_y_log10, scale_color_manual, scale_fill_manual, scale_shape_manual,
+    labs, theme_minimal, theme, element_text, position_dodge, scale_y_continuous
 )
 from scipy.optimize import curve_fit
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+CB_PALETTE = ["#E69F00", "#56B4E9", "#009E73", "#D4AC0D", "#0072B2", "#D55E00", "#CC79A7", "#000000"]
 
 class ResultsPlotter:
 
@@ -33,13 +35,13 @@ class ResultsPlotter:
 
         # Font setup - fallback if files don't exist
         try:
-            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
-            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
-            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
         except:
-            self.font = fm.FontProperties(size=11)
-            self.bold_font = fm.FontProperties(weight='bold', size=11)
-            self.title_font = fm.FontProperties(weight='bold', size=14)
+            self.font = fm.FontProperties(size=14)
+            self.bold_font = fm.FontProperties(weight='bold', size=14)
+            self.title_font = fm.FontProperties(weight='bold', size=18)
 
     def load_and_process_data(self):
         self.data = pd.read_csv(self.file_path)
@@ -184,7 +186,7 @@ class ResultsPlotter:
                 + geom_line()
                 + geom_point(size=3)
                 + scale_y_log10()
-                + scale_color_brewer(type='qual', palette='Dark2')
+                + scale_color_manual(values=CB_PALETTE)
                 + scale_shape_manual(values=markers)
                 + labs(
             title='Comparison of Phase Execution Times for Clustering Pipeline',
@@ -207,7 +209,7 @@ class ResultsPlotter:
         self.plot_object.save(
             plot_filename,
             dpi=dpi,
-            width=10,
+            width=12,
             height=6,
             units='in',
             verbose=False
@@ -221,9 +223,11 @@ class ResultsPlotter:
 
 
 class BenchmarkComparator:
-    def __init__(self, file1: str, file2: str, output_dir: str = '.'):
+    def __init__(self, file1: str, file2: str, name1: str = None, name2: str = None, output_dir: str = '.'):
         self.file1 = file1
         self.file2 = file2
+        self.name1 = name1 if name1 else os.path.basename(file1).replace('.csv', '')
+        self.name2 = name2 if name2 else os.path.basename(file2).replace('.csv', '')
         self.output_dir = output_dir
         self.phases = [
             'ParmenidesLoader',
@@ -237,24 +241,28 @@ class BenchmarkComparator:
         
         # Font setup
         try:
-            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
-            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
-            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
         except:
-            self.font = fm.FontProperties(size=11)
-            self.bold_font = fm.FontProperties(weight='bold', size=11)
-            self.title_font = fm.FontProperties(weight='bold', size=14)
+            self.font = fm.FontProperties(size=14)
+            self.bold_font = fm.FontProperties(weight='bold', size=14)
+            self.title_font = fm.FontProperties(weight='bold', size=18)
 
     def run(self):
-        logging.info(f"Comparing benchmarks: {self.file1} vs {self.file2}")
+        logging.info(f"Comparing benchmarks: {self.name1} vs {self.name2}")
         
         df1 = pd.read_csv(self.file1)
         df2 = pd.read_csv(self.file2)
         
+        self._plot_time_comparison(df1, df2)
+        self._plot_memory_comparison(df1, df2)
+
+    def _plot_time_comparison(self, df1, df2):
         # Filter for available phases
         available_phases = [p for p in self.phases if p in df1.columns and p in df2.columns]
         if not available_phases:
-            logging.error("No matching phases found in both CSV files.")
+            logging.error("No matching phases found in both CSV files for time comparison.")
             return
 
         # Calculate mean and std for each phase
@@ -263,21 +271,24 @@ class BenchmarkComparator:
             for phase in available_phases:
                 mean_val = df[phase].mean()
                 std_val = df[phase].std() if len(df) > 1 else 0
+                display_phase = phase.replace('Loader', '')
+                
                 stats.append({
-                    'Phase': phase,
+                    'Phase': display_phase,
                     'Dataset': label,
                     'Time': mean_val,
                     'Std': std_val
                 })
             return pd.DataFrame(stats)
 
-        label1 = os.path.basename(self.file1).replace('.csv', '')
-        label2 = os.path.basename(self.file2).replace('.csv', '')
-        
-        stats1 = get_stats(df1, label1)
-        stats2 = get_stats(df2, label2)
+        stats1 = get_stats(df1, self.name1)
+        stats2 = get_stats(df2, self.name2)
         
         combined_data = pd.concat([stats1, stats2])
+
+        # Enforce phase order
+        display_phases = [p.replace('Loader', '') for p in available_phases]
+        combined_data['Phase'] = pd.Categorical(combined_data['Phase'], categories=display_phases, ordered=True)
         
         # Calculate ymin/ymax for error bars
         combined_data['ymin'] = combined_data['Time'] - combined_data['Std']
@@ -289,7 +300,7 @@ class BenchmarkComparator:
             ggplot(combined_data, aes(x='Phase', y='Time', fill='Dataset'))
             + geom_bar(stat='identity', position=position_dodge(width=0.9), width=0.8)
             + geom_errorbar(aes(ymin='ymin', ymax='ymax'), position=position_dodge(width=0.9), width=0.25)
-            + scale_fill_brewer(type='qual', palette='Set1')
+            + scale_fill_manual(values=[CB_PALETTE[5], CB_PALETTE[4]]) # Vermilion and Blue
             + labs(
                 title='Comparison of Build Phase Execution Times',
                 x='Phase',
@@ -310,6 +321,231 @@ class BenchmarkComparator:
         output_path = os.path.join(self.output_dir, 'benchmark_comparison.png')
         plot.save(output_path, dpi=300, width=12, height=8, units='in', verbose=False)
         logging.info(f"Saved comparison plot to '{output_path}'")
+
+    def _plot_memory_comparison(self, df1, df2):
+        # Identify memory columns (ending with _memory_mb)
+        mem_cols1 = [c for c in df1.columns if c.endswith('_memory_mb')]
+        mem_cols2 = [c for c in df2.columns if c.endswith('_memory_mb')]
+        
+        # Find common memory columns
+        common_cols = list(set(mem_cols1).intersection(mem_cols2))
+        
+        # Filter to keep only those related to our phases of interest
+        relevant_mem_cols = []
+        for phase in self.phases:
+            mem_col = f"{phase}_memory_mb"
+            if mem_col in common_cols:
+                relevant_mem_cols.append(mem_col)
+        
+        if not relevant_mem_cols:
+            logging.warning("No matching memory columns found for the specified phases.")
+            return
+
+        def get_mem_stats(df, label):
+            stats = []
+            for col in relevant_mem_cols:
+                # Clean phase name for display
+                phase_name = col.replace('_memory_mb', '').replace('Loader', '')
+                mean_val = df[col].mean()
+                std_val = df[col].std() if len(df) > 1 else 0
+                stats.append({
+                    'Phase': phase_name,
+                    'Dataset': label,
+                    'Memory': mean_val,
+                    'Std': std_val
+                })
+            return pd.DataFrame(stats)
+
+        stats1 = get_mem_stats(df1, self.name1)
+        stats2 = get_mem_stats(df2, self.name2)
+        
+        combined_data = pd.concat([stats1, stats2])
+        
+        # Enforce phase order
+        display_phases = [col.replace('_memory_mb', '').replace('Loader', '') for col in relevant_mem_cols]
+        combined_data['Phase'] = pd.Categorical(combined_data['Phase'], categories=display_phases, ordered=True)
+        
+        combined_data['ymin'] = combined_data['Memory'] - combined_data['Std']
+        combined_data['ymax'] = combined_data['Memory'] + combined_data['Std']
+        combined_data['ymin'] = combined_data['ymin'].clip(lower=0)
+
+        plot = (
+            ggplot(combined_data, aes(x='Phase', y='Memory', fill='Dataset'))
+            + geom_bar(stat='identity', position=position_dodge(width=0.9), width=0.8)
+            + geom_errorbar(aes(ymin='ymin', ymax='ymax'), position=position_dodge(width=0.9), width=0.25)
+            + scale_fill_manual(values=[CB_PALETTE[5], CB_PALETTE[4]]) # Vermilion and Blue
+            + labs(
+                title='Comparison of Memory Usage per Phase',
+                x='Phase',
+                y='Memory Usage (MB)'
+            )
+            + theme_minimal()
+            + theme(
+                plot_title=element_text(fontproperties=self.title_font, ha='center'),
+                axis_title_x=element_text(fontproperties=self.bold_font),
+                axis_title_y=element_text(fontproperties=self.bold_font),
+                axis_text_x=element_text(fontproperties=self.font, angle=45, ha='right'),
+                legend_title=element_text(fontproperties=self.bold_font),
+                legend_text=element_text(fontproperties=self.font),
+                legend_position='bottom'
+            )
+        )
+        
+        output_path = os.path.join(self.output_dir, 'memory_comparison.png')
+        plot.save(output_path, dpi=300, width=12, height=8, units='in', verbose=False)
+        logging.info(f"Saved memory comparison plot to '{output_path}'")
+
+
+class PipelinePerformancePlotter:
+    def __init__(self, file_path: str, output_dir: str = '.'):
+        self.file_path = file_path
+        self.output_dir = output_dir
+        self.phases = [
+            'ParmenidesLoader',
+            'ConceptNetLoader',
+            'WiktionaryLoader',
+            'WordNetLoader',
+            'GeoNamesLoader',
+            'Graph building',
+            'Graph dumping'
+        ]
+        
+        # Font setup
+        try:
+            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
+        except:
+            self.font = fm.FontProperties(size=14)
+            self.bold_font = fm.FontProperties(weight='bold', size=14)
+            self.title_font = fm.FontProperties(weight='bold', size=18)
+
+    def run(self):
+        logging.info(f"Analyzing pipeline performance: {self.file_path}")
+        
+        df = pd.read_csv(self.file_path)
+        
+        # Filter for available phases
+        available_phases = [p for p in self.phases if p in df.columns]
+        if not available_phases:
+            logging.error("No matching phases found in CSV file.")
+            return
+
+        # Calculate mean and std for time and memory
+        stats = []
+        total_time = 0
+        peak_memory = 0
+        
+        for phase in available_phases:
+            # Time
+            time_mean = df[phase].mean()
+            total_time += time_mean
+            
+            # Memory
+            mem_col = f"{phase}_memory_mb"
+            if mem_col in df.columns:
+                mem_mean = df[mem_col].mean()
+                peak_memory = max(peak_memory, mem_mean)
+            else:
+                mem_mean = 0
+            
+            # Clean phase name
+            display_phase = phase.replace('Loader', '')
+            
+            stats.append({
+                'Phase': display_phase,
+                'Time': time_mean,
+                'Memory': mem_mean
+            })
+            
+        stats_df = pd.DataFrame(stats)
+        
+        # Enforce phase order
+        display_phases = [p.replace('Loader', '') for p in available_phases]
+        stats_df['Phase'] = pd.Categorical(stats_df['Phase'], categories=display_phases, ordered=True)
+        
+        self._plot_time_stacked(stats_df)
+        self._plot_memory(stats_df)
+        self._print_summary_latex(total_time, peak_memory)
+
+    def _plot_time_stacked(self, df):
+        # Stacked bar chart for time
+        # We need a dummy x-axis variable since it's a single pipeline
+        df['Pipeline'] = 'Pipeline'
+        
+        plot = (
+            ggplot(df, aes(x='Pipeline', y='Time', fill='Phase'))
+            + geom_bar(stat='identity', width=0.5)
+            + scale_fill_manual(values=CB_PALETTE)
+            + labs(
+                title='Pipeline Execution Time Breakdown',
+                x='',
+                y='Time (seconds)'
+            )
+            + theme_minimal()
+            + theme(
+                plot_title=element_text(fontproperties=self.title_font, ha='center'),
+                axis_title_y=element_text(fontproperties=self.bold_font),
+                axis_text_y=element_text(fontproperties=self.font),
+                axis_text_x=element_text(size=0), # Hide x-axis text
+                legend_title=element_text(fontproperties=self.bold_font),
+                legend_text=element_text(fontproperties=self.font),
+                legend_position='right'
+            )
+        )
+        
+        output_path = os.path.join(self.output_dir, 'pipeline_time_stacked.png')
+        plot.save(output_path, dpi=300, width=8, height=8, units='in', verbose=False)
+        logging.info(f"Saved stacked time plot to '{output_path}'")
+
+    def _plot_memory(self, df):
+        # Bar chart for memory usage per phase
+        plot = (
+            ggplot(df, aes(x='Phase', y='Memory', fill='Phase'))
+            + geom_bar(stat='identity', width=0.7)
+            + scale_fill_manual(values=CB_PALETTE)
+            + labs(
+                title='Memory Usage per Phase',
+                x='Phase',
+                y='Memory Usage (MB)'
+            )
+            + theme_minimal()
+            + theme(
+                plot_title=element_text(fontproperties=self.title_font, ha='center'),
+                axis_title_x=element_text(fontproperties=self.bold_font),
+                axis_title_y=element_text(fontproperties=self.bold_font),
+                axis_text_x=element_text(fontproperties=self.font, angle=45, ha='right'),
+                legend_position='none' # Legend redundant with x-axis
+            )
+        )
+        
+        output_path = os.path.join(self.output_dir, 'pipeline_memory.png')
+        plot.save(output_path, dpi=300, width=10, height=6, units='in', verbose=False)
+        logging.info(f"Saved memory plot to '{output_path}'")
+
+    def _print_summary_latex(self, total_time, peak_memory):
+        print("\n--- Pipeline Performance Summary (LaTeX) ---\n")
+        
+        latex_code = f"""
+\\begin{{table}}[h!]
+    \\centering
+    \\caption{{Pipeline Performance Summary}}
+    \\label{{table:pipeline-performance}}
+    \\begin{{tabular}}{{lr}}
+        \\toprule
+        \\textbf{{Metric}} & \\textbf{{Value}} \\\\
+        \\midrule
+        Total Runtime & {total_time:.2f} s \\\\
+        Peak Memory Usage & {peak_memory:.2f} MB \\\\
+        Output Graph Nodes & \\TODO \\\\
+        Output Graph Edges & \\TODO \\\\
+        Output Graph Triples & \\TODO \\\\
+        Throughput & \\TODO triples/sec \\\\
+        \\bottomrule
+    \\end{{tabular}}
+\\end{{table}}
+"""
+        print(latex_code)
 
 
 # --- Graph Comparison Plotting Functions ---
@@ -338,14 +574,14 @@ def plot_pos_distribution(data, output_dir):
     width = 0.35
     
     fig, ax = plt.subplots(figsize=(12, 6))
-    rects1 = ax.bar(x - width/2, freq1, width, label=g1_name)
-    rects2 = ax.bar(x + width/2, freq2, width, label=g2_name)
+    rects1 = ax.bar(x - width/2, freq1, width, label=g1_name, color=CB_PALETTE[5])
+    rects2 = ax.bar(x + width/2, freq2, width, label=g2_name, color=CB_PALETTE[4])
     
-    ax.set_ylabel('Relative Frequency')
-    ax.set_title('Top 10 Syntactic Tag Distribution')
+    ax.set_ylabel('Relative Frequency', fontsize=14, fontweight='bold')
+    ax.set_title('Top 10 Syntactic Tag Distribution', fontsize=18, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=45, ha='right')
-    ax.legend()
+    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=12)
+    ax.legend(fontsize=12)
     
     plt.subplots_adjust(bottom=0.2)
     
@@ -383,17 +619,17 @@ def plot_relation_correlation(data, output_dir):
         return
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(rel_freqs, recalls, alpha=0.5)
+    ax.scatter(rel_freqs, recalls, alpha=0.5, color=CB_PALETTE[4])
     
     # Annotate top 5 most frequent
     sorted_indices = np.argsort(rel_freqs)[::-1]
     for i in sorted_indices[:5]:
         if i < len(labels):
-            ax.annotate(labels[i], (rel_freqs[i], recalls[i]))
+            ax.annotate(labels[i], (rel_freqs[i], recalls[i]), fontsize=12)
         
-    ax.set_xlabel(f'Relative Frequency in {g1_name}')
-    ax.set_ylabel(f'Recall in Overlap ({g1_name} $\cap$ {g2_name})')
-    ax.set_title('Relation Frequency vs. Recall in Overlap')
+    ax.set_xlabel(f'Relative Frequency in {g1_name}', fontsize=14, fontweight='bold')
+    ax.set_ylabel(f'Recall in Overlap ({g1_name} $\cap$ {g2_name})', fontsize=14, fontweight='bold')
+    ax.set_title('Relation Frequency vs. Recall in Overlap', fontsize=18, fontweight='bold')
     ax.grid(True)
     
     fig.tight_layout()
@@ -411,6 +647,11 @@ def main():
     
     # Argument for comparing two benchmark CSVs
     parser.add_argument("--compare-csvs", nargs=2, help="Paths to two CSV files to compare (e.g., timing_A.csv timing_B.csv)")
+    parser.add_argument("--name1", help="Name for the first benchmark dataset")
+    parser.add_argument("--name2", help="Name for the second benchmark dataset")
+    
+    # Argument for pipeline performance mode
+    parser.add_argument("--pipeline-performance", help="Path to a single benchmark CSV to visualize pipeline performance")
     
     # Argument for scalability benchmark mode (default if no comparison data)
     parser.add_argument("--scalability-csv", default='results/clustering_benchmark.csv', help="Path to scalability benchmark CSV")
@@ -435,8 +676,16 @@ def main():
             logging.error("One or both CSV files not found.")
             return
         
-        comparator = BenchmarkComparator(file1, file2, args.output_dir)
+        comparator = BenchmarkComparator(file1, file2, args.name1, args.name2, args.output_dir)
         comparator.run()
+    elif args.pipeline_performance:
+        # Pipeline Performance Mode
+        if not os.path.exists(args.pipeline_performance):
+            logging.error(f"Pipeline performance CSV not found: {args.pipeline_performance}")
+            return
+            
+        plotter = PipelinePerformancePlotter(args.pipeline_performance, args.output_dir)
+        plotter.run()
     else:
         # Scalability Benchmark Mode
         if not os.path.exists(args.scalability_csv):

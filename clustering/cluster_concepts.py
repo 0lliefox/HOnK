@@ -103,8 +103,7 @@ class ConceptClusterer:
             db[id1].add(id2)
             db[id2].add(id1)
 
-        db = {k: sorted(list(v)) for k, v in db.items()}
-        return db
+        return {k: sorted(list(v)) for k, v in db.items()}
 
     @timer
     def add_unclustered_concepts(self, cluster_mappings, cursor, visited_nodes):

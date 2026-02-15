@@ -31,7 +31,7 @@ class WordNetLoader(AbstractLoader):
                 logging.info(f"Downloading NLTK's '{nltk_package}'...")
                 nltk.download(nltk_package)
 
-    def load_data(self):
+    def parse_data(self):
         filepath = self.config['local_files']['wordnet']
         try:
             synset_data = self.pickle_manager.load('synset_data')
@@ -61,155 +61,174 @@ class WordNetLoader(AbstractLoader):
                 self.get_components(g, synset_data)
                 self.get_relationships(g, synset_data)
 
-            synset_item_to_db_id = {}
-            with self.conn.cursor() as cursor:
-                logging.info("Processing and inserting WordNet concepts...")
-                for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts"):
-                    if '#Component' in synset_uri:
-                        component_split = synset_uri.split('#Component-')
-                        component_index = int(component_split[1]) - 1
-                        component_parts = component_split[0][:-2].split('/')[-1].split('+')
-                        component_to_relate = component_parts[int(component_split[1]) - 1]
-                        full_component_label = ' '.join(component_parts)
-                        full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', cursor)
-
-                        tagged_phrase = nltk.pos_tag(word_tokenize(full_component_label))
-                        if tagged_phrase[component_index][0].lower() == component_to_relate.lower():
-                            nltk_pos = tagged_phrase[component_index][1]
-                        else:
-                            # Search for the word incase index doesn't match
-                            for word, tag in tagged_phrase:
-                                if word.lower() == component_to_relate.lower():
-                                    nltk_pos = tag
-                                    break
-
-                        if 'classes' in self.cc_graph.pos_tag_mappings[nltk_pos]:
-                            pos_classes = self.cc_graph.pos_tag_mappings[nltk_pos]['classes']
-                        else:
-                            pos_classes = [nltk_pos]
-
-                        for pos_class in pos_classes:
-                            component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class,
-                                                                                   cursor)
-                            self.add_relation({
-                                'id': full_component_db_id,
-                                'term': full_component_label
-                            },
-                                {
-                                    'id': component_to_relate_db_id,
-                                    'term': component_to_relate
-                                },
-                                'compositeFormWith', 1.0, cursor)
-                            if isinstance(pos_classes, dict) and 'properties' in pos_classes[pos_class]:
-                                for prop in pos_classes[pos_class]['properties']:
-                                    self.add_property(
-                                        {
-                                            'id': component_to_relate_db_id,
-                                            'term': component_to_relate
-                                        },
-                                        prop, True, cursor)
-                    else:
-                        if data['pos'] == 'phrase':
-                            pos = 'Phrase'
-                            if data['phrase_type']:
-                                pos = self.get_mapped_pos(data['phrase_type'])
-                        elif data['lexical_domain'] == '':
-                            pos = self.get_mapped_pos(data['pos'])
-                        else:
-                            pos = self.get_mapped_pos(data['lexical_domain'])
-
-                        if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
-                            lexical_pos, lexical_domain = data['lexical_domain'].split('.')
-                            pos = self.get_mapped_pos(lexical_pos)
-                            lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, cursor)
-                        else:
-                            if data['phrase_type'] == '':
-                                pos = data['pos']
-                            lexical_domain = None
-
-                        lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in
-                                        data['lemmas'].items()]
-                        for idx, db_info in enumerate(lemma_db_ids):
-                            db_id, term = db_info
-                            synset_item_to_db_id[synset_uri, list(data['lemmas'])[
-                                idx]] = db_info # A synset_uri might have multiple db_ids (?)
-                            self.add_url({'id': db_id, 'term': term}, data['lemmas'][list(data['lemmas'])[idx]], cursor)
-                            # self.add_undirected(db_id, 'definition', data['definition'], cursor)
-
-                            if lexical_domain:
-                                self.add_relation(
-                                    {
-                                        'id': db_id,
-                                        'term': term
-                                    },
-                                    {
-                                        'id': lexical_domain_db_id,
-                                        'term': lexical_domain
-                                    },
-                                    'relatedTo', 1.0, cursor)
-
-                        if len(lemma_db_ids) > 1:
-                            for i in range(len(lemma_db_ids)):
-                                for j in range(i + 1, len(lemma_db_ids)):
-                                    self.add_relation({
-                                        'id': lemma_db_ids[i][0],
-                                        'term': lemma_db_ids[i][1]
-                                    },
-                                        {
-                                            'id': lemma_db_ids[j][0],
-                                            'term': lemma_db_ids[j][1]
-                                        }, 'eq', 1.0, cursor)
-
-                synset_uri_to_db_ids = defaultdict(list)
-                for (synset_uri, lemma), db_id in synset_item_to_db_id.items():
-                    synset_uri_to_db_ids[synset_uri].append(db_id)
-
-                logging.info("Adding mapped semantic relationships...")
-                for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations"):
-                    for lemma, uri in data['lemmas'].items():
-                        l_key = synset_uri, lemma
-                        if l_key not in synset_item_to_db_id: continue
-                        for rel_fragment, related_uri in data['relations']:
-                            related_db_ids = synset_uri_to_db_ids.get(related_uri, [])
-                            if len(related_db_ids) == 0: continue
-
-                            mapping = self.mappings.get(rel_fragment.lower())
-                            if not mapping: continue
-
-                            rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get(
-                                'swap', False)
-                            if not rel: continue
-
-                            for related_id in related_db_ids:
-                                start_id, end_id = synset_item_to_db_id[l_key], related_id
-
-                                if swap:
-                                    self.add_relation(
-                                        {
-                                            'id': end_id[0],
-                                            'term': end_id[1]
-                                        },
-                                        {
-                                            'id': start_id[0],
-                                            'term': start_id[1]
-                                        },
-                                        rel, 1.0, cursor)
-                                else:
-                                    self.add_relation(
-                                        {
-                                            'id': start_id[0],
-                                            'term': start_id[1]
-                                        },
-                                        {
-                                            'id': end_id[0],
-                                            'term': end_id[1]
-                                        },
-                                        rel, 1.0, cursor)
-
-                self.conn.commit()
-            logging.info("Finished loading WordNet data from file.")
+                logging.info("Finished loading WordNet data from file.")
+            return synset_data
         except FileNotFoundError:
             logging.error(f"WordNet file not found at '{filepath}'")
+
+    def store_data(self, synset_data):
+        synset_item_to_db_id = {}
+
+        def iterate_over_file(cursor=None):
+            logging.info("Processing and inserting WordNet concepts...")
+            for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts"):
+                if '#Component' in synset_uri:
+                    component_split = synset_uri.split('#Component-')
+                    component_index = int(component_split[1]) - 1
+                    component_parts = component_split[0][:-2].split('/')[-1].split('+')
+                    component_to_relate = component_parts[int(component_split[1]) - 1]
+                    full_component_label = ' '.join(component_parts)
+                    full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', cursor)
+
+                    tagged_phrase = nltk.pos_tag(word_tokenize(full_component_label))
+                    if tagged_phrase[component_index][0].lower() == component_to_relate.lower():
+                        nltk_pos = tagged_phrase[component_index][1]
+                    else:
+                        # Search for the word incase index doesn't match
+                        for word, tag in tagged_phrase:
+                            if word.lower() == component_to_relate.lower():
+                                nltk_pos = tag
+                                break
+
+                    if 'classes' in self.cc_graph.pos_tag_mappings[nltk_pos]:
+                        pos_classes = self.cc_graph.pos_tag_mappings[nltk_pos]['classes']
+                    else:
+                        pos_classes = [nltk_pos]
+
+                    for pos_class in pos_classes:
+                        component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, cursor)
+
+                        self.add_relation({
+                            'id': full_component_db_id,
+                            'term': full_component_label,
+                            'pos': 'Phrase'
+                        },
+                            {
+                                'id': component_to_relate_db_id,
+                                'term': component_to_relate,
+                                'pos': pos_class
+                            },
+                            'compositeFormWith', 1.0, cursor)
+                        if isinstance(pos_classes, dict) and 'properties' in pos_classes[pos_class]:
+                            for prop in pos_classes[pos_class]['properties']:
+                                self.add_property(
+                                    {
+                                        'id': component_to_relate_db_id,
+                                        'term': component_to_relate
+                                    },
+                                    prop, True, cursor)
+                else:
+                    if data['pos'] == 'phrase':
+                        pos = 'Phrase'
+                        if data['phrase_type']:
+                            pos = self.get_mapped_pos(data['phrase_type'])
+                    elif data['lexical_domain'] == '':
+                        pos = self.get_mapped_pos(data['pos'])
+                    else:
+                        pos = self.get_mapped_pos(data['lexical_domain'])
+
+                    if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
+                        lexical_pos, lexical_domain = data['lexical_domain'].split('.')
+                        pos = self.get_mapped_pos(lexical_pos)
+                        lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, cursor)
+                    else:
+                        if data['phrase_type'] == '':
+                            pos = data['pos']
+                        lexical_domain = None
+
+                    lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in
+                                    data['lemmas'].items()]
+                    for idx, db_info in enumerate(lemma_db_ids):
+                        db_id, term = db_info
+                        synset_item_to_db_id[synset_uri, list(data['lemmas'])[
+                            idx]] = [db_id, term, pos]  # A synset_uri might have multiple db_ids (?)
+                        self.add_url({'id': db_id, 'term': term}, data['lemmas'][list(data['lemmas'])[idx]], cursor,
+                                     pos)
+                        # self.add_undirected(db_id, 'definition', data['definition'], cursor)
+
+                        if lexical_domain:
+                            self.add_relation(
+                                {
+                                    'id': db_id,
+                                    'term': term,
+                                    'pos': pos
+                                },
+                                {
+                                    'id': lexical_domain_db_id,
+                                    'term': lexical_domain,
+                                    'pos': pos
+                                },
+                                'relatedTo', 1.0, cursor)
+
+                    if len(lemma_db_ids) > 1:
+                        for i in range(len(lemma_db_ids)):
+                            for j in range(i + 1, len(lemma_db_ids)):
+                                self.add_relation({
+                                    'id': lemma_db_ids[i][0],
+                                    'term': lemma_db_ids[i][1],
+                                    'pos': pos
+                                },
+                                {
+                                    'id': lemma_db_ids[j][0],
+                                    'term': lemma_db_ids[j][1],
+                                    'pos': pos
+                                }, 'eq', 1.0, cursor)
+
+            synset_uri_to_db_ids = defaultdict(list)
+            for (synset_uri, lemma), db_id in synset_item_to_db_id.items():
+                synset_uri_to_db_ids[synset_uri].append(db_id)
+
+            logging.info("Adding mapped semantic relationships...")
+            for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations"):
+                for lemma, uri in data['lemmas'].items():
+                    l_key = synset_uri, lemma
+                    if l_key not in synset_item_to_db_id: continue
+                    for rel_fragment, related_uri in data['relations']:
+                        related_db_ids = synset_uri_to_db_ids.get(related_uri, [])
+                        if len(related_db_ids) == 0: continue
+
+                        mapping = self.mappings.get(rel_fragment.lower())
+                        if not mapping: continue
+
+                        rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap', False)
+                        if not rel: continue
+
+                        for related_id in related_db_ids:
+                            start_id, end_id = synset_item_to_db_id[l_key], related_id
+
+                            if swap:
+                                self.add_relation(
+                                    {
+                                        'id': end_id[0],
+                                        'term': end_id[1],
+                                        'pos': end_id[2]
+                                    },
+                                    {
+                                        'id': start_id[0],
+                                        'term': start_id[1],
+                                        'pos': start_id[2]
+                                    },
+                                    rel, 1.0, cursor)
+                            else:
+                                self.add_relation(
+                                    {
+                                        'id': start_id[0],
+                                        'term': start_id[1],
+                                        'pos': start_id[2]
+                                    },
+                                    {
+                                        'id': end_id[0],
+                                        'term': end_id[1],
+                                        'pos': end_id[2]
+                                    },
+                                    rel, 1.0, cursor)
+
+        if self.mode == 'db':
+            with self.conn.cursor() as cursor:
+                iterate_over_file(cursor)
+                self.conn.commit()
+        else:
+            iterate_over_file()
 
     def get_relationships(self, g, synset_data):
         logging.info("Querying for WordNet relationships using targeted queries...")
