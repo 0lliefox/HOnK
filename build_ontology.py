@@ -40,7 +40,7 @@ class OntologyBuilder:
             self._setup_database()
 
         # Serialisation
-        self.graph_manager = GraphManager(config)
+        self.graph_manager = GraphManager(self, config)
         self.g = self.graph_manager.g
         self.convert = self.config['turtle_export']['convert']  # Should the pipeline convert from .nt to .ttl
 
@@ -290,13 +290,13 @@ class OntologyBuilder:
 
 def run_process(config, run_id, benchmarking):
     builder = OntologyBuilder(config, run_id, benchmarking)
-    builder.build()
+    # builder.build()
 
     output_file = config['turtle_export']['output_file']
     if builder.mode == 'db':
-        if builder.should_cluster:
-            clusterer = ConceptClusterer(builder, config)
-            clusterer.run()
+        # if builder.should_cluster:
+        #     clusterer = ConceptClusterer(builder, config)
+        #     clusterer.run()
 
         builder.build_graph_from_db(output_file)
     elif builder.mode == 'graph':
