@@ -45,11 +45,8 @@ def timer(func=None, *, log=True, threaded=True, independent=False):
     def wrapper(self, *args, **kwargs):
         class_name = self.__class__.__name__
         method_name = func.__name__
-        
-        if 'ConceptClusterer' in class_name:
-            identifier = method_name
-        else:
-            identifier = f"{class_name}.{method_name}"
+
+        identifier = f"{class_name}.{method_name}"
         
         start_mem = get_memory_usage()
         if log:

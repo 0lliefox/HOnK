@@ -5,6 +5,7 @@ from rdflib import OWL, Literal
 
 from tools.pickling import PickleManager
 from tools.timer import timer
+from tools.db_funcs import DBManager
 
 
 class AbstractLoader(ABC):
@@ -15,9 +16,14 @@ class AbstractLoader(ABC):
         self.conn = builder.conn if self.mode == 'db' else None
         self.source = None
         self.mappings = self.get_mappings(["edge", "pos"])
-        self.cc_graph = self.builder.cc_graph
-        self.g = self.cc_graph.g
-        self.ns = self.cc_graph.ns
+        self.graph_manager = self.builder.graph_manager
+        self.g = self.graph_manager.g
+        self.ns = self.graph_manager.ns
+        
+        if self.mode == 'db':
+            self.db_manager = DBManager(builder)
+        else:
+            self.db_manager = None
 
         self._timer_stack = []
         self.pickle_manager = PickleManager(self.builder.should_cache, self.pause_timer, self.resume_timer)
@@ -36,11 +42,13 @@ class AbstractLoader(ABC):
                 k.lower(): v
                 for source in [self.source.lower()]
                 for m_type in mapping_types
-                for k, v in self.cc_graph.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
+                for k, v in self.graph_manager.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
             }
         return None
 
     def load_data(self):
+        if self.db_manager:
+            self.db_manager.source = self.source
         data = self._parse_data_timed()
         self._store_data_timed(data)
 
@@ -66,7 +74,7 @@ class AbstractLoader(ABC):
     @lru_cache(maxsize=1024)
     @timer(log=False, threaded=False, independent=True)
     def normalise_data(self, term, pos):
-        if self.cc_graph.normalise_pos:
+        if self.graph_manager.normalise_pos:
             term = self.normalise_term(term)
             pos = self.get_mapped_pos(pos)
         return term, pos
@@ -74,126 +82,49 @@ class AbstractLoader(ABC):
     @lru_cache(maxsize=1024)
     def get_mapped_pos(self, pos_tag):
         if self.config['turtle_export']['normalise_pos']:
-            return self.cc_graph.full_mappings.get(pos_tag, pos_tag)
+            return self.graph_manager.full_mappings.get(pos_tag, pos_tag)
         else:
             return pos_tag
-
-    @lru_cache(maxsize=1024)
-    def add_or_get_concept_from_db(self, term, pos, cursor=None):
-        standalone = cursor is None
-        if standalone: cursor = self.conn.cursor()
-        try:
-            if not self.config['general']['unique_source']:
-                cursor.execute("""
-                   INSERT INTO concepts (term, part_of_speech, source)
-                   VALUES (%s, %s, %s)
-                   ON CONFLICT (term, part_of_speech) DO NOTHING
-                   RETURNING id;
-                   """,
-                   (term, pos, self.source)
-               )
-            else:
-                cursor.execute("""
-                   INSERT INTO concepts (term, part_of_speech, source)
-                   VALUES (%s, %s, %s)
-                   ON CONFLICT (term, part_of_speech, source) DO NOTHING
-                   RETURNING id;
-                   """,
-                   (term, pos, self.source)
-                )
-            result = cursor.fetchone()
-            if result:
-                # if standalone: self.conn.commit()
-                return result[0]
-            else:
-                # If the insert did nothing (due to conflict), fetch the existing ID
-                cursor.execute("SELECT id FROM concepts WHERE term = %s AND part_of_speech = %s", (term, pos))
-                return cursor.fetchone()[0]
-        finally:
-            if standalone: cursor.close()
 
     def get_or_create_concept(self, term, pos, cursor=None):
         term, pos = self.normalise_data(term, pos)
 
         if self.mode == 'db':
-            return self.add_or_get_concept_from_db(term, pos, cursor)
+            return self.db_manager.add_or_get_concept_from_db(term, pos, cursor)
         elif self.mode == 'graph':
-            self.cc_graph.add_concept_to_graph(term, pos)
+            self.graph_manager.add_concept_to_graph(term, pos)
         return None
 
     def add_relation(self, start, end, rel_type, weight, cursor):
         # Unnecessary to add relation between same terms (e.g. A isRelated A), we know that already?
         if self.mode == 'db':
             if start['id'] != end['id']:
-                self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
+                self.db_manager.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
         elif self.mode == 'graph':
             start_term, start_pos = self.normalise_data(start['term'], start['pos'])
             end_term, end_pos = self.normalise_data(end['term'], end['pos'])
             if start_term != end_term:
-                self.cc_graph.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
-
-    def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
-        if not self.config['general']['unique_source']:
-            cursor.execute(
-                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
-                "VALUES (%s, %s, %s, %s, %s) "
-                "ON CONFLICT (start_concept_id, end_concept_id, relation_type, weight) DO NOTHING",
-                (start_id, end_id, rel_type, weight, self.source)
-            )
-        else:
-            cursor.execute(
-                "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
-                "VALUES (%s, %s, %s, %s, %s) "
-                "ON CONFLICT (start_concept_id, end_concept_id, relation_type, source) DO NOTHING",
-                (start_id, end_id, rel_type, weight, self.source)
-            )
+                self.graph_manager.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
 
     def add_property(self, concept, c_type, c_value, cursor):
         if self.mode == 'db':
-            self.add_property_to_db(concept['id'], c_type, c_value, cursor)
+            self.db_manager.add_property_to_db(concept['id'], c_type, c_value, cursor)
         elif self.mode == 'graph':
             term, _ = self.normalise_data(concept['term'], None)
-            self.cc_graph.add_property_to_graph(c_type, c_value, term=term)
-
-    def add_property_to_db(self, c_id, c_type, c_value, cursor):
-        if not self.config['general']['unique_source']:
-            cursor.execute(
-                "INSERT INTO properties (concept_id, type, value, source) "
-                "VALUES (%s, %s, %s, %s) "
-                "ON CONFLICT (concept_id, type, value) DO NOTHING",
-                (c_id, c_type, c_value, self.source)
-            )
-        else:
-            cursor.execute(
-                "INSERT INTO properties (concept_id, type, value, source) "
-                "VALUES (%s, %s, %s, %s) "
-                "ON CONFLICT (concept_id, type, value, source) DO NOTHING",
-                (c_id, c_type, c_value, self.source)
-            )
+            self.graph_manager.add_property_to_graph(c_type, c_value, term=term)
 
     def add_url(self, concept, e_url, cursor):
         if self.builder.should_cluster:
             if self.mode == 'db':
-                if not self.config['general']['unique_source']:
-                    cursor.execute(
-                        "INSERT INTO urls (concept_id, external_url, source) "
-                        "VALUES (%s, %s, %s) "
-                        "ON CONFLICT (concept_id, external_url) DO NOTHING",
-                        (concept['id'], e_url, self.source)
-                    )
-                else:
-                    cursor.execute(
-                        "INSERT INTO urls (concept_id, external_url, source) "
-                        "VALUES (%s, %s, %s) "
-                        "ON CONFLICT (concept_id, external_url, source) DO NOTHING",
-                        (concept['id'], e_url, self.source)
-                    )
+                self.db_manager.add_url_to_db(concept['id'], e_url, cursor)
             elif self.mode == 'graph':
                 term, pos = self.normalise_data(concept['term'], concept['pos'])
-                concept_uri = self.cc_graph.get_safe_uri(term)
-                self.g.add((concept_uri, self.ns.hasURL, Literal(f"{e_url}=={pos}")))
+                concept_uri = self.graph_manager.get_safe_uri(term)
+                self.graph_manager.add_url_to_graph(concept_uri, e_url, pos)
+
 
     @lru_cache(maxsize=1024)
+    @timer(log=False, threaded=False, independent=True)
     def normalise_term(self, term):
         term = term.replace('_', ' ').replace('"', '')
 

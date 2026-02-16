@@ -14,7 +14,7 @@ from clustering.cluster_concepts import ConceptClusterer
 from clustering.cluster_graph_concepts import ConceptGraphClusterer
 from knowledge_bases import ConceptNetLoader
 from tools.config import get_config
-from tools.graph_funcs import CCGraph
+from tools.graph_funcs import GraphManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -40,8 +40,8 @@ class OntologyBuilder:
             self._setup_database()
 
         # Serialisation
-        self.cc_graph = CCGraph(config)
-        self.g = self.cc_graph.g
+        self.graph_manager = GraphManager(config)
+        self.g = self.graph_manager.g
         self.convert = self.config['turtle_export']['convert']  # Should the pipeline convert from .nt to .ttl
 
         self.should_cluster = self.config['clustering']['enabled']
@@ -202,21 +202,21 @@ class OntologyBuilder:
 
         with self.conn.cursor(name='concepts') as cursor:
             cursor.execute("SELECT id, term, part_of_speech, source FROM concepts")
-            for cid, term, pos, source in tqdm(cursor, total=total_concepts, desc="Processing Concepts"):
-                self.cc_graph.add_concept_to_graph(term, pos, cid)
+            for cid, term, pos, source in tqdm(cursor, total=total_concepts, desc="Processing concepts"):
+                self.graph_manager.add_concept_to_graph(term, pos, cid)
 
         if not self.should_cluster:
             with self.conn.cursor(name='relations') as cursor:
                 cursor.execute("SELECT start_concept_id, end_concept_id, relation_type, weight, source FROM relations")
-                for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing Relations"):
-                    self.cc_graph.add_relation_to_graph(start_id, end_id, rel_type, weight)
+                for start_id, end_id, rel_type, weight, source in tqdm(cursor, desc="Processing relations"):
+                    self.graph_manager.add_relation_to_graph(start_id, end_id, rel_type, weight)
         else:
             cluster_to_concepts_map = defaultdict(list)
             chunk_size = 10000
 
             with self.conn.cursor(name='fetch_clusters') as cluster_cursor:
                 cluster_cursor.execute("SELECT cluster_id, concept_id FROM clusters")
-                pbar = tqdm(desc="Fetching Cluster Data", unit=" mappings")
+                pbar = tqdm(desc="Fetching cluster data", unit=" mappings")
                 while True:
                     rows = cluster_cursor.fetchmany(size=chunk_size)
                     if not rows:
@@ -234,7 +234,7 @@ class OntologyBuilder:
 
             with self.conn.cursor(name='cluster_relations') as cursor:
                 cursor.execute("SELECT start_cluster_id, end_cluster_id, relation_type, weight FROM cluster_relations")
-                for start_cluster_id, end_cluster_id, rel_type, weight in tqdm(cursor, total=total_relations, desc="Processing Clustered Relations"):
+                for start_cluster_id, end_cluster_id, rel_type, weight in tqdm(cursor, total=total_relations, desc="Processing clustered relations"):
                     start_ids = cluster_to_concepts_map.get(start_cluster_id, [])
                     end_ids = cluster_to_concepts_map.get(end_cluster_id, [])
 
@@ -243,14 +243,14 @@ class OntologyBuilder:
 
                     for start_id in start_ids:
                         for end_id in end_ids:
-                            self.cc_graph.add_relation_to_graph(start_id, end_id, rel_type, weight)
+                            self.graph_manager.add_relation_to_graph(start_id, end_id, rel_type, weight)
 
         with self.conn.cursor(name='properties') as cursor:
             cursor.execute("SELECT concept_id, type, value, source FROM properties")
-            for cid, prop_type, value, source in tqdm(cursor, desc="Processing Properties"):
-                self.cc_graph.add_property_to_graph(prop_type, value, cid=cid)
+            for cid, prop_type, value, source in tqdm(cursor, desc="Processing properties"):
+                self.graph_manager.add_property_to_graph(prop_type, value, cid=cid)
 
-        self.cc_graph.add_pos_tag_classes(self.g)
+        self.graph_manager.add_pos_tag_classes(self.g)
 
         end = time.time()
         self.benchmarking.add_row(self.run_id, f"Graph building", end - start)
@@ -300,13 +300,13 @@ def run_process(config, run_id, benchmarking):
 
         builder.build_graph_from_db(output_file)
     elif builder.mode == 'graph':
-        final_g = builder.cc_graph.g
+        final_g = builder.graph_manager.g
 
         if builder.should_cluster:
             clusterer = ConceptGraphClusterer(builder, config)
             final_g = clusterer.run()
 
-        builder.cc_graph.add_pos_tag_classes(final_g)
+        builder.graph_manager.add_pos_tag_classes(final_g)
         builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
 
     benchmarking.to_csv(filename=f'benchmark_{output_file.split(".")[0]}', data_length=False, append=True)

@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class ConceptGraphClusterer:
     def __init__(self, builder, config):
         self.builder = builder
-        self.cc_graph = self.builder.cc_graph
-        self.g = self.cc_graph.g if hasattr(self.cc_graph, 'g') else self.cc_graph
-        self.ns = self.cc_graph.ns
+        self.graph_manager = self.builder.graph_manager
+        self.g = self.graph_manager.g if hasattr(self.graph_manager, 'g') else self.graph_manager
+        self.ns = self.graph_manager.ns
         self.config = config
         self.base_uri = self.config['turtle_export']['base_uri']
 

@@ -90,8 +90,8 @@ class WordNetLoader(AbstractLoader):
                                 nltk_pos = tag
                                 break
 
-                    if 'classes' in self.cc_graph.pos_tag_mappings[nltk_pos]:
-                        pos_classes = self.cc_graph.pos_tag_mappings[nltk_pos]['classes']
+                    if 'classes' in self.graph_manager.pos_tag_mappings[nltk_pos]:
+                        pos_classes = self.graph_manager.pos_tag_mappings[nltk_pos]['classes']
                     else:
                         pos_classes = [nltk_pos]
 
