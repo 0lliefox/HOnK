@@ -8,7 +8,8 @@ database:
 general:
   language: 'en'  # Fix a specific language for filtering the knowledge bases
   clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
-  sources: ['wordnet', 'conceptnet', 'wiktionary']
+  sources: ['parmenides', 'conceptnet', 'wiktionary', 'wordnet', 'geonames']
+  mapping_sources: ['wordnet', 'conceptnet', 'wiktionary']
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
   confirm_clear_db: false

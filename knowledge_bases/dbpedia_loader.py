@@ -156,7 +156,7 @@ class DBpediaLoader(AbstractLoader):
                 pos = 'Concept'
                 concept_id = self.get_or_create_concept(term, pos, 'DBpedia', cursor)
                 if concept_id:
-                    self.add_url(concept_id, concept_uri, cursor, pos)
+                    self.add_url({'id': concept_id, 'term': term, 'pos': pos}, concept_uri, cursor)
 
                     # if 'properties' in data:
                     #     for prop, values in data['properties'].items():

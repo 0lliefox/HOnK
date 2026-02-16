@@ -1,74 +1,10 @@
-import logging
-import os
-import time
-import threading
 from abc import abstractmethod, ABC
-from functools import lru_cache, wraps
+from functools import lru_cache
 
-import psutil
 from rdflib import OWL, Literal
 
 from tools.pickling import PickleManager
-
-
-def get_memory_usage():
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
-
-
-def timer(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        class_name = self.__class__.__name__
-        method_name = func.__name__
-        
-        if 'ConceptClusterer' in class_name:
-            identifier = method_name
-        else:
-            identifier = f"{class_name}.{method_name}"
-        
-        start_mem = get_memory_usage()
-        logging.info(f"Starting execution of {identifier}... (Memory: {start_mem:.2f} MB)")
-        
-        peak_memory = [start_mem]
-        stop_event = threading.Event()
-
-        def monitor():
-            while not stop_event.is_set():
-                current_mem = get_memory_usage()
-                if current_mem > peak_memory[0]:
-                    peak_memory[0] = current_mem
-                time.sleep(0.1)
-        
-        t = threading.Thread(target=monitor)
-        t.start()
-
-        self._start_time = time.time()
-        self._paused_time = 0
-        self._is_paused = False
-
-        try:
-            result = func(self, *args, **kwargs)
-        finally:
-            stop_event.set()
-            t.join()
-
-        end_time = time.time()
-        
-        # Check final memory
-        end_mem = get_memory_usage()
-        if end_mem > peak_memory[0]:
-            peak_memory[0] = end_mem
-
-        duration = end_time - self._start_time - self._paused_time
-        
-        logging.info(f"Finished execution of {identifier} in {duration:.2f} seconds. (Peak Memory: {peak_memory[0]:.2f} MB)")
-        
-        self.builder.benchmarking.add_row(self.builder.run_id, identifier, duration)
-        self.builder.benchmarking.add_row(self.builder.run_id, f"{identifier}_peak_memory_mb", peak_memory[0])
-        
-        return result
-    return wrapper
+from tools.timer import timer
 
 
 class AbstractLoader(ABC):
@@ -83,21 +19,16 @@ class AbstractLoader(ABC):
         self.g = self.cc_graph.g
         self.ns = self.cc_graph.ns
 
-        self._start_time = 0
-        self._paused_time = 0
-        self._pause_start_time = 0
-        self._is_paused = False
+        self._timer_stack = []
         self.pickle_manager = PickleManager(self.builder.should_cache, self.pause_timer, self.resume_timer)
 
     def pause_timer(self):
-        if not self._is_paused:
-            self._pause_start_time = time.time()
-            self._is_paused = True
+        if hasattr(self, '_timer_stack') and self._timer_stack:
+            self._timer_stack[-1].pause()
 
     def resume_timer(self):
-        if self._is_paused:
-            self._paused_time += time.time() - self._pause_start_time
-            self._is_paused = False
+        if hasattr(self, '_timer_stack') and self._timer_stack:
+            self._timer_stack[-1].resume()
 
     def get_mappings(self, mapping_types):
         if self.source:
@@ -132,6 +63,15 @@ class AbstractLoader(ABC):
     def does_term_matches_language(self, lang):
         return self.config['general']['language'] == lang
 
+    @lru_cache(maxsize=1024)
+    @timer(log=False, threaded=False, independent=True)
+    def normalise_data(self, term, pos):
+        if self.cc_graph.normalise_pos:
+            term = self.normalise_term(term)
+            pos = self.get_mapped_pos(pos)
+        return term, pos
+
+    @lru_cache(maxsize=1024)
     def get_mapped_pos(self, pos_tag):
         if self.config['turtle_export']['normalise_pos']:
             return self.cc_graph.full_mappings.get(pos_tag, pos_tag)
@@ -173,8 +113,7 @@ class AbstractLoader(ABC):
             if standalone: cursor.close()
 
     def get_or_create_concept(self, term, pos, cursor=None):
-        term = self.normalise_term(term)
-        pos = self.get_mapped_pos(pos) if self.cc_graph.normalise_pos else pos
+        term, pos = self.normalise_data(term, pos)
 
         if self.mode == 'db':
             return self.add_or_get_concept_from_db(term, pos, cursor)
@@ -183,17 +122,14 @@ class AbstractLoader(ABC):
         return None
 
     def add_relation(self, start, end, rel_type, weight, cursor):
-        start_term = self.normalise_term(start['term'])
-        end_term = self.normalise_term(end['term'])
-        start_pos = start['pos']
-        end_pos = end['pos']
-
         # Unnecessary to add relation between same terms (e.g. A isRelated A), we know that already?
-        if start_term != end_term:
-            if self.mode == 'db':
-                if start['id'] != end['id']:
-                    self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
-            elif self.mode == 'graph':
+        if self.mode == 'db':
+            if start['id'] != end['id']:
+                self.add_relation_to_db(start['id'], end['id'], rel_type, weight, cursor)
+        elif self.mode == 'graph':
+            start_term, start_pos = self.normalise_data(start['term'], start['pos'])
+            end_term, end_pos = self.normalise_data(end['term'], end['pos'])
+            if start_term != end_term:
                 self.cc_graph.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
 
     def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
@@ -216,7 +152,8 @@ class AbstractLoader(ABC):
         if self.mode == 'db':
             self.add_property_to_db(concept['id'], c_type, c_value, cursor)
         elif self.mode == 'graph':
-            self.cc_graph.add_property_to_graph(c_type, c_value, term=self.normalise_term(concept['term']))
+            term, _ = self.normalise_data(concept['term'], None)
+            self.cc_graph.add_property_to_graph(c_type, c_value, term=term)
 
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
         if not self.config['general']['unique_source']:
@@ -234,7 +171,7 @@ class AbstractLoader(ABC):
                 (c_id, c_type, c_value, self.source)
             )
 
-    def add_url(self, concept, e_url, cursor, pos):
+    def add_url(self, concept, e_url, cursor):
         if self.builder.should_cluster:
             if self.mode == 'db':
                 if not self.config['general']['unique_source']:
@@ -252,7 +189,8 @@ class AbstractLoader(ABC):
                         (concept['id'], e_url, self.source)
                     )
             elif self.mode == 'graph':
-                concept_uri = self.cc_graph.get_safe_uri(self.normalise_term(concept['term']))
+                term, pos = self.normalise_data(concept['term'], concept['pos'])
+                concept_uri = self.cc_graph.get_safe_uri(term)
                 self.g.add((concept_uri, self.ns.hasURL, Literal(f"{e_url}=={pos}")))
 
     @lru_cache(maxsize=1024)

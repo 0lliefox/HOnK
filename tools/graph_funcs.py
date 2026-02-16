@@ -24,12 +24,10 @@ class CCGraph:
         self.normalise_pos = config['turtle_export']['normalise_pos']
         self.declared_base_properties = set()
 
-        sources = self.config['general']['sources']
-        mapping_types = ["edge", "pos"]
         self.full_mappings = {
             k.lower(): v
-            for source in sources
-            for m_type in mapping_types
+            for source in self.config['general']['mapping_sources']
+            for m_type in ["edge", "pos"]
             for k, v in self.load_mappings(config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
         }
 

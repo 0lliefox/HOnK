@@ -7,7 +7,7 @@ from collections import defaultdict
 from tqdm import tqdm
 from rdflib import RDF, URIRef
 
-from knowledge_bases.abstract_loader import timer
+from tools.timer import timer
 from tools.config import get_config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

@@ -45,7 +45,9 @@ class WiktionaryLoader(AbstractLoader):
                 found_poses = set()
                 found_props = set()
                 pos = data.get('pos')
-                standardised_pos = self.get_mapped_pos(pos)
+                
+                # Use normalise_data to get standardised POS, but we only need the POS here
+                _, standardised_pos = self.normalise_data(term, pos)
 
                 current_lemma_data = self.cached_lemma_data.get(standardised_pos)
 

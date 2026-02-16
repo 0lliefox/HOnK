@@ -1,5 +1,5 @@
 [project]
-name = "commonsense_combiner"
+name = "HOnK"
 authors = [
     {name = "Oliver R. Fox", email= "o.fox3@newcastle.ac.uk"}
 ]
@@ -20,7 +20,8 @@ dependencies = [
     "matplotlib",
     "plotnine",
     "psutil",
-    "pytest"
+    "pytest",
+    "pyyaml"
 ]
 
 [project.scripts]

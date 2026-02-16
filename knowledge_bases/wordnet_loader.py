@@ -142,8 +142,7 @@ class WordNetLoader(AbstractLoader):
                         db_id, term = db_info
                         synset_item_to_db_id[synset_uri, list(data['lemmas'])[
                             idx]] = [db_id, term, pos]  # A synset_uri might have multiple db_ids (?)
-                        self.add_url({'id': db_id, 'term': term}, data['lemmas'][list(data['lemmas'])[idx]], cursor,
-                                     pos)
+                        self.add_url({'id': db_id, 'term': term, 'pos': pos}, data['lemmas'][list(data['lemmas'])[idx]], cursor)
                         # self.add_undirected(db_id, 'definition', data['definition'], cursor)
 
                         if lexical_domain:

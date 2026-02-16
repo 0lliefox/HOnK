@@ -30,6 +30,7 @@ class OntologyBuilder:
         self.config = config
         self.mode = self.config['general']['mode']  # db / graph
         self.should_cache = self.config['general']['should_cache']  # Should the pipeline pickle/load from pickles at certain stages
+        self.sources = self.config['general']['sources']
 
         # Initialise database
         if self.mode == 'db':
@@ -49,6 +50,7 @@ class OntologyBuilder:
             self.benchmarking = Benchmark("timing")
         else:
             self.benchmarking = benchmarking
+        self.memory_benchmarking = Benchmark("memory")
 
     def get_all_keys(self, nested_dict):
         keys = []
@@ -175,11 +177,16 @@ class OntologyBuilder:
                 raise e
 
     def build(self):
-        ParmenidesLoader(self).load_data()
-        ConceptNetLoader(self).load_data()
-        WiktionaryLoader(self).load_data()
-        WordNetLoader(self).load_data()
-        GeoNamesLoader(self).load_data()
+        if 'parmenides' in self.sources:
+            ParmenidesLoader(self).load_data()
+        if 'conceptnet' in self.sources:
+            ConceptNetLoader(self).load_data()
+        if 'wiktionary' in self.sources:
+            WiktionaryLoader(self).load_data()
+        if 'wordnet' in self.sources:
+            WordNetLoader(self).load_data()
+        if 'geonames' in self.sources:
+            GeoNamesLoader(self).load_data()
         # DBpediaLoader(self).load_data()
         logging.info("Ontology build process finished")
 
@@ -303,6 +310,7 @@ def run_process(config, run_id, benchmarking):
         builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
 
     benchmarking.to_csv(filename=f'benchmark_{output_file.split(".")[0]}', data_length=False, append=True)
+    builder.memory_benchmarking.to_csv(filename=f'memory_benchmark_{output_file.split(".")[0]}', data_length=False, append=True)
 
     if builder.mode == 'db':
         builder.close()

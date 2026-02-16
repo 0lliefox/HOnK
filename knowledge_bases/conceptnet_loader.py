@@ -105,31 +105,28 @@ class ConceptNetLoader(AbstractLoader):
                         continue
 
                     # Use the POS extracted by the Relation class
-                    start_pos = self.get_mapped_pos(relation.startPOS)
-                    start_concept_id = self.get_or_create_concept(relation.surfaceStart, start_pos, cursor)
+                    start_concept_id = self.get_or_create_concept(relation.surfaceStart, relation.startPOS, cursor)
 
                     if self.is_url(relation):
                         self.add_url(
-                            {'id': start_concept_id, 'term': relation.surfaceStart},
+                            {'id': start_concept_id, 'term': relation.surfaceStart, 'pos': relation.startPOS},
                             relation.end,
-                            cursor,
-                            start_pos
+                            cursor
                         )
                     else:
-                        end_pos = self.get_mapped_pos(relation.endPOS)
-                        end_concept_id = self.get_or_create_concept(relation.surfaceEnd, end_pos, cursor)
+                        end_concept_id = self.get_or_create_concept(relation.surfaceEnd, relation.endPOS, cursor)
 
                         if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
                             self.add_relation(
                                 {
                                     'id': start_concept_id,
                                     'term': relation.surfaceStart,
-                                    'pos': start_pos
+                                    'pos': relation.startPOS
                                 },
                                 {
                                     'id': end_concept_id,
                                     'term': relation.surfaceEnd,
-                                    'pos': end_pos
+                                    'pos': relation.endPOS
                                 },
                                 relation.rel,
                                 float(relation.weight),

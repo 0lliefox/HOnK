@@ -72,7 +72,7 @@ class GeoNamesLoader(AbstractLoader):
                         current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
-                            self.add_url({'id': current_id, 'term': name}, self.links[n_id], cursor, pos)
+                            self.add_url({'id': current_id, 'term': name, 'pos': pos}, self.links[n_id], cursor)
 
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
