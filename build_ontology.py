@@ -40,7 +40,7 @@ class OntologyBuilder:
             self._setup_database()
 
         # Serialisation
-        self.graph_manager = GraphManager(config)
+        self.graph_manager = GraphManager(self, config)
         self.g = self.graph_manager.g
         self.convert = self.config['turtle_export']['convert']  # Should the pipeline convert from .nt to .ttl
 

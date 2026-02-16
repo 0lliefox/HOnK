@@ -12,8 +12,9 @@ from tools.timer import timer
 
 
 class GraphManager:
-    def __init__(self, config):
+    def __init__(self, builder, config):
         self.config = config
+        self.builder = builder
         self.ns = Namespace(self.config['turtle_export']['base_uri'])
         self.mode = config['general']['mode']
         self.should_cluster = config['clustering']['enabled']
