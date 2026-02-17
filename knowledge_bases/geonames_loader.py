@@ -4,7 +4,7 @@ import logging
 
 from tqdm import tqdm
 
-from knowledge_bases import AbstractLoader
+from knowledge_bases.abstract_loader import AbstractLoader
 
 
 class GeoNamesLoader(AbstractLoader):
@@ -21,7 +21,10 @@ class GeoNamesLoader(AbstractLoader):
             self.geonames_data_exists = False
 
         self.map_cache_filepath = f"{self.config['local_files']['cache']}/geonames_map.pkl"
-        self.id_term_map = self.mode == 'db' and self.pickle_manager.load(self.map_cache_filepath) if self.geonames_data_exists else {}
+        self.id_term_map = {}
+        if self.mode == 'db' and self.geonames_data_exists:
+             self.id_term_map = self.pickle_manager.load(self.map_cache_filepath)
+        
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
@@ -37,19 +40,39 @@ class GeoNamesLoader(AbstractLoader):
         with open(hierarchy_filepath, 'r') as f:
             hierarchy = json.load(f)
 
+        needed_ids = set()
         if self.mode == 'graph' or not self.geonames_data_exists:
             self.id_term_map = {}
+
+            if hierarchy:
+                def collect_chain(start_id):
+                    curr = str(start_id)
+                    chain_seen = set()
+                    while curr:
+                        needed_ids.add(curr)
+                        chain_seen.add(curr)
+                        if curr in self.alternate_names:
+                            curr = self.alternate_names[curr]
+                            if curr in chain_seen:
+                                break
+                        else:
+                            break
+                for parent, children in tqdm(hierarchy.items(), desc="Analyzing hierarchy for required IDs"):
+                    collect_chain(parent)
+                    for child in children:
+                        collect_chain(child)
+
             f = open(filepath, 'r')
             reader = csv.reader(f, delimiter='\t')
-            return (f, reader, hierarchy)
+            return (f, reader, hierarchy, needed_ids)
 
-        return None
+        return (None, None, hierarchy, needed_ids)
 
     def store_data(self, data):
         if data is None:
             return
 
-        file_handle, reader, hierarchy = data
+        file_handle, reader, hierarchy, needed_ids = data
 
         try:
             def iterate_over_file(cursor=None):
@@ -68,7 +91,8 @@ class GeoNamesLoader(AbstractLoader):
                         else:
                             pos = 'LOC'
 
-                        self.id_term_map[n_id] = [name, pos]
+                        if n_id in needed_ids:
+                            self.id_term_map[n_id] = [name, pos]
                         current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
@@ -76,20 +100,21 @@ class GeoNamesLoader(AbstractLoader):
 
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
-                            feature_instance = self.feature_codes[f"{feature_class}.{feature_code}"]
-                            feature_db_id = self.get_or_create_concept(feature_instance, "Noun", cursor)
-                            self.add_relation(
-                                {
-                                    'id': current_id,
-                                    'term': name,
-                                    'pos': pos
-                                },
-                                {
-                                    'id': feature_db_id,
-                                    'term': feature_instance,
-                                    'pos': "Noun"
-                                },
-                                "instanceOf", 1, cursor)
+                            feature_instance = self.feature_codes.get(f"{feature_class}.{feature_code}")
+                            if feature_instance:
+                                feature_db_id = self.get_or_create_concept(feature_instance, "Noun", cursor)
+                                self.add_relation(
+                                    {
+                                        'id': current_id,
+                                        'term': name,
+                                        'pos': pos
+                                    },
+                                    {
+                                        'id': feature_db_id,
+                                        'term': feature_instance,
+                                        'pos': "Noun"
+                                    },
+                                    "instanceOf", 1, cursor)
 
                         if len(translations) > 0:
                             translations = translations.split(',')
@@ -100,12 +125,12 @@ class GeoNamesLoader(AbstractLoader):
                     self.pickle_manager.save(self.map_cache_filepath, self.id_term_map)
 
                 for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy", total=len(hierarchy)):
-                    parent = self.check_id(parent)
+                    parent = self.check_id(str(parent))
                     if parent and parent in self.id_term_map:
                         parent_term, parent_pos = self.id_term_map[parent]
                         parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
                         for child in children:
-                            child = self.check_id(child)
+                            child = self.check_id(str(child))
                             if child and child in self.id_term_map:
                                 child_term, child_pos = self.id_term_map[child]
                                 child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
