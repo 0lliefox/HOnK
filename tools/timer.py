@@ -9,7 +9,9 @@ import os
 _process = psutil.Process(os.getpid())
 
 def get_memory_usage():
-    return _process.memory_info().rss / (1024 * 1024)
+    mem = _process.memory_full_info()
+    # Total memory = RSS (RAM) + Swap
+    return (mem.rss + getattr(mem, "swap", 0)) / (1024 * 1024)
 
 class TimerContext:
     def __init__(self):

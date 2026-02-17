@@ -21,7 +21,8 @@ dependencies = [
     "plotnine",
     "psutil",
     "pytest",
-    "pyyaml"
+    "pyyaml",
+    "networkx"
 ]
 
 [project.scripts]
