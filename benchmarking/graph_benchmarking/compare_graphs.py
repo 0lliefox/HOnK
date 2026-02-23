@@ -26,6 +26,9 @@ class GraphComparator:
         self.g1_name = name1 if name1 else os.path.basename(graph1_path)
         self.g2_name = name2 if name2 else os.path.basename(graph2_path)
         
+        # Determine output directory based on the first graph's location
+        self.output_dir = os.path.dirname(os.path.abspath(graph1_path))
+        
         self.g1_mem = 0
         self.g2_mem = 0
         
@@ -204,10 +207,13 @@ class GraphComparator:
         self._plot_results()
 
     def _find_unique_samples(self):
-        logging.info("Finding unique triple samples...")
+        logging.info("Finding unique triples and saving to files...")
         
         f1_path = os.path.join(self.temp_dir, "g1_edges.txt")
         f2_path = os.path.join(self.temp_dir, "g2_edges.txt")
+        
+        out1_path = os.path.join(self.output_dir, f"unique_to_{self.g1_name}.txt")
+        out2_path = os.path.join(self.output_dir, f"unique_to_{self.g2_name}.txt")
         
         def is_bnode_triple(line):
             # Check if subject or object is a blank node (_:...)
@@ -217,36 +223,51 @@ class GraphComparator:
                 return s.startswith("_:") or o.startswith("_:")
             return False
 
-        with open(f1_path, 'r') as f1, open(f2_path, 'r') as f2:
+        with open(f1_path, 'r') as f1, open(f2_path, 'r') as f2, \
+             open(out1_path, 'w') as out1, open(out2_path, 'w') as out2:
+            
             line1 = f1.readline()
             line2 = f2.readline()
             
-            while line1 and line2:
-                if line1 == line2:
+            while line1 or line2:
+                if line1 and line2:
+                    if line1 == line2:
+                        line1 = f1.readline()
+                        line2 = f2.readline()
+                    elif line1 < line2:
+                        # Unique to g1
+                        if not is_bnode_triple(line1):
+                            clean_line = line1.strip().replace('\t', ' ')
+                            if len(self.unique_samples['g1']) < self.num_of_unique_samples:
+                                self.unique_samples['g1'].append(clean_line)
+                            out1.write(clean_line + '\n')
+                        line1 = f1.readline()
+                    else:
+                        # Unique to g2
+                        if not is_bnode_triple(line2):
+                            clean_line = line2.strip().replace('\t', ' ')
+                            if len(self.unique_samples['g2']) < self.num_of_unique_samples:
+                                self.unique_samples['g2'].append(clean_line)
+                            out2.write(clean_line + '\n')
+                        line2 = f2.readline()
+                elif line1:
+                    # Remaining in g1
+                    if not is_bnode_triple(line1):
+                        clean_line = line1.strip().replace('\t', ' ')
+                        if len(self.unique_samples['g1']) < self.num_of_unique_samples:
+                            self.unique_samples['g1'].append(clean_line)
+                        out1.write(clean_line + '\n')
                     line1 = f1.readline()
+                elif line2:
+                    # Remaining in g2
+                    if not is_bnode_triple(line2):
+                        clean_line = line2.strip().replace('\t', ' ')
+                        if len(self.unique_samples['g2']) < self.num_of_unique_samples:
+                            self.unique_samples['g2'].append(clean_line)
+                        out2.write(clean_line + '\n')
                     line2 = f2.readline()
-                elif line1 < line2:
-                    if len(self.unique_samples['g1']) < self.num_of_unique_samples and not is_bnode_triple(line1):
-                        self.unique_samples['g1'].append(line1.strip().replace('\t', ' '))
-                    line1 = f1.readline()
-                else:
-                    if len(self.unique_samples['g2']) < self.num_of_unique_samples and not is_bnode_triple(line2):
-                        self.unique_samples['g2'].append(line2.strip().replace('\t', ' '))
-                    line2 = f2.readline()
-
-                if len(self.unique_samples['g1']) >= self.num_of_unique_samples and len(self.unique_samples['g2']) >= self.num_of_unique_samples:
-                    break
-            
-            # Fill remaining if needed
-            while line1 and len(self.unique_samples['g1']) < self.num_of_unique_samples:
-                if not is_bnode_triple(line1):
-                    self.unique_samples['g1'].append(line1.strip().replace('\t', ' '))
-                line1 = f1.readline()
-            
-            while line2 and len(self.unique_samples['g2']) < self.num_of_unique_samples:
-                if not is_bnode_triple(line2):
-                    self.unique_samples['g2'].append(line2.strip().replace('\t', ' '))
-                line2 = f2.readline()
+        
+        logging.info(f"Unique triples written to {out1_path} and {out2_path}")
 
     def _print_report(self):
         print("1. Basic Statistics:")
@@ -363,7 +384,7 @@ class GraphComparator:
         print(latex_code)
 
     def _save_results_to_csv(self):
-        filename = f"comparison_{self.g1_name}_{self.g2_name}.csv"
+        filename = os.path.join(self.output_dir, f"comparison_{self.g1_name}_{self.g2_name}.csv")
         logging.info(f"Saving results to {filename}...")
         
         s1 = self.stats['g1']
@@ -415,8 +436,10 @@ class GraphComparator:
         plt.subplots_adjust(bottom=0.2)
         
         fig.tight_layout()
-        plt.savefig('pos_distribution.png')
-        logging.info("Saved 'pos_distribution.png'")
+        
+        plot_path = os.path.join(self.output_dir, 'pos_distribution.png')
+        plt.savefig(plot_path)
+        logging.info(f"Saved '{plot_path}'")
 
 def main():
     parser = argparse.ArgumentParser(description="Compare two RDF graphs.")

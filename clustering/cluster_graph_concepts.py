@@ -215,8 +215,8 @@ class ConceptGraphClusterer:
         # Group targets by (start_cluster, predicate) to avoid repeated lookups and batch additions
         grouped_targets = defaultdict(set)
         for c_start, p, c_end in tqdm(cluster_relations, desc="Grouping relations"):
-            if c_start == c_end:
-                continue
+            # if c_start == c_end:
+            #     continue
             grouped_targets[(c_start, p)].update(cluster_to_urirefs[c_end])
 
         logging.info(f"  - Grouped into {len(grouped_targets)} unique (start_cluster, predicate) pairs.")

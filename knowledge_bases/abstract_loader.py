@@ -72,7 +72,7 @@ class AbstractLoader(ABC):
         return self.config['general']['language'] == lang
 
     @lru_cache(maxsize=1024)
-    @timer(log=False, threaded=False, independent=True)
+    @timer(log=False, threaded=False, independent=False)
     def normalise_data(self, term, pos):
         if self.graph_manager.normalise_pos:
             term = self.normalise_term(term)
@@ -124,7 +124,6 @@ class AbstractLoader(ABC):
 
 
     @lru_cache(maxsize=1024)
-    @timer(log=False, threaded=False, independent=True)
     def normalise_term(self, term):
         term = term.replace('_', ' ').replace('"', '')
 

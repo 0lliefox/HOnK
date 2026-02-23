@@ -1,6 +1,10 @@
 import logging
 import os
+import sys
 import argparse
+
+# Add the project root to sys.path to allow imports from 'tools' and 'clustering'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import psycopg2
 import yaml
@@ -31,6 +35,7 @@ class MockBuilder:
     def __init__(self, conn, run_id):
         self.conn = conn
         self.benchmarking = Benchmark("scalability")
+        self.memory_benchmarking = Benchmark("memory")
         self.run_id = run_id
 
 def create_subset_tables(conn, fraction):
@@ -177,4 +182,4 @@ def main(num_runs=1):
 
 
 if __name__ == "__main__":
-    main(8)
+    main(10)

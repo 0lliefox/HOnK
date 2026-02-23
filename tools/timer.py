@@ -4,14 +4,37 @@ import threading
 from functools import wraps, partial
 import psutil
 import os
+import sys
 
 # Cache the process object to avoid recreating it on every call
 _process = psutil.Process(os.getpid())
 
 def get_memory_usage():
-    mem = _process.memory_full_info()
-    # Total memory = RSS (RAM) + Swap
-    return (mem.rss + getattr(mem, "swap", 0)) / (1024 * 1024)
+    """
+    Returns memory usage in MB.
+    Attempts to include swap usage where possible without significant performance penalty.
+    """
+    mem = _process.memory_info()
+    
+    # Windows: 'private' field in memory_info includes swap (commit charge) and is fast
+    if hasattr(mem, 'private'):
+        return mem.private / (1024 * 1024)
+        
+    # Linux: Read VmSwap from /proc to avoid expensive memory_full_info()
+    if sys.platform.startswith('linux'):
+        try:
+            with open(f'/proc/{_process.pid}/status', 'r') as f:
+                for line in f:
+                    if line.startswith('VmSwap:'):
+                        # Format: VmSwap:        1234 kB
+                        swap_kb = int(line.split()[1])
+                        return (mem.rss + swap_kb * 1024) / (1024 * 1024)
+        except (IOError, ValueError, IndexError):
+            pass
+            
+    # Fallback (macOS, etc.): Return RSS only
+    # memory_full_info() which provides swap is too slow on macOS (calculates USS)
+    return mem.rss / (1024 * 1024)
 
 class TimerContext:
     def __init__(self):
@@ -39,9 +62,9 @@ class TimerContext:
             return self.accumulated_time + (time.time() - self.start_time)
         return self.accumulated_time
 
-def timer(func=None, *, log=True, threaded=True, independent=False):
+def timer(func=None, *, log=True, threaded=True, independent=False, memory=True):
     if func is None:
-        return partial(timer, log=log, threaded=threaded, independent=independent)
+        return partial(timer, log=log, threaded=threaded, independent=independent, memory=memory)
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -50,9 +73,13 @@ def timer(func=None, *, log=True, threaded=True, independent=False):
 
         identifier = f"{class_name}.{method_name}"
         
-        start_mem = get_memory_usage()
+        start_mem = 0
+        if memory:
+            start_mem = get_memory_usage()
+            
         if log:
-            logging.info(f"Starting execution of {identifier}... (Memory: {start_mem:.2f} MB)")
+            mem_msg = f" (Memory: {start_mem:.2f} MB)" if memory else ""
+            logging.info(f"Starting execution of {identifier}...{mem_msg}")
 
         peak_memory = [start_mem]
         stop_event = threading.Event()
@@ -65,7 +92,7 @@ def timer(func=None, *, log=True, threaded=True, independent=False):
                 time.sleep(0.1)
 
         t = None
-        if threaded:
+        if threaded and memory:
             t = threading.Thread(target=monitor)
             t.start()
 
@@ -101,15 +128,23 @@ def timer(func=None, *, log=True, threaded=True, independent=False):
                 if self._timer_stack:
                     self._timer_stack[-1].resume()
 
-        end_mem = get_memory_usage()
-        if end_mem > peak_memory[0]:
-            peak_memory[0] = end_mem
+        if memory:
+            end_mem = get_memory_usage()
+            if end_mem > peak_memory[0]:
+                peak_memory[0] = end_mem
 
         if log:
-            logging.info(f"Finished execution of {identifier} in {duration:.2f} seconds. (Peak Memory: {peak_memory[0]:.2f} MB)")
+            mem_msg = f" (Peak Memory: {peak_memory[0]:.2f} MB)" if memory else ""
+            logging.info(f"Finished execution of {identifier} in {duration:.2f} seconds.{mem_msg}")
 
-        self.builder.benchmarking.add_row(self.builder.run_id, identifier, duration)
-        self.builder.memory_benchmarking.add_row(self.builder.run_id, f"{identifier}_peak_memory_mb", peak_memory[0])
+        # Accumulate duration for repeated calls
+        self.builder.benchmarking.add_row(self.builder.run_id, identifier, duration, accumulate=True)
+        
+        if memory:
+            # For memory, we don't accumulate (sum), we just overwrite with the latest peak.
+            # Ideally we would want max(existing, new), but Benchmark.add_row doesn't support that easily.
+            # Overwriting is the current behavior.
+            self.builder.memory_benchmarking.add_row(self.builder.run_id, f"{identifier}_peak_memory_mb", peak_memory[0])
         
         return result
     return wrapper

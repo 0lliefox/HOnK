@@ -135,7 +135,7 @@
       },
       "turtle_export": {
         "normalise_pos": false,
-        "output_file": "graph_unnormalised_unclustered_final.nt"
+        "output_file": "db_unnormalised_unclustered_final.nt"
       }
     }
   },

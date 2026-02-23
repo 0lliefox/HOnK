@@ -52,12 +52,12 @@ class ResultsPlotter:
 
         self.data = self.data.rename(columns={
             'id': 'Percentage',
-            'build_adj_list': 'Build adjacency list',
-            'build_clusters_from_adj': 'Build clusters from adjacency list',
-            'transitive_closure': 'Transitive closure',
-            'add_unclustered_concepts': 'Add unclustered concepts',
-            'store_clusters_in_db': 'Store clusters in DB',
-            'coalesce_relationships': 'Coalesce relationships'
+            'ConceptClusterer.build_adj_list': 'Build adjacency list',
+            'ConceptClusterer.build_clusters_from_adj': 'Build clusters from adjacency list',
+            'ConceptClusterer.transitive_closure': 'Transitive closure',
+            'ConceptClusterer.add_unclustered_concepts': 'Add unclustered concepts',
+            'ConceptClusterer.store_clusters_in_db': 'Store clusters in DB',
+            'ConceptClusterer.coalesce_relationships': 'Coalesce relationships'
         })
         self.data['Total'] = self.data[self.phase_columns].sum(axis=1)
 
