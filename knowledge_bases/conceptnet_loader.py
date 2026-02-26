@@ -69,6 +69,7 @@ class ConceptNetLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
         self.source = "ConceptNet"
+        self.verbose = self.config['general']['verbose']
 
     def parse_data(self):
         filepath = self.config['local_files']['conceptnet']
@@ -91,7 +92,7 @@ class ConceptNetLoader(AbstractLoader):
 
         try:
             def iterate_over_file(cursor=None):
-                for row in tqdm(reader, desc="Processing ConceptNet Edges"):
+                for row in tqdm(reader, desc="Processing ConceptNet Edges", disable=not self.verbose):
                     relation = Relation(row)
 
                     # According to documentation, /dbpedia relations should be removed (https://github.com/commonsense/conceptnet5/wiki/Relations)

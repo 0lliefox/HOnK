@@ -20,6 +20,7 @@ class ConceptGraphClusterer:
         self.g = self.graph_manager.g if hasattr(self.graph_manager, 'g') else self.graph_manager
         self.ns = self.graph_manager.ns
         self.config = config
+        self.verbose = self.config['general']['verbose']
         self.base_uri = self.config['turtle_export']['base_uri']
 
     @timer
@@ -56,7 +57,7 @@ class ConceptGraphClusterer:
         logging.info("  - Building adjacency list from Graph URLs")
 
         db = defaultdict(set)
-        for s, o in tqdm(self.g.subject_objects(self.ns.hasURL), desc="Fetching URL triples"):
+        for s, o in tqdm(self.g.subject_objects(self.ns.hasURL), desc="Fetching URL triples", disable=not self.verbose):
             o, pos = o.split('==')
             s = f"{s}=={pos}"
 
@@ -97,7 +98,7 @@ class ConceptGraphClusterer:
             except ValueError:
                 cluster_id = 0
 
-        for node in tqdm(unvisited_candidates, desc="Handling isolated nodes"):
+        for node in tqdm(unvisited_candidates, desc="Handling isolated nodes", disable=not self.verbose):
             cluster_id += 1
             cluster_mappings.append((node, f"c{cluster_id}"))
 
@@ -108,7 +109,7 @@ class ConceptGraphClusterer:
         visited_nodes = set()
 
         visited_clusters = dict()
-        for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
+        for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters", disable=not self.verbose):
             cluster_nodes = set(adjacency_list)
             cluster_nodes.add(key_node)
 
@@ -128,7 +129,7 @@ class ConceptGraphClusterer:
     @timer
     def transitive_closure(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
-        for i in tqdm(adjacency_db.keys(), desc="Transitive closure"):
+        for i in tqdm(adjacency_db.keys(), desc="Transitive closure", disable=not self.verbose):
             adjacency_list = adjacency_db[i]
             j_idx = 0
             while j_idx < len(adjacency_list):
@@ -169,7 +170,7 @@ class ConceptGraphClusterer:
 
         logging.info(f"  - Scanning {len(raw_uri_to_cluster_info)} unique concepts for existing relations...")
 
-        for s_raw in tqdm(raw_uri_to_cluster_info.keys(), desc="Scanning graph"):
+        for s_raw in tqdm(raw_uri_to_cluster_info.keys(), desc="Scanning graph", disable=not self.verbose):
             for p, o in self.g.predicate_objects(URIRef(s_raw)):
                 if self.base_uri not in str(p) or p in excluded_predicates:
                     continue
@@ -214,7 +215,7 @@ class ConceptGraphClusterer:
 
         # Group targets by (start_cluster, predicate) to avoid repeated lookups and batch additions
         grouped_targets = defaultdict(set)
-        for c_start, p, c_end in tqdm(cluster_relations, desc="Grouping relations"):
+        for c_start, p, c_end in tqdm(cluster_relations, desc="Grouping relations", disable=not self.verbose):
             # if c_start == c_end:
             #     continue
             grouped_targets[(c_start, p)].update(cluster_to_urirefs[c_end])
@@ -222,7 +223,7 @@ class ConceptGraphClusterer:
         logging.info(f"  - Grouped into {len(grouped_targets)} unique (start_cluster, predicate) pairs.")
 
         def triples_generator():
-            for (c_start, p), target_uris in tqdm(grouped_targets.items(), desc="Materialising triples"):
+            for (c_start, p), target_uris in tqdm(grouped_targets.items(), desc="Materialising triples", disable=not self.verbose):
                 start_uris = cluster_to_urirefs[c_start]
                 for s in start_uris:
                     for o in target_uris:
@@ -252,7 +253,7 @@ class ConceptGraphClusterer:
                 negations[s] = str(o)
 
         props_map = defaultdict(list)
-        for rel_uri, weight_val in tqdm(weights.items(), desc="Analyzing predicates"):
+        for rel_uri, weight_val in tqdm(weights.items(), desc="Analyzing predicates", disable=not self.verbose):
             is_negated_val = negations.get(rel_uri)
             if is_negated_val is not None:
                 base_type = self.g.value(rel_uri, RDF.type)
@@ -261,7 +262,7 @@ class ConceptGraphClusterer:
                     props_map[sig].append(rel_uri)
 
         merged_count = 0
-        for sig, uris in tqdm(props_map.items(), desc="Merging predicates"):
+        for sig, uris in tqdm(props_map.items(), desc="Merging predicates", disable=not self.verbose):
             if len(uris) > 1:
                 uris.sort(key=lambda u: str(u))
                 canonical = uris[0]

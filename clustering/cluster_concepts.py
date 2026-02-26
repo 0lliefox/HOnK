@@ -22,6 +22,7 @@ class ConceptClusterer:
         self.builder = builder
         self.conn = self.builder.conn
         self.config = config
+        self.verbose = self.config['general']['verbose']
 
         if table_names is None:
             self.tables = {
@@ -99,7 +100,7 @@ class ConceptClusterer:
         edges = cursor.fetchall()
 
         db = defaultdict(set)
-        for id1, id2 in tqdm(edges, desc="Processing edges from URLs database"):
+        for id1, id2 in tqdm(edges, desc="Processing edges from URLs database", disable=not self.verbose):
             db[id1].add(id2)
             db[id2].add(id1)
 
@@ -112,7 +113,7 @@ class ConceptClusterer:
         all_concept_ids = {row[0] for row in cursor.fetchall()}
         unvisited_nodes = list(all_concept_ids - visited_nodes)
         cluster_id = int(cluster_mappings[-1][1].split('c')[-1])
-        for node in tqdm(unvisited_nodes, desc="Handling isolated nodes"):
+        for node in tqdm(unvisited_nodes, desc="Handling isolated nodes", disable=not self.verbose):
             cluster_id += 1
             cluster_mappings.append((node, f"c{cluster_id}"))
 
@@ -123,7 +124,7 @@ class ConceptClusterer:
         visited_nodes = set()
 
         visited_clusters = dict()
-        for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters"):
+        for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters", disable=not self.verbose):
             cluster_nodes = set(adjacency_list)
             cluster_nodes.add(key_node)
 
@@ -142,7 +143,7 @@ class ConceptClusterer:
     @timer
     def transitive_closure(self, adjacency_db):
         logging.info("  - Calculating transitive closure on adjacency list...")
-        for i in tqdm(adjacency_db.keys(), desc="Transitive closure"):
+        for i in tqdm(adjacency_db.keys(), desc="Transitive closure", disable=not self.verbose):
             adjacency_list = adjacency_db[i]
             j_idx = 0
             while j_idx < len(adjacency_list):

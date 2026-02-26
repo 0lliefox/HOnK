@@ -14,6 +14,7 @@ class WiktionaryLoader(AbstractLoader):
         self.source = "Wiktionary"
         self.edge_mappings = self.get_mappings(["edge"])
         self.cached_lemma_data = {} # Cache for pre-compiled regex patterns and class names
+        self.verbose = self.config['general']['verbose']
 
     def parse_data(self):
         filepath = self.config['local_files']['wiktionary']
@@ -35,7 +36,7 @@ class WiktionaryLoader(AbstractLoader):
         }
 
         def iterate_over_file(cursor=None):
-            for data in tqdm(entries, desc="Processing Wiktionary Entries"):
+            for data in tqdm(entries, desc="Processing Wiktionary Entries", disable=not self.verbose):
                 term = data.get('word')
                 lang = data.get('lang_code')
 

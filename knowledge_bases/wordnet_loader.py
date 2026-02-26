@@ -16,6 +16,7 @@ class WordNetLoader(AbstractLoader):
         super().__init__(builder)
         self.source = "WordNet"
         self.mappings = self.get_mappings(["edge", "pos"])
+        self.verbose = self.config['general']['verbose']
         try:
             _create_unverified_https_context = ssl._create_unverified_context
         except AttributeError:
@@ -23,13 +24,29 @@ class WordNetLoader(AbstractLoader):
         else:
             ssl._create_default_https_context = _create_unverified_https_context
 
-        nltk_packages = ['averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']
+        nltk_packages = [
+            'averaged_perceptron_tagger',
+            'averaged_perceptron_tagger_eng',
+            'punkt_tab'
+        ]
         for nltk_package in nltk_packages:
             try:
-                nltk.data.find(nltk_package)
+                if nltk_package == 'punkt_tab':
+                    nltk.data.find('tokenizers/punkt_tab')
+                else:
+                    nltk.data.find(f'taggers/{nltk_package}')
             except LookupError:
-                logging.info(f"Downloading NLTK's '{nltk_package}'...")
-                nltk.download(nltk_package)
+                # Check if we are on a login node
+                # or compute node
+                if os.environ.get('SLURM_JOB_ID'):
+                    logging.error(
+                        f"NLTK resource '{nltk_package}' missing on compute node. "
+                        "Please run 'python -c \"import nltk; nltk.download('" + nltk_package + "')\"' "
+                                                                                                "on the login node before submitting."
+                    )
+                else:
+                    logging.info(f"Downloading NLTK's '{nltk_package}'...")
+                    nltk.download(nltk_package)
 
     def parse_data(self):
         filepath = self.config['local_files']['wordnet']
@@ -71,7 +88,7 @@ class WordNetLoader(AbstractLoader):
 
         def iterate_over_file(cursor=None):
             logging.info("Processing and inserting WordNet concepts...")
-            for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts"):
+            for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts", disable=not self.verbose):
                 if '#Component' in synset_uri:
                     component_split = synset_uri.split('#Component-')
                     component_index = int(component_split[1]) - 1
@@ -142,7 +159,8 @@ class WordNetLoader(AbstractLoader):
                         db_id, term = db_info
                         synset_item_to_db_id[synset_uri, list(data['lemmas'])[
                             idx]] = [db_id, term, pos]  # A synset_uri might have multiple db_ids (?)
-                        self.add_url({'id': db_id, 'term': term, 'pos': pos}, data['lemmas'][list(data['lemmas'])[idx]], cursor)
+                        self.add_url({'id': db_id, 'term': term, 'pos': pos}, data['lemmas'][list(data['lemmas'])[idx]],
+                                     cursor)
                         # self.add_undirected(db_id, 'definition', data['definition'], cursor)
 
                         if lexical_domain:
@@ -167,18 +185,18 @@ class WordNetLoader(AbstractLoader):
                                     'term': lemma_db_ids[i][1],
                                     'pos': pos
                                 },
-                                {
-                                    'id': lemma_db_ids[j][0],
-                                    'term': lemma_db_ids[j][1],
-                                    'pos': pos
-                                }, 'eq', 1.0, cursor)
+                                    {
+                                        'id': lemma_db_ids[j][0],
+                                        'term': lemma_db_ids[j][1],
+                                        'pos': pos
+                                    }, 'eq', 1.0, cursor)
 
             synset_uri_to_db_ids = defaultdict(list)
             for (synset_uri, lemma), db_id in synset_item_to_db_id.items():
                 synset_uri_to_db_ids[synset_uri].append(db_id)
 
             logging.info("Adding mapped semantic relationships...")
-            for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations"):
+            for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations", disable=not self.verbose):
                 for lemma, uri in data['lemmas'].items():
                     l_key = synset_uri, lemma
                     if l_key not in synset_item_to_db_id: continue
@@ -189,7 +207,8 @@ class WordNetLoader(AbstractLoader):
                         mapping = self.mappings.get(rel_fragment.lower())
                         if not mapping: continue
 
-                        rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap', False)
+                        rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap',
+                                                                                                              False)
                         if not rel: continue
 
                         for related_id in related_db_ids:
@@ -234,7 +253,7 @@ class WordNetLoader(AbstractLoader):
         relations_to_query = list(self.mappings.keys())
         total_relations_found = 0
 
-        for rel_fragment in tqdm(relations_to_query, desc="Querying Relation Types"):
+        for rel_fragment in tqdm(relations_to_query, desc="Querying Relation Types", disable=not self.verbose):
             relation_query = f"""
                         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                         PREFIX wnp: <http://wordnet-rdf.princeton.edu/ontology#>
@@ -276,7 +295,7 @@ class WordNetLoader(AbstractLoader):
         component_results = g.query(component_query)
         logging.info(f"Found {len(component_results)} Component rows.")
 
-        for row in tqdm(component_results, desc="Aggregating Component Data"):
+        for row in tqdm(component_results, desc="Aggregating Component Data", disable=not self.verbose):
             component_uri = str(row.component)
             if component_uri not in synset_data:
                 synset_data[component_uri] = {
@@ -322,7 +341,7 @@ class WordNetLoader(AbstractLoader):
         logging.info(f"Found {len(core_results)} core concept rows.")
 
         synset_data = {}
-        for row in tqdm(core_results, desc="Aggregating Core Data"):
+        for row in tqdm(core_results, desc="Aggregating Core Data", disable=not self.verbose):
             synset_uri = str(row.synset)
             if synset_uri not in synset_data:
                 synset_data[synset_uri] = {

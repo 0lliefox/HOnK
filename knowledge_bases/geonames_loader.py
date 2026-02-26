@@ -11,6 +11,7 @@ class GeoNamesLoader(AbstractLoader):
     def __init__(self, builder):
         super().__init__(builder)
         self.source = "GeoNames"
+        self.verbose = self.config['general']['verbose']
 
         # Check if GeoNames data exists in the database
         if self.mode == 'db':
@@ -78,7 +79,7 @@ class GeoNamesLoader(AbstractLoader):
             def iterate_over_file(cursor=None):
                 # reader is an iterator (if not None)
                 if reader:
-                    for line in tqdm(reader, desc="Processing GeoNames"):
+                    for line in tqdm(reader, desc="Processing GeoNames", disable=not self.verbose):
                         n_id, name, _, translations, _, _, feature_class, feature_code = line[
                             :8]  # https://download.geonames.org/export/dump/readme.txt
 
