@@ -17,6 +17,7 @@ general:
   should_cache: true
   unique_source: false
   show_stats: true
+  verbose: false
 
 local_files:
   supporting_files: 'supporting_files'
