@@ -79,8 +79,10 @@ class ConceptClusterer:
         with self.conn.cursor() as cursor:
             # Adjacency list
             db = self.build_adj_list(cursor)
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump(db, f, ensure_ascii=False, indent=4)
+
+            if os.path.exists(cache_path) and self.config['general']['should_cache']:
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    json.dump(db, f, ensure_ascii=False, indent=4)
 
             # Transitive closure
             self.transitive_closure(db)
