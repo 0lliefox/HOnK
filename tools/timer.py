@@ -139,12 +139,15 @@ def timer(func=None, *, log=True, threaded=True, independent=False, memory=True)
 
         # Accumulate duration for repeated calls
         self.builder.benchmarking.add_row(self.builder.run_id, identifier, duration, accumulate=True)
-        
+
         if memory:
-            # For memory, we don't accumulate (sum), we just overwrite with the latest peak.
-            # Ideally we would want max(existing, new), but Benchmark.add_row doesn't support that easily.
-            # Overwriting is the current behavior.
-            self.builder.memory_benchmarking.add_row(self.builder.run_id, f"{identifier}_peak_memory_mb", peak_memory[0])
-        
+            # Tell the benchmark class to strictly use the maximum peak observed
+            self.builder.memory_benchmarking.add_row(
+                self.builder.run_id,
+                f"{identifier}_peak_memory_mb",
+                peak_memory[0],
+                mode='max'
+            )
+
         return result
     return wrapper
