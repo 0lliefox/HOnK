@@ -3,6 +3,8 @@ CONFIGURATIONS_FILE="configurations.json"
 BENCHMARK_FILE="benchmarking/results/timing_final_ontology.csv"
 ITERATIONS=${1:-1}
 START_GLOBAL_ID=${2:-0}
+EMAIL_SCRIPT="tools/send_status.py"
+MY_EMAIL="o.fox3@newcastle.ac.uk"
 
 # Remove existing benchmark file to start fresh
 if [ -f "$BENCHMARK_FILE" ] && [ "$START_GLOBAL_ID" -eq 0 ]; then
@@ -47,6 +49,13 @@ do
             echo "Error in run $RUN_ID. Aborting."
             rm "$TEMP_CONFIG_FILE"
             exit 1
+        fi
+
+        if [ -f "$EMAIL_SCRIPT" ]; then
+            NOW=$(date +"%T")
+            SUBJECT="HOnK Run $RUN_ID Complete"
+            MESSAGE="Experiment $j (Iteration $((i+1))) finished successfully at $NOW. Global Counter: $GLOBAL_COUNTER."
+            python3 "$EMAIL_SCRIPT" "$SUBJECT" "$MESSAGE"
         fi
 
         rm "$TEMP_CONFIG_FILE"
