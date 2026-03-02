@@ -15,6 +15,7 @@ from clustering.cluster_graph_concepts import ConceptGraphClusterer
 from knowledge_bases import ConceptNetLoader
 from tools.config import get_config
 from tools.graph_funcs import GraphManager
+from tools.timer import timer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -32,6 +33,9 @@ class OntologyBuilder:
         self.should_cache = self.config['general']['should_cache']  # Should the pipeline pickle/load from pickles at certain stages
         self.sources = self.config['general']['sources']
         self.verbose = self.config['general']['verbose']
+        
+        # Self-reference for timer decorator compatibility
+        self.builder = self
 
         # Initialise database
         if self.mode == 'db':
@@ -191,9 +195,8 @@ class OntologyBuilder:
         # DBpediaLoader(self).load_data()
         logging.info("Ontology build process finished")
 
+    @timer
     def build_graph_from_db(self, file_path):
-        start = time.time()
-
         if not self.conn: logging.error("No DB connection for Turtle dump"); return
         logging.info(f"Building graph for Turtle file: {file_path}")
 
@@ -253,13 +256,9 @@ class OntologyBuilder:
 
         self.graph_manager.add_pos_tag_classes(self.g)
 
-        end = time.time()
-        self.benchmarking.add_row(self.run_id, f"Graph building", end - start)
-        self.serialise_graph(file_path, file_path.split('.')[-1], self.g)
-
+    @timer
     def serialise_graph(self, file_path, ont_format, g):
         try:
-            start = time.time()
             file_path = f"ontologies/{file_path}"
 
             if not os.path.isdir('ontologies'):
@@ -271,9 +270,6 @@ class OntologyBuilder:
 
             if self.config['general'].get('show_stats', False):
                 logging.info(f"Final graph contains {len(g)} triples.")
-
-            end = time.time()
-            self.benchmarking.add_row(self.run_id, f"Graph dumping", end - start)
 
             if ont_format == 'nt' and self.convert:
                 logging.info(f"Converting '{file_path}' to .ttl")
@@ -300,6 +296,7 @@ def run_process(config, run_id, benchmarking):
             clusterer.run()
 
         builder.build_graph_from_db(output_file)
+        builder.serialise_graph(output_file, output_file.split('.')[-1], builder.graph_manager.g)
     elif builder.mode == 'graph':
         final_g = builder.graph_manager.g
 

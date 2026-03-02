@@ -71,7 +71,7 @@ class AbstractLoader(ABC):
     def does_term_matches_language(self, lang):
         return self.config['general']['language'] == lang
 
-    @timer(log=False, threaded=False, independent=False, memory=False)
+    @timer(log=False, threaded=False, independent=True, memory=False)
     @lru_cache(maxsize=1024)
     def normalise_data(self, term, pos):
         if self.graph_manager.normalise_pos:
