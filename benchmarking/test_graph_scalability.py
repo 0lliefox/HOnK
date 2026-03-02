@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import sys
@@ -107,6 +108,9 @@ def run_experiment(input_file, config, fractions):
 
         except Exception as e:
             logging.error(f"Error during clustering: {e}")
+
+        del subset_graph
+        gc.collect()
 
 def main():
     parser = argparse.ArgumentParser(description="Test scalability of graph clustering.")
