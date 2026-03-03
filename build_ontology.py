@@ -1,8 +1,6 @@
 import argparse
 import logging
 import os
-import subprocess
-import time
 from collections import defaultdict
 
 import psycopg2
@@ -273,8 +271,14 @@ class OntologyBuilder:
 
             if ont_format == 'nt' and self.convert:
                 logging.info(f"Converting '{file_path}' to .ttl")
-                result = subprocess.run(['rapper', '-i', "ntriples", "-o", 'turtle', file_path], capture_output=True,
-                                        text=True, check=True)
+
+                project_root = os.path.dirname(os.path.abspath(__file__))
+                rapper_path = os.path.join(project_root, 'raptor', 'bin', 'rapper')
+
+                if not os.path.exists(rapper_path):
+                    logging.error(f"Rapper not found at {rapper_path}. Run install_raptor.sh")
+                    return
+
                 output_file_path = file_path.replace('.nt', '.ttl')
                 with open(output_file_path, 'w') as f:
                     f.write(result.stdout)

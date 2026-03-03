@@ -176,7 +176,7 @@ def main(num_runs=1):
         run_experiment(config, TEST_FRACTIONS)
 
     os.chdir('benchmarking')
-    file_path = 'results/clustering_benchmark.csv'
+    file_path = 'graph_benchmarking/results/clustering_benchmark.csv'
     plotter = ResultsPlotter(file_path)
     plotter.run()
 
