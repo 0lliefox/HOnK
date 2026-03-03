@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import subprocess
 from collections import defaultdict
 
 import psycopg2
@@ -279,10 +280,22 @@ class OntologyBuilder:
                     logging.error(f"Rapper not found at {rapper_path}. Run install_raptor.sh")
                     return
 
-                output_file_path = file_path.replace('.nt', '.ttl')
-                with open(output_file_path, 'w') as f:
-                    f.write(result.stdout)
-                logging.info(f"Successfully saved ontology to '{output_file_path}'")
+                try:
+                    result = subprocess.run(
+                        [rapper_path, '-i', "ntriples", "-o", 'turtle', file_path],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+
+                    output_file_path = file_path.replace('.nt', '.ttl')
+                    with open(output_file_path, 'w') as f:
+                        f.write(result.stdout)
+                    logging.info(f"Successfully saved ontology to '{output_file_path}'")
+
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"Rapper crashed with Exit Code: {e.returncode}")
+                    logging.error(f"Rapper error log: \n{e.stderr}")
         except Exception as e:
             logging.error(f"Failed to write Turtle file: {e}")
 
