@@ -193,8 +193,10 @@ class AbstractLoader(ABC):
             if db_urls: self.db_manager.add_urls_bulk(db_urls, cursor)
             if db_props: self.db_manager.add_properties_bulk(db_props, cursor)
 
+            # Commit the transaction immediately to free up server RAM
+            self.conn.commit()
+
         elif self.mode == 'graph':
-            # Loop through graph operations and add them directly
             for term, pos in self.batch_concepts:
                 self.graph_manager.add_concept_to_graph(term, pos)
             for st, sp, et, ep, rel, w in self.batch_relations:
