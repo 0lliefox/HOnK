@@ -83,15 +83,10 @@ class WordNetLoader(AbstractLoader):
             logging.error(f"WordNet file not found at '{filepath}'")
 
     def store_data(self, synset_data):
-        if not synset_data:
-            return
+        synset_item_to_db_id = {}
 
         def iterate_over_file(cursor=None):
             logging.info("Processing and inserting WordNet concepts...")
-
-            synset_uri_to_term_pos = defaultdict(list)
-
-            # --- PHASE 1: Concepts and Internal Relations ---
             for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts",
                                          disable=not self.verbose):
                 if '#Component' in synset_uri:
@@ -101,32 +96,52 @@ class WordNetLoader(AbstractLoader):
                     component_to_relate = component_parts[int(component_split[1]) - 1]
                     full_component_label = ' '.join(component_parts)
 
-                    norm_full_comp, norm_full_pos = self.queue_concept(full_component_label, 'Phrase')
-                    synset_uri_to_term_pos[synset_uri].append((norm_full_comp, norm_full_pos))
+                    # Using old DB inserts
+                    full_component_db_id = self.get_or_create_concept(full_component_label, 'Phrase', cursor)
 
                     tagged_phrase = nltk.pos_tag(word_tokenize(full_component_label))
                     if tagged_phrase[component_index][0].lower() == component_to_relate.lower():
                         nltk_pos = tagged_phrase[component_index][1]
                     else:
+                        # Search for the word incase index doesn't match
                         for word, tag in tagged_phrase:
                             if word.lower() == component_to_relate.lower():
                                 nltk_pos = tag
                                 break
 
-                    pos_classes = self.graph_manager.pos_tag_mappings[nltk_pos][
-                        'classes'] if 'classes' in self.graph_manager.pos_tag_mappings.get(nltk_pos, {}) else [nltk_pos]
+                    if 'classes' in self.graph_manager.pos_tag_mappings.get(nltk_pos, {}):
+                        pos_classes = self.graph_manager.pos_tag_mappings[nltk_pos]['classes']
+                    else:
+                        pos_classes = [nltk_pos]
 
                     for pos_class in pos_classes:
-                        norm_comp, norm_comp_pos = self.queue_concept(component_to_relate, pos_class)
-                        self.queue_relation(norm_full_comp, norm_full_pos, norm_comp, norm_comp_pos,
-                                            'compositeFormWith', 1.0)
+                        component_to_relate_db_id = self.get_or_create_concept(component_to_relate, pos_class, cursor)
+
+                        self.add_relation({
+                            'id': full_component_db_id,
+                            'term': full_component_label,
+                            'pos': 'Phrase'
+                        },
+                            {
+                                'id': component_to_relate_db_id,
+                                'term': component_to_relate,
+                                'pos': pos_class
+                            },
+                            'compositeFormWith', 1.0, cursor)
 
                         if isinstance(pos_classes, dict) and 'properties' in pos_classes.get(pos_class, {}):
                             for prop in pos_classes[pos_class]['properties']:
-                                self.queue_property(norm_comp, norm_comp_pos, prop, True)
+                                self.add_property(
+                                    {
+                                        'id': component_to_relate_db_id,
+                                        'term': component_to_relate
+                                    },
+                                    prop, True, cursor)
                 else:
                     if data['pos'] == 'phrase':
-                        pos = self.get_mapped_pos(data['phrase_type']) if data['phrase_type'] else 'Phrase'
+                        pos = 'Phrase'
+                        if data['phrase_type']:
+                            pos = self.get_mapped_pos(data['phrase_type'])
                     elif data['lexical_domain'] == '':
                         pos = self.get_mapped_pos(data['pos'])
                     else:
@@ -135,66 +150,100 @@ class WordNetLoader(AbstractLoader):
                     if (pos == '' or pos.lower() == data['pos']) and data['lexical_domain'] != '':
                         lexical_pos, lexical_domain = data['lexical_domain'].split('.')
                         pos = self.get_mapped_pos(lexical_pos)
-                        norm_lex_domain, norm_lex_pos = self.queue_concept(lexical_domain, pos)
+                        lexical_domain_db_id = self.get_or_create_concept(lexical_domain, pos, cursor)
                     else:
                         if data['phrase_type'] == '':
                             pos = data['pos']
                         lexical_domain = None
 
-                    lemma_term_pos_list = []
-                    for term, uri in data['lemmas'].items():
-                        norm_term, norm_pos = self.queue_concept(term, pos)
-                        lemma_term_pos_list.append((norm_term, norm_pos))
-                        synset_uri_to_term_pos[synset_uri].append((norm_term, norm_pos))
+                    lemma_db_ids = [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in
+                                    data['lemmas'].items()]
 
-                        self.queue_url(norm_term, norm_pos, data['lemmas'][term])
+                    for idx, db_info in enumerate(lemma_db_ids):
+                        db_id, term = db_info
+                        synset_item_to_db_id[synset_uri, list(data['lemmas'])[idx]] = [db_id, term, pos]
+
+                        self.add_url({'id': db_id, 'term': term, 'pos': pos}, data['lemmas'][list(data['lemmas'])[idx]],
+                                     cursor)
 
                         if lexical_domain:
-                            self.queue_relation(norm_term, norm_pos, norm_lex_domain, norm_lex_pos, 'relatedTo', 1.0)
+                            self.add_relation(
+                                {
+                                    'id': db_id,
+                                    'term': term,
+                                    'pos': pos
+                                },
+                                {
+                                    'id': lexical_domain_db_id,
+                                    'term': lexical_domain,
+                                    'pos': pos
+                                },
+                                'relatedTo', 1.0, cursor)
 
-                    if len(lemma_term_pos_list) > 1:
-                        for i in range(len(lemma_term_pos_list)):
-                            for j in range(i + 1, len(lemma_term_pos_list)):
-                                self.queue_relation(
-                                    lemma_term_pos_list[i][0], lemma_term_pos_list[i][1],
-                                    lemma_term_pos_list[j][0], lemma_term_pos_list[j][1],
-                                    'eq', 1.0)
+                    if len(lemma_db_ids) > 1:
+                        for i in range(len(lemma_db_ids)):
+                            for j in range(i + 1, len(lemma_db_ids)):
+                                self.add_relation({
+                                    'id': lemma_db_ids[i][0],
+                                    'term': lemma_db_ids[i][1],
+                                    'pos': pos
+                                },
+                                    {
+                                        'id': lemma_db_ids[j][0],
+                                        'term': lemma_db_ids[j][1],
+                                        'pos': pos
+                                    }, 'eq', 1.0, cursor)
 
-                if len(self.batch_concepts) >= self.batch_size:
-                    self.flush_batch(cursor)
+            synset_uri_to_db_ids = defaultdict(list)
+            for (synset_uri, lemma), db_id in synset_item_to_db_id.items():
+                synset_uri_to_db_ids[synset_uri].append(db_id)
 
-            self.flush_batch(cursor)
-
-            # --- PHASE 2: Cross-Synset Relationships ---
             logging.info("Adding mapped semantic relationships...")
             for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations",
                                          disable=not self.verbose):
-                for rel_fragment, related_uri in data['relations']:
-                    start_nodes = synset_uri_to_term_pos.get(synset_uri, [])
-                    end_nodes = synset_uri_to_term_pos.get(related_uri, [])
+                for lemma, uri in data['lemmas'].items():
+                    l_key = synset_uri, lemma
+                    if l_key not in synset_item_to_db_id: continue
+                    for rel_fragment, related_uri in data['relations']:
+                        related_db_ids = synset_uri_to_db_ids.get(related_uri, [])
+                        if len(related_db_ids) == 0: continue
 
-                    if not start_nodes or not end_nodes: continue
+                        mapping = self.mappings.get(rel_fragment.lower())
+                        if not mapping: continue
 
-                    mapping = self.mappings.get(rel_fragment.lower())
-                    if not mapping: continue
+                        rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap',
+                                                                                                              False)
+                        if not rel: continue
 
-                    rel, swap = mapping.get('rel'), mapping.get('swap', False)
-                    if not rel: continue
-
-                    for s_term, s_pos in start_nodes:
-                        for e_term, e_pos in end_nodes:
-                            self.queue_concept(s_term, s_pos)
-                            self.queue_concept(e_term, e_pos)
+                        for related_id in related_db_ids:
+                            start_id, end_id = synset_item_to_db_id[l_key], related_id
 
                             if swap:
-                                self.queue_relation(e_term, e_pos, s_term, s_pos, rel, 1.0)
+                                self.add_relation(
+                                    {
+                                        'id': end_id[0],
+                                        'term': end_id[1],
+                                        'pos': end_id[2]
+                                    },
+                                    {
+                                        'id': start_id[0],
+                                        'term': start_id[1],
+                                        'pos': start_id[2]
+                                    },
+                                    rel, 1.0, cursor)
                             else:
-                                self.queue_relation(s_term, s_pos, e_term, e_pos, rel, 1.0)
-
-                if len(self.batch_concepts) >= self.batch_size:
-                    self.flush_batch(cursor)
-
-            self.flush_batch(cursor)
+                                self.add_relation(
+                                    {
+                                        'id': start_id[0],
+                                        'term': start_id[1],
+                                        'pos': start_id[2]
+                                    },
+                                    {
+                                        'id': end_id[0],
+                                        'term': end_id[1],
+                                        'pos': end_id[2]
+                                    },
+                                    rel, 1.0, cursor)
 
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
@@ -272,23 +321,23 @@ class WordNetLoader(AbstractLoader):
                     SELECT ?synset ?lemma ?definition ?pos ?lexical_domain ?synset_member ?phrase_type
                     WHERE {
                         ?synset rdf:type wnp:Synset .
-    
+
                         ?synset rdfs:label ?lemma . 
                         FILTER(langMatches(lang(?lemma), "eng"))
-    
+
                         ?synset wnp:gloss ?definition . 
                         FILTER(langMatches(lang(?definition), "eng"))
-    
+
                         ?synset wnp:part_of_speech ?pos_uri .
                         ?synset wnp:synset_member ?synset_member .
-    
+
                         BIND(STRAFTER(STR(?pos_uri), STR(wnp:)) AS ?pos)
-    
+
                         OPTIONAL {
                             ?synset wnp:lexical_domain ?raw_lexical_domain .
                             BIND(STRAFTER(STR(?raw_lexical_domain), STR(wnp:)) AS ?lexical_domain)
                         }
-    
+
                         OPTIONAL {
                             ?synset wnp:phrase_type ?raw_phrase_type .
                             BIND(STRAFTER(STR(?raw_phrase_type), STR(wnp:)) AS ?phrase_type)
