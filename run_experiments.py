@@ -6,7 +6,7 @@ import argparse
 import copy
 
 CONFIG_FILE = "config.yaml"
-CONFIGURATIONS_FILE = "configurations.json"
+CONFIGURATIONS_FILE = "configurations_combined.json.json"
 
 def deep_merge(base, overrides):
     for key, value in overrides.items():

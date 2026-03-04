@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from psycopg2.extras import execute_values
 
 from tools.timer import timer

@@ -89,7 +89,7 @@ class WordNetLoader(AbstractLoader):
         def iterate_over_file(cursor=None):
             logging.info("Processing and inserting WordNet concepts...")
 
-            # Map synset_uris directly to their normalized terms/poses (instead of DB IDs)
+            # Map synset_uris directly to their normalised terms/poses (instead of DB IDs)
             synset_uri_to_term_pos = defaultdict(list)
 
             # --- PHASE 1: Concepts and Internal Relations ---
@@ -164,9 +164,9 @@ class WordNetLoader(AbstractLoader):
                 if len(self.batch_concepts) >= self.batch_size:
                     self.flush_batch(cursor)
 
-            self.flush_batch(cursor) # Final flush for Phase 1
+            self.flush_batch(cursor)  # Final flush for Phase 1
 
-            # --- PHASE 2: Cross-Synset Relationships ---
+            # Cross-Synset Relationships
             logging.info("Adding mapped semantic relationships...")
             for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations", disable=not self.verbose):
                 for rel_fragment, related_uri in data['relations']:
@@ -183,7 +183,7 @@ class WordNetLoader(AbstractLoader):
 
                     for s_term, s_pos in start_nodes:
                         for e_term, e_pos in end_nodes:
-                            # CRITICAL: We must queue the concepts again here so `flush_batch`
+                            # We must queue the concepts again here so `flush_batch`
                             # knows to fetch their DB IDs to construct the relations.
                             self.queue_concept(s_term, s_pos)
                             self.queue_concept(e_term, e_pos)
@@ -197,7 +197,7 @@ class WordNetLoader(AbstractLoader):
                 if len(self.batch_concepts) >= self.batch_size:
                     self.flush_batch(cursor)
 
-            self.flush_batch(cursor) # Final flush for Phase 2
+            self.flush_batch(cursor)  # Final flush for Phase 2
 
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
