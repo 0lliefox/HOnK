@@ -16,8 +16,9 @@ general:
   mode: 'graph'  # graph / db
   should_cache: true
   unique_source: false
-  show_stats: true
+  show_stats: false
   verbose: false
+  batch_size: 10000
 
 local_files:
   supporting_files: 'supporting_files'

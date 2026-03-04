@@ -41,10 +41,11 @@ class ParmenidesLoader(AbstractLoader):
             self.create_concepts(data['wh'], cursor, True)
             self.create_concepts(data['predeterminers'], cursor, True)
 
+            self.flush_batch(cursor)
+
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
                 iterate_over_files(cursor)
-
                 self.conn.commit()
         else:
             iterate_over_files()
@@ -56,17 +57,23 @@ class ParmenidesLoader(AbstractLoader):
                 pos = self.get_class_name(path, trim)
                 if path.endswith('.txt'):
                     for line in dep:
-                        line = line.strip()
-                        self.get_or_create_concept(line, pos, cursor)
-                    dep.close()
+                        term = line.strip()
+                        self.queue_concept(term, pos)
+
+                        if len(self.batch_concepts) >= self.batch_size:
+                            self.flush_batch(cursor)
+
                 elif path.endswith('.json'):
                     lines = json.load(dep)
                     for term, v in lines.items():
                         if not term.startswith("__"):
-                            c_id = self.get_or_create_concept(term, pos, cursor)
-                            for prop in v:
-                                self.add_property({'id': c_id, 'term': term}, prop, v[prop], cursor)
-                    dep.close()
+                            norm_term, norm_pos = self.queue_concept(term, pos)
+
+                            for prop_type, prop_value in v.items():
+                                self.queue_property(norm_term, norm_pos, prop_type, prop_value)
+
+                            if len(self.batch_concepts) >= self.batch_size:
+                                self.flush_batch(cursor)
 
     def list_files(self, folder) -> list[str]:
         new_folder = f"{self.config['local_files']['parmenides']}{folder}"

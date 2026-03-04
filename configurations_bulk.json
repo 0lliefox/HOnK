@@ -1,0 +1,66 @@
+[
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false,
+        "batch_size": 10000
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_10000_db_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false,
+        "batch_size": 25000
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_25000_db_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false,
+        "batch_size": 50000
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_50000_db_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false,
+        "batch_size": 100000
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_100000_db_clustered_final.nt"
+      }
+    }
+  }
+]

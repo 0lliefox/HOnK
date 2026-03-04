@@ -94,7 +94,7 @@ class GraphManager:
             if len(children[child]) > 0 and 'sameAs' in children[child]:
                 self.equivalent_classes[child] = [child, children[child]['sameAs']]
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_concept_to_graph(self, term, pos, cid=None):
         if pos.lower() in self.rejected_classes:
             return
@@ -108,7 +108,7 @@ class GraphManager:
             self.g.add((uri, RDF.type, self.ns[i_pos]))
         self.g.add((uri, RDFS.label, Literal(term, datatype=XSD.string)))
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None):
         try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
@@ -177,7 +177,7 @@ class GraphManager:
         s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
         self.g.add((s, rel_uri, t))
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_property_to_graph(self, c_type, c_value, term=None, cid=None):
         if cid is not None and cid in self.id_to_uri:
             concept_uri = self.id_to_uri[cid]
@@ -198,7 +198,7 @@ class GraphManager:
             self.g.add((concept_uri, prop_uri, Literal(c_value)))
             self.g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_url_to_graph(self, concept_uri, url, pos):
         self.g.add((concept_uri, self.ns.hasURL, Literal(f"{url}=={pos}")))
 

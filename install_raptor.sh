@@ -21,6 +21,6 @@ make install
 
 echo "Cleaning up temporary build files..."
 cd ..
-rm -rf raptor2-2.0.15 raptor2-2.0.15.tar.gz
+rm -rf raptor2-2.0.16 raptor2-2.0.16.tar.gz
 
 echo "Success! Rapper is ready to use at: $INSTALL_DIR/bin/rapper"

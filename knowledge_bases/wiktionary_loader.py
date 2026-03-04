@@ -115,40 +115,33 @@ class WiktionaryLoader(AbstractLoader):
                     logging.warning(f"No POS tags found for '{term}'")
                     continue
 
-                for pos in found_poses:
-                    main_concept_id = self.get_or_create_concept(term, pos, cursor)
-                    if not main_concept_id and self.mode == 'db':
-                        continue
+                for current_pos in found_poses:
+                    # Queue the main concept
+                    norm_term, norm_pos = self.queue_concept(term, current_pos)
 
-                    # if definitions:
-                    #     full_definition = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(definitions))
-                    #     self.add_undirected(main_concept_id, 'definition', full_definition, cursor)
-
+                    # Queue relationships (edges)
                     for class_type in list(self.edge_mappings.keys()):
                         for c_item in [s_obj.get('word') for s_obj in data.get(class_type, []) if s_obj.get('word')]:
                             if class_type in {'related', 'derived'}:
                                 c_item_pos = word_to_pos.get(c_item, [])
                             else:
-                                c_item_pos = [pos]
+                                c_item_pos = [current_pos]
 
                             for c_pos in c_item_pos:
-                                c_id = self.get_or_create_concept(c_item, c_pos, cursor)
-                                if (c_id and self.mode == 'db') or self.mode == 'graph':
-                                    self.add_relation(
-                                        {
-                                            'id': main_concept_id,
-                                            'term': term,
-                                            'pos': pos
-                                        },
-                                        {
-                                            'id': c_id,
-                                            'term': c_item,
-                                            'pos': c_pos
-                                        },
-                                        class_type, 1.0, cursor)
+                                # Queue the related concept and then link them
+                                norm_c_item, norm_c_pos = self.queue_concept(c_item, c_pos)
+                                self.queue_relation(norm_term, norm_pos, norm_c_item, norm_c_pos, class_type, 1.0)
 
+                    # Queue properties
                     for prop in found_props:
-                        self.add_property({'id': main_concept_id, 'term': term}, prop, True, cursor)
+                        self.queue_property(norm_term, norm_pos, prop, True)
+
+                    # Flush if batch limit is reached
+                    if len(self.batch_concepts) >= self.batch_size:
+                        self.flush_batch(cursor)
+
+            # Flush any remaining items at the end of the JSON array
+            self.flush_batch(cursor)
 
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
