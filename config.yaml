@@ -67,4 +67,4 @@ turtle_export:
   base_prefix: "parmenides"
 
 clustering:
-  enabled: True
+  enabled: true

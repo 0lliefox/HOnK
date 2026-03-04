@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import nltk
 from nltk import word_tokenize
-from rdflib import Graph
+import pyoxigraph
 from tqdm import tqdm
 
 from .abstract_loader import AbstractLoader
@@ -36,8 +36,6 @@ class WordNetLoader(AbstractLoader):
                 else:
                     nltk.data.find(f'taggers/{nltk_package}')
             except LookupError:
-                # Check if we are on a login node
-                # or compute node
                 if os.environ.get('SLURM_JOB_ID'):
                     logging.error(
                         f"NLTK resource '{nltk_package}' missing on compute node. "
@@ -56,22 +54,23 @@ class WordNetLoader(AbstractLoader):
                 logging.info(f"Loading WordNet data from file: '{filepath}'...")
                 g = self.pickle_manager.load(filepath)
                 if not g:
-                    g = Graph()
+                    g = pyoxigraph.Store()
                     logging.info("Parsing WordNet file (this may take a few minutes)...")
 
                     file_extension = os.path.splitext(filepath)[1].lower()
-                    if file_extension == '.ttl':
-                        file_format = 'turtle'
+                    if file_extension in ['.ttl', '.turtle']:
+                        rdf_format = pyoxigraph.RdfFormat.TURTLE
                     elif file_extension == '.nt':
-                        file_format = 'nt'
+                        rdf_format = pyoxigraph.RdfFormat.N_TRIPLES
                     else:
                         logging.warning(
                             f"Unknown WordNet file extension '{file_extension}'. Attempting to parse as Turtle.")
-                        file_format = 'turtle'
+                        rdf_format = pyoxigraph.RdfFormat.TURTLE
 
-                    g.parse(filepath, format=file_format)
+                    with open(filepath, 'rb') as f:
+                        g.load(f, format=rdf_format)
 
-                    logging.info(f"Finished parsing WordNet file. Found {len(g)} triples.")
+                    logging.info("Finished parsing WordNet file.")
                     self.pickle_manager.save(filepath, g)
 
                 synset_data = self.get_synsets(g)
@@ -84,17 +83,17 @@ class WordNetLoader(AbstractLoader):
             logging.error(f"WordNet file not found at '{filepath}'")
 
     def store_data(self, synset_data):
-        synset_item_to_db_id = {}
+        if not synset_data:
+            return
 
         def iterate_over_file(cursor=None):
             logging.info("Processing and inserting WordNet concepts...")
 
-            # Map synset_uris directly to their normalised terms/poses (instead of DB IDs)
+            # Map synset_uris directly to their normalized terms/poses (instead of DB IDs)
             synset_uri_to_term_pos = defaultdict(list)
 
-            # Concepts and Internal Relations
-            for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts",
-                                         disable=not self.verbose):
+            # --- PHASE 1: Concepts and Internal Relations ---
+            for synset_uri, data in tqdm(synset_data.items(), desc="Inserting WordNet Concepts", disable=not self.verbose):
                 if '#Component' in synset_uri:
                     component_split = synset_uri.split('#Component-')
                     component_index = int(component_split[1]) - 1
@@ -115,13 +114,11 @@ class WordNetLoader(AbstractLoader):
                                 nltk_pos = tag
                                 break
 
-                    pos_classes = self.graph_manager.pos_tag_mappings[nltk_pos][
-                        'classes'] if 'classes' in self.graph_manager.pos_tag_mappings.get(nltk_pos, {}) else [nltk_pos]
+                    pos_classes = self.graph_manager.pos_tag_mappings[nltk_pos]['classes'] if 'classes' in self.graph_manager.pos_tag_mappings.get(nltk_pos, {}) else [nltk_pos]
 
                     for pos_class in pos_classes:
                         norm_comp, norm_comp_pos = self.queue_concept(component_to_relate, pos_class)
-                        self.queue_relation(norm_full_comp, norm_full_pos, norm_comp, norm_comp_pos,
-                                            'compositeFormWith', 1.0)
+                        self.queue_relation(norm_full_comp, norm_full_pos, norm_comp, norm_comp_pos, 'compositeFormWith', 1.0)
 
                         if isinstance(pos_classes, dict) and 'properties' in pos_classes.get(pos_class, {}):
                             for prop in pos_classes[pos_class]['properties']:
@@ -167,12 +164,11 @@ class WordNetLoader(AbstractLoader):
                 if len(self.batch_concepts) >= self.batch_size:
                     self.flush_batch(cursor)
 
-            self.flush_batch(cursor)  # Final flush for Phase 1
+            self.flush_batch(cursor) # Final flush for Phase 1
 
-            # Cross-Synset Relationships
+            # --- PHASE 2: Cross-Synset Relationships ---
             logging.info("Adding mapped semantic relationships...")
-            for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations",
-                                         disable=not self.verbose):
+            for synset_uri, data in tqdm(synset_data.items(), desc="Adding WordNet Relations", disable=not self.verbose):
                 for rel_fragment, related_uri in data['relations']:
                     start_nodes = synset_uri_to_term_pos.get(synset_uri, [])
                     end_nodes = synset_uri_to_term_pos.get(related_uri, [])
@@ -187,8 +183,8 @@ class WordNetLoader(AbstractLoader):
 
                     for s_term, s_pos in start_nodes:
                         for e_term, e_pos in end_nodes:
-                            # We must queue the concepts again here so flush_batch
-                            # knows to fetch their DB IDs to construct the relations
+                            # CRITICAL: We must queue the concepts again here so `flush_batch`
+                            # knows to fetch their DB IDs to construct the relations.
                             self.queue_concept(s_term, s_pos)
                             self.queue_concept(e_term, e_pos)
 
@@ -201,7 +197,7 @@ class WordNetLoader(AbstractLoader):
                 if len(self.batch_concepts) >= self.batch_size:
                     self.flush_batch(cursor)
 
-            self.flush_batch(cursor)  # Final flush for Phase 2
+            self.flush_batch(cursor) # Final flush for Phase 2
 
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
@@ -226,12 +222,12 @@ class WordNetLoader(AbstractLoader):
                         }}
                     """
             try:
-                relation_results = g.query(relation_query)
+                relation_results = list(g.query(relation_query))
                 total_relations_found += len(relation_results)
                 for row in relation_results:
-                    synset_uri = str(row.synset)
+                    synset_uri = row['synset'].value
                     if synset_uri in synset_data:
-                        related_synset_uri = str(row.related_synset)
+                        related_synset_uri = row['related_synset'].value
                         synset_data[synset_uri]['relations'].add((rel_fragment, related_synset_uri))
             except Exception as e:
                 logging.warning(f"Could not query for relation '{rel_fragment}': {e}")
@@ -254,11 +250,11 @@ class WordNetLoader(AbstractLoader):
                     }
                 """
         logging.info("Querying for WordNet Components...")
-        component_results = g.query(component_query)
+        component_results = list(g.query(component_query))
         logging.info(f"Found {len(component_results)} Component rows.")
 
         for row in tqdm(component_results, desc="Aggregating Component Data", disable=not self.verbose):
-            component_uri = str(row.component)
+            component_uri = row['component'].value
             if component_uri not in synset_data:
                 synset_data[component_uri] = {
                     'lemmas': dict(),
@@ -268,7 +264,7 @@ class WordNetLoader(AbstractLoader):
                     'phrase_type': "",
                     'relations': set()
                 }
-            synset_data[component_uri]['lemmas'][str(row.lemma)] = component_uri
+            synset_data[component_uri]['lemmas'][row['lemma'].value] = component_uri
 
     def get_synsets(self, g):
         core_data_query = """
@@ -279,44 +275,54 @@ class WordNetLoader(AbstractLoader):
                     SELECT ?synset ?lemma ?definition ?pos ?lexical_domain ?synset_member ?phrase_type
                     WHERE {
                         ?synset rdf:type wnp:Synset .
-                        ?synset rdfs:label ?lemma . FILTER(langMatches(lang(?lemma), "eng")) .
-                        ?synset wnp:gloss ?definition . FILTER(langMatches(lang(?definition), "eng")) .
+
+                        ?synset rdfs:label ?lemma . 
+                        FILTER(langMatches(lang(?lemma), "eng"))
+
+                        ?synset wnp:gloss ?definition . 
+                        FILTER(langMatches(lang(?definition), "eng"))
+
                         ?synset wnp:part_of_speech ?pos_uri .
                         ?synset wnp:synset_member ?synset_member .
-                        BIND(STRAFTER(STR(?pos_uri), STR(wnp:)) AS ?pos) .
+
+                        BIND(STRAFTER(STR(?pos_uri), STR(wnp:)) AS ?pos)
 
                         OPTIONAL {
-                            ?synset wnp:lexical_domain ?lexical_domain .
-                            BIND(STRAFTER(STR(?lexical_domain), STR(wnp:)) AS ?lexical_domain) .
-                        }
-                        
-                        OPTIONAL {
-                            ?synset wnp:phrase_type ?phrase_type .
-                            BIND(STRAFTER(STR(?phrase_type), STR(wnp:)) AS ?phrase_type) .
+                            ?synset wnp:lexical_domain ?raw_lexical_domain .
+                            BIND(STRAFTER(STR(?raw_lexical_domain), STR(wnp:)) AS ?lexical_domain)
                         }
 
-                        # BIND(IF(BOUND(?lexical_domain) && ?lexical_domain != 'unlabeled', ?lexical_domain, ?pos_fallback) AS ?pos) .
+                        OPTIONAL {
+                            ?synset wnp:phrase_type ?raw_phrase_type .
+                            BIND(STRAFTER(STR(?raw_phrase_type), STR(wnp:)) AS ?phrase_type)
+                        }
                     }
                 """
         logging.info("Querying for core WordNet concepts...")
-        core_results = g.query(core_data_query)
+        core_results = list(g.query(core_data_query))
         logging.info(f"Found {len(core_results)} core concept rows.")
 
         synset_data = {}
         for row in tqdm(core_results, desc="Aggregating Core Data", disable=not self.verbose):
-            synset_uri = str(row.synset)
+            synset_uri = row['synset'].value
+            lemma_val = row['lemma'].value
+            synset_member_val = row['synset_member'].value
+
             if synset_uri not in synset_data:
                 synset_data[synset_uri] = {
                     'lemmas': dict(),
-                    'definition': str(row.definition),
-                    'pos': str(row.pos),
-                    'lexical_domain': str(row.get('lexical_domain', '')),
-                    'phrase_type': str(row.get('phrase_type', '')),
+                    'definition': row['definition'].value,
+                    'pos': row['pos'].value,
+                    # Safely check Pyoxigraph's OPTIONAL bindings without .get()
+                    'lexical_domain': row['lexical_domain'].value if row['lexical_domain'] is not None else '',
+                    'phrase_type': row['phrase_type'].value if row['phrase_type'] is not None else '',
                     'relations': set()
                 }
-            if str(row.lemma).replace(" ", "+") == str(row.synset_member).split('/')[-1][:-2]:
-                synset_data[synset_uri]['lemmas'][str(row.lemma)] = str(row.synset_member)
+
+            if lemma_val.replace(" ", "+") == synset_member_val.split('/')[-1][:-2]:
+                synset_data[synset_uri]['lemmas'][lemma_val] = synset_member_val
             else:
                 if len(synset_data[synset_uri]['lemmas']) == 0:
-                    synset_data[synset_uri]['lemmas'][str(row.lemma)] = synset_uri
+                    synset_data[synset_uri]['lemmas'][lemma_val] = synset_uri
+
         return synset_data

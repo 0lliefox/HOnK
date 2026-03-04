@@ -5,6 +5,7 @@ import subprocess
 from collections import defaultdict
 
 import psycopg2
+import pyoxigraph
 from psycopg2._psycopg import AsIs
 from tqdm import tqdm
 
@@ -174,17 +175,14 @@ class OntologyBuilder:
                        )
                     ''')
 
+                # Implement Foreign Key and Relation Indexes for rapid batch ON CONFLICT checks and graph traversal
                 cursor.execute('''
-                               CREATE INDEX IF NOT EXISTS idx_relations_start_concept ON relations(start_concept_id);
-                               CREATE INDEX IF NOT EXISTS idx_relations_end_concept ON relations(end_concept_id);
-                               CREATE INDEX IF NOT EXISTS idx_properties_concept_id ON properties(concept_id);
-                               CREATE INDEX IF NOT EXISTS idx_urls_concept_id ON urls(concept_id);
-                               ''')
-
-                # Index relation_type for faster filtering by edge type
-                cursor.execute('''
-                               CREATE INDEX IF NOT EXISTS idx_relations_type ON relations(relation_type);
-                               ''')
+                    CREATE INDEX IF NOT EXISTS idx_relations_start_concept ON relations(start_concept_id);
+                    CREATE INDEX IF NOT EXISTS idx_relations_end_concept ON relations(end_concept_id);
+                    CREATE INDEX IF NOT EXISTS idx_properties_concept_id ON properties(concept_id);
+                    CREATE INDEX IF NOT EXISTS idx_urls_concept_id ON urls(concept_id);
+                    CREATE INDEX IF NOT EXISTS idx_relations_type ON relations(relation_type);
+                ''')
 
                 self.conn.commit()
                 logging.info("Database tables are set up")
@@ -277,7 +275,13 @@ class OntologyBuilder:
                 os.mkdir('ontologies')
 
             logging.info("Serialising ontology")
-            g.serialize(destination=file_path, format=ont_format)
+
+            # Map Pyoxigraph MIME formats
+            rdf_format = pyoxigraph.RdfFormat.N_TRIPLES if ont_format == 'nt' else pyoxigraph.RdfFormat.TURTLE
+
+            with open(file_path, 'wb') as f:
+                g.dump(f, format=rdf_format, from_graph=pyoxigraph.DefaultGraph())
+
             logging.info(f"Successfully saved ontology to '{file_path}'")
 
             if self.config['general'].get('show_stats', False):
@@ -294,16 +298,18 @@ class OntologyBuilder:
                     return
 
                 try:
-                    result = subprocess.run(
-                        [rapper_path, '-i', "ntriples", "-o", 'turtle', file_path],
-                        capture_output=True,
-                        text=True,
-                        check=True
-                    )
-
                     output_file_path = file_path.replace('.nt', '.ttl')
+
+                    # Stream output directly to the file handler to skip memory loading
                     with open(output_file_path, 'w') as f:
-                        f.write(result.stdout)
+                        subprocess.run(
+                            [rapper_path, '-i', "ntriples", "-o", 'turtle', file_path],
+                            stdout=f,
+                            stderr=subprocess.PIPE,
+                            text=True,
+                            check=True
+                        )
+
                     logging.info(f"Successfully saved ontology to '{output_file_path}'")
 
                 except subprocess.CalledProcessError as e:

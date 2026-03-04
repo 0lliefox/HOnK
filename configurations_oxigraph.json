@@ -1,0 +1,65 @@
+[
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "graph",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "oxigraph_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "oxigraph_db_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "normalise_pos": true,
+        "output_file": "oxigraph_db_direct_to_turtle_clustered_final.ttl"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "convert": true,
+        "normalise_pos": true,
+        "output_file": "oxigraph_db_turtle_converted_clustered_final.nt"
+      }
+    }
+  }
+]
