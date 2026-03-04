@@ -1,26 +1,54 @@
 import urllib
 
-from rdflib import Namespace, URIRef, RDF, OWL, RDFS, Literal, Graph, XSD, BNode
+import pyoxigraph
+from pyoxigraph import NamedNode, Literal, BlankNode, Quad, DefaultGraph
+
+# Pre-define core RDF/OWL/RDFS/XSD NamedNodes
+RDF_TYPE = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+OWL_CLASS = NamedNode("http://www.w3.org/2002/07/owl#Class")
+OWL_OBJECTPROPERTY = NamedNode("http://www.w3.org/2002/07/owl#ObjectProperty")
+RDFS_COMMENT = NamedNode("http://www.w3.org/2000/01/rdf-schema#comment")
+RDFS_LABEL = NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
+RDFS_SUBCLASSOF = NamedNode("http://www.w3.org/2000/01/rdf-schema#subClassOf")
+XSD_STRING = NamedNode("http://www.w3.org/2001/XMLSchema#string")
+XSD_BOOLEAN = NamedNode("http://www.w3.org/2001/XMLSchema#boolean")
+XSD_INTEGER = NamedNode("http://www.w3.org/2001/XMLSchema#integer")
+XSD_DOUBLE = NamedNode("http://www.w3.org/2001/XMLSchema#double")
+
+
+class Namespace:
+    def __init__(self, base_uri):
+        self.base_uri = base_uri
+
+    def __getitem__(self, key):
+        return NamedNode(f"{self.base_uri}{key}")
+
+    def __getattr__(self, name):
+        # This catches dot notation (e.g., self.ns.hasURL)
+        return NamedNode(f"{self.base_uri}{name}")
+
+    def __add__(self, other):
+        return NamedNode(f"{self.base_uri}{other}")
 
 
 def literal(s: str):
-    return Literal(s, datatype=XSD.string)
+    return Literal(str(s), datatype=XSD_STRING)
 
 
 def boolean(s: bool):
-    return Literal(s, datatype=XSD.boolean)
+    return Literal("true" if s else "false", datatype=XSD_BOOLEAN)
 
 
-def integer(s: bool):
-    return Literal(s, datatype=XSD.integer)
+def integer(s: int):
+    return Literal(str(s), datatype=XSD_INTEGER)
 
 
 def double(s: float):
-    return Literal(s, datatype=XSD.double)
+    return Literal(str(s), datatype=XSD_DOUBLE)
 
 
 def onta(ns, s: str):
-    return URIRef(ns[urllib.parse.quote_plus(s)])
+    return NamedNode(f"{ns.base_uri}{urllib.parse.quote_plus(s)}")
 
 
 class ParmenidesBuild:
@@ -28,18 +56,18 @@ class ParmenidesBuild:
 
     def create_property(self, name, comment=None):
         if name not in self.relationships:
-            d_object = URIRef(ParmenidesBuild.parmenides_ns[name])
-            self.g.add((d_object, RDF.type, OWL.ObjectProperty))
+            d_object = ParmenidesBuild.parmenides_ns[name]
+            self.g.add(Quad(d_object, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
             self.relationships[name] = d_object
             if comment is not None:
-                self.g.add((d_object, RDFS.comment, Literal(comment)))
+                self.g.add(Quad(d_object, RDFS_COMMENT, literal(comment), DefaultGraph()))
         return self.relationships[name]
 
     def create_relationship(self, name, comment=None):
         if name not in self.relationships:
-            self.relationships[name] = URIRef(ParmenidesBuild.parmenides_ns[name])
+            self.relationships[name] = ParmenidesBuild.parmenides_ns[name]
             if comment is not None:
-                self.g.add((self.relationships[name], RDFS.comment, Literal(comment)))
+                self.g.add(Quad(self.relationships[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
         return self.relationships[name]
 
     def __init__(self, g):
@@ -47,8 +75,7 @@ class ParmenidesBuild:
         self.relationships = dict()
         self.g = g
         self.classes = dict()
-        self.g.bind("parmenides", ParmenidesBuild.parmenides_ns)
-        self.g.bind("rdfs", RDF)
+
         self.create_property("hasAdjective")
         self.create_property("subject")
         self.create_property("d_object")
@@ -69,7 +96,7 @@ class ParmenidesBuild:
         self.create_relationship("eqTo")
         self.create_relationship("neqTo")
 
-    def create_concept(self, full_name, type,
+    def create_concept(self, full_name, type_uri,
                        hasAdjective=None,
                        entryPoint=None,
                        subject=None,
@@ -77,127 +104,144 @@ class ParmenidesBuild:
                        entity_name=None,
                        composite_with=None, comment=None,
                        **kwargs):
-        if entity_name == None:
+        if entity_name is None:
             entity_name = full_name
-        ref = self.create_entity(full_name, type, label=entity_name)
-        if entryPoint == None:
+        ref = self.create_entity(full_name, type_uri, label=entity_name)
+
+        if entryPoint is None:
             entryPoint = ref
         else:
             assert entryPoint in self.names
             entryPoint = self.names[entryPoint]
-        self.g.add((ref, self.relationships["entryPoint"], entryPoint))
+
+        self.g.add(Quad(ref, self.relationships["entryPoint"], entryPoint, DefaultGraph()))
+
         from collections.abc import Iterable
-        if (hasAdjective != None) and (isinstance(hasAdjective, Iterable)):
+        if (hasAdjective is not None) and (isinstance(hasAdjective, Iterable)):
             assert hasAdjective in self.names
-            self.g.add((ref, self.relationships["hasAdjective"], self.names[hasAdjective]))
+            self.g.add(Quad(ref, self.relationships["hasAdjective"], self.names[hasAdjective], DefaultGraph()))
+
         if (d_object is not None):
             assert subject is not None
+
         if composite_with is not None:
             assert isinstance(composite_with, list)
             for composite in composite_with:
                 assert composite in self.names
-                self.g.add((ref, self.relationships["composite_form_with"], self.names[composite]))
+                self.g.add(Quad(ref, self.relationships["composite_form_with"], self.names[composite], DefaultGraph()))
+
         if subject is not None:
             assert subject in self.names
-            self.g.add((ref, self.relationships["subject"], self.names[subject]))
+            self.g.add(Quad(ref, self.relationships["subject"], self.names[subject], DefaultGraph()))
             if d_object is not None:
-                self.g.add((ref, self.relationships["d_object"], self.names[d_object]))
+                self.g.add(Quad(ref, self.relationships["d_object"], self.names[d_object], DefaultGraph()))
+
         for k, val in kwargs.items():
             if k not in self.relationships:
-                d_object = URIRef(ParmenidesBuild.parmenides_ns[k])
-                self.g.add((d_object, RDF.type, OWL.ObjectProperty))
-            result = literal(str(val))
+                d_obj = ParmenidesBuild.parmenides_ns[k]
+                self.g.add(Quad(d_obj, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
+                self.relationships[k] = d_obj
+
             if isinstance(val, bool):
                 result = boolean(val)
-            elif isinstance(val, str):
-                result = literal(val)
             elif isinstance(val, float):
                 result = double(val)
-            self.g.add((ref, self.relationships[k], result))
+            else:
+                result = literal(val)
+
+            self.g.add(Quad(ref, self.relationships[k], result, DefaultGraph()))
+
         if comment is not None:
-            self.g.add((ref, RDFS.comment, Literal(comment)))
+            self.g.add(Quad(ref, RDFS_COMMENT, literal(comment), DefaultGraph()))
         return ref
 
     def create_relationship_instance(self, src: str, rel: str, dst: str, refl=False):
         assert src in self.names
         assert dst in self.names
-        rel = self.create_relationship(rel)
-        self.g.add((self.names[src], rel, self.names[dst]))
+        rel_uri = self.create_relationship(rel)
+        self.g.add(Quad(self.names[src], rel_uri, self.names[dst], DefaultGraph()))
         if refl:
-            self.g.add((self.names[dst], rel, self.names[src]))
+            self.g.add(Quad(self.names[dst], rel_uri, self.names[src], DefaultGraph()))
 
-    def create_entity(self, name: str, clazzL=None, label=None, comment=None,
-                      **kwargs):
+    def create_entity(self, name: str, clazzL=None, label=None, comment=None, **kwargs):
         if label is None:
             label = name
         if name not in self.names:
             self.names[name] = onta(ParmenidesBuild.parmenides_ns, name)
-        if (clazzL is not None):
+
+        if clazzL is not None:
             if isinstance(clazzL, list):
                 for clazz in clazzL:
                     assert clazz in self.classes
-                    clazz = self.classes[clazz]
-                    self.g.add((self.names[name], RDF.type, clazz))
+                    clazz_uri = self.classes[clazz]
+                    self.g.add(Quad(self.names[name], RDF_TYPE, clazz_uri, DefaultGraph()))
             elif isinstance(clazzL, str):
-                self.g.add((self.names[name], RDF.type, ParmenidesBuild.parmenides_ns[clazzL]))
-            self.g.add((self.names[name], RDFS.label, literal(label)))
+                self.g.add(Quad(self.names[name], RDF_TYPE, ParmenidesBuild.parmenides_ns[clazzL], DefaultGraph()))
+
+            self.g.add(Quad(self.names[name], RDFS_LABEL, literal(label), DefaultGraph()))
+
         self.extract_properties(self.names[name], kwargs)
+
         if comment is not None:
-            self.g.add((self.names[name], RDFS.comment, Literal(comment)))
+            self.g.add(Quad(self.names[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
+
         return self.names[name]
 
     def extract_properties(self, obj_src, kwargs):
         for k, val in kwargs.items():
             if val is not None:
                 if k not in self.relationships:
-                    rel = URIRef(ParmenidesBuild.parmenides_ns[k])
-                    self.g.add((rel, RDF.type, OWL.ObjectProperty))
+                    rel = ParmenidesBuild.parmenides_ns[k]
+                    self.g.add(Quad(rel, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
                     self.relationships[k] = rel
-                result = literal(str(val))
+
                 if isinstance(val, dict):
-                    src_bnode = BNode()
-                    self.g.add((obj_src, self.relationships[k], src_bnode))
+                    src_bnode = BlankNode()
+                    self.g.add(Quad(obj_src, self.relationships[k], src_bnode, DefaultGraph()))
                     self.extract_properties(src_bnode, val)
                 elif isinstance(val, list) or isinstance(val, tuple):
                     for x in val:
                         if isinstance(x, bool):
                             result = boolean(x)
-                        elif isinstance(x, str):
-                            result = literal(x)
-                        elif isinstance(x, int):
-                            result = integer(x)
                         elif isinstance(x, float):
                             result = double(x)
-                        self.g.add((obj_src, self.relationships[k], result))
-                elif isinstance(val, bool):
-                    result = boolean(val)
-                    self.g.add((obj_src, self.relationships[k], result))
-                elif isinstance(val, str):
-                    result = literal(val)
-                    self.g.add((obj_src, self.relationships[k], result))
-                elif isinstance(val, int):
-                    result = integer(val)
-                    self.g.add((obj_src, self.relationships[k], result))
-                elif isinstance(val, float):
-                    result = double(val)
-                    self.g.add((obj_src, self.relationships[k], result))
+                        elif isinstance(x, int):
+                            result = integer(x)
+                        else:
+                            result = literal(x)
+                        self.g.add(Quad(obj_src, self.relationships[k], result, DefaultGraph()))
+                else:
+                    if isinstance(val, bool):
+                        result = boolean(val)
+                    elif isinstance(val, float):
+                        result = double(val)
+                    elif isinstance(val, int):
+                        result = integer(val)
+                    else:
+                        result = literal(val)
+                    self.g.add(Quad(obj_src, self.relationships[k], result, DefaultGraph()))
 
     def create_class(self, name, subclazzOf=None, comment=None):
         if name not in self.classes:
             clazz = onta(ParmenidesBuild.parmenides_ns, name)
-            self.g.add((clazz, RDF.type, OWL.Class))
-            if (subclazzOf is not None):
+            self.g.add(Quad(clazz, RDF_TYPE, OWL_CLASS, DefaultGraph()))
+
+            if subclazzOf is not None:
                 if isinstance(subclazzOf, str):
-                    subclazzOf = self.create_class(subclazzOf)
-                    self.g.add((clazz, RDFS.subClassOf, subclazzOf))
+                    subclazz_uri = self.create_class(subclazzOf)
+                    self.g.add(Quad(clazz, RDFS_SUBCLASSOF, subclazz_uri, DefaultGraph()))
                 elif isinstance(subclazzOf, list):
                     for x in subclazzOf:
-                        x = self.create_class(x)
-                        self.g.add((clazz, RDFS.subClassOf, x))
+                        x_uri = self.create_class(x)
+                        self.g.add(Quad(clazz, RDFS_SUBCLASSOF, x_uri, DefaultGraph()))
+
             self.classes[name] = clazz
+
         if comment is not None:
-            self.g.add((self.classes[name], RDFS.comment, Literal(comment)))
+            self.g.add(Quad(self.classes[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
+
         return self.classes[name]
 
     def serialize(self, filename):
-        self.g.serialize(destination=filename)
+        with open(filename, 'wb') as f:
+            self.g.dump(f, format=pyoxigraph.RdfFormat.TURTLE)

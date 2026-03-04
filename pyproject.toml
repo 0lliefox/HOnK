@@ -22,7 +22,8 @@ dependencies = [
     "psutil",
     "pytest",
     "pyyaml",
-    "networkx"
+    "networkx",
+    "pyoxigraph"
 ]
 
 [project.scripts]
