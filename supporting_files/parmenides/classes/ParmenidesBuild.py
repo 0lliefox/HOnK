@@ -244,4 +244,4 @@ class ParmenidesBuild:
 
     def serialize(self, filename):
         with open(filename, 'wb') as f:
-            self.g.dump(f, format=pyoxigraph.RdfFormat.TURTLE)
+            self.g.dump(f, format=pyoxigraph.RdfFormat.TURTLE, from_graph=pyoxigraph.DefaultGraph())

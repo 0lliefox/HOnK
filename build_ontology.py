@@ -280,7 +280,7 @@ class OntologyBuilder:
             rdf_format = pyoxigraph.RdfFormat.N_TRIPLES if ont_format == 'nt' else pyoxigraph.RdfFormat.TURTLE
 
             with open(file_path, 'wb') as f:
-                g.dump(f, format=rdf_format)
+                g.dump(f, format=rdf_format, from_graph=pyoxigraph.DefaultGraph())
 
             logging.info(f"Successfully saved ontology to '{file_path}'")
 

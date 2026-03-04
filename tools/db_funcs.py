@@ -8,7 +8,7 @@ class DBManager:
         self.conn = builder.conn
         self.source = None
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_or_get_concept_from_db(self, term, pos, cursor=None):
         standalone = cursor is None
         if standalone: cursor = self.conn.cursor()
@@ -42,7 +42,7 @@ class DBManager:
         finally:
             if standalone: cursor.close()
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
         if not self.config['general']['unique_source']:
             cursor.execute(
@@ -59,7 +59,7 @@ class DBManager:
                 (start_id, end_id, rel_type, weight, self.source)
             )
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
         if not self.config['general']['unique_source']:
             cursor.execute(
@@ -76,7 +76,7 @@ class DBManager:
                 (c_id, c_type, c_value, self.source)
             )
 
-    @timer(log=False, threaded=False, independent=True, memory=False)
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def add_url_to_db(self, concept_id, e_url, cursor):
         if not self.config['general']['unique_source']:
             cursor.execute(
