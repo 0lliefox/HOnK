@@ -5,6 +5,22 @@
         "mode": "db",
         "should_cache": false,
         "show_stats": false,
+        "batch_size": 5000
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_5000_db_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false,
         "batch_size": 10000
       },
       "clustering": {
@@ -44,22 +60,6 @@
       },
       "turtle_export": {
         "output_file": "bulk_50000_db_clustered_final.nt"
-      }
-    }
-  },
-  {
-    "config_overrides": {
-      "general": {
-        "mode": "db",
-        "should_cache": false,
-        "show_stats": false,
-        "batch_size": 100000
-      },
-      "clustering": {
-        "enabled": true
-      },
-      "turtle_export": {
-        "output_file": "bulk_100000_db_clustered_final.nt"
       }
     }
   }
