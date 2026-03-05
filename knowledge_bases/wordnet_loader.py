@@ -50,29 +50,29 @@ class WordNetLoader(AbstractLoader):
         filepath = self.config['local_files']['wordnet']
         try:
             synset_data = self.pickle_manager.load('synset_data')
+
             if not synset_data:
                 logging.info(f"Loading WordNet data from file: '{filepath}'...")
-                g = self.pickle_manager.load(filepath)
-                if not g:
-                    g = pyoxigraph.Store()
-                    logging.info("Parsing WordNet file (this may take a few minutes)...")
 
-                    file_extension = os.path.splitext(filepath)[1].lower()
-                    if file_extension in ['.ttl', '.turtle']:
-                        rdf_format = pyoxigraph.RdfFormat.TURTLE
-                    elif file_extension == '.nt':
-                        rdf_format = pyoxigraph.RdfFormat.N_TRIPLES
-                    else:
-                        logging.warning(
-                            f"Unknown WordNet file extension '{file_extension}'. Attempting to parse as Turtle.")
-                        rdf_format = pyoxigraph.RdfFormat.TURTLE
+                g = pyoxigraph.Store()
+                logging.info("Parsing WordNet file (this may take a few seconds)...")
 
-                    with open(filepath, 'rb') as f:
-                        g.load(f, format=rdf_format)
+                file_extension = os.path.splitext(filepath)[1].lower()
+                if file_extension in ['.ttl', '.turtle']:
+                    rdf_format = pyoxigraph.RdfFormat.TURTLE
+                elif file_extension == '.nt':
+                    rdf_format = pyoxigraph.RdfFormat.N_TRIPLES
+                else:
+                    logging.warning(
+                        f"Unknown WordNet file extension '{file_extension}'. Attempting to parse as Turtle.")
+                    rdf_format = pyoxigraph.RdfFormat.TURTLE
 
-                    logging.info("Finished parsing WordNet file.")
-                    self.pickle_manager.save(filepath, g)
+                with open(filepath, 'rb') as f:
+                    g.load(f, format=rdf_format)
 
+                logging.info("Finished parsing WordNet file.")
+
+                # Process the data
                 synset_data = self.get_synsets(g)
                 self.get_components(g, synset_data)
                 self.get_relationships(g, synset_data)
@@ -136,8 +136,6 @@ class WordNetLoader(AbstractLoader):
                         pos = self.get_mapped_pos(lexical_pos)
                         norm_lex_domain, norm_lex_pos = self.queue_concept(lexical_domain, pos)
                     else:
-                        if data['phrase_type'] == '':
-                            pos = data['pos']
                         lexical_domain = None
 
                     lemma_term_pos_list = []
@@ -258,7 +256,6 @@ class WordNetLoader(AbstractLoader):
             if component_uri not in synset_data:
                 synset_data[component_uri] = {
                     'lemmas': dict(),
-                    'definition': "",
                     'pos': "",
                     'lexical_domain': "",
                     'phrase_type': "",
@@ -272,29 +269,25 @@ class WordNetLoader(AbstractLoader):
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                     PREFIX wnp: <http://wordnet-rdf.princeton.edu/ontology#>
 
-                    SELECT ?synset ?lemma ?definition ?pos ?lexical_domain ?synset_member ?phrase_type
+                    SELECT ?synset ?lemma ?pos ?lexical_domain ?synset_member ?phrase_type
                     WHERE {
                         ?synset rdf:type wnp:Synset .
 
                         ?synset rdfs:label ?lemma . 
-                        FILTER(langMatches(lang(?lemma), "eng"))
-
-                        ?synset wnp:gloss ?definition . 
-                        FILTER(langMatches(lang(?definition), "eng"))
 
                         ?synset wnp:part_of_speech ?pos_uri .
                         ?synset wnp:synset_member ?synset_member .
 
-                        BIND(STRAFTER(STR(?pos_uri), STR(wnp:)) AS ?pos)
+                        BIND(STRAFTER(STR(?pos_uri), "http://wordnet-rdf.princeton.edu/ontology#") AS ?pos)
 
                         OPTIONAL {
                             ?synset wnp:lexical_domain ?raw_lexical_domain .
-                            BIND(STRAFTER(STR(?raw_lexical_domain), STR(wnp:)) AS ?lexical_domain)
+                            BIND(STRAFTER(STR(?raw_lexical_domain), "http://wordnet-rdf.princeton.edu/ontology#") AS ?lexical_domain)
                         }
 
                         OPTIONAL {
                             ?synset wnp:phrase_type ?raw_phrase_type .
-                            BIND(STRAFTER(STR(?raw_phrase_type), STR(wnp:)) AS ?phrase_type)
+                            BIND(STRAFTER(STR(?raw_phrase_type), "http://wordnet-rdf.princeton.edu/ontology#") AS ?phrase_type)
                         }
                     }
                 """
@@ -311,9 +304,7 @@ class WordNetLoader(AbstractLoader):
             if synset_uri not in synset_data:
                 synset_data[synset_uri] = {
                     'lemmas': dict(),
-                    'definition': row['definition'].value,
                     'pos': row['pos'].value,
-                    # Safely check Pyoxigraph's OPTIONAL bindings without .get()
                     'lexical_domain': row['lexical_domain'].value if row['lexical_domain'] is not None else '',
                     'phrase_type': row['phrase_type'].value if row['phrase_type'] is not None else '',
                     'relations': set()

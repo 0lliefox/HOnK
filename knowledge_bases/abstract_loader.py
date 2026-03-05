@@ -158,7 +158,7 @@ class AbstractLoader(ABC):
 
     @timer(log=False, threaded=False, independent=False, memory=False)
     def flush_batch(self, cursor=None):
-        if not self.batch_concepts:
+        if not self.batch_concepts and not self.batch_relations and not self.batch_urls and not self.batch_properties:
             return
 
         if self.mode == 'db':

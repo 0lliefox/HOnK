@@ -18,6 +18,8 @@ RDFS_LABEL = NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
 XSD_STRING = NamedNode("http://www.w3.org/2001/XMLSchema#string")
 XSD_BOOLEAN = NamedNode("http://www.w3.org/2001/XMLSchema#boolean")
 XSD_FLOAT = NamedNode("http://www.w3.org/2001/XMLSchema#float")
+XSD_INTEGER = NamedNode("http://www.w3.org/2001/XMLSchema#integer")
+XSD_DOUBLE = NamedNode("http://www.w3.org/2001/XMLSchema#double")
 OWL_ANNOTATIONPROPERTY = NamedNode("http://www.w3.org/2002/07/owl#AnnotationProperty")
 OWL_DATATYPEPROPERTY = NamedNode("http://www.w3.org/2002/07/owl#DatatypeProperty")
 
@@ -40,8 +42,10 @@ class Namespace:
 def pyoxi_literal(val):
     if isinstance(val, bool):
         return Literal("true" if val else "false", datatype=XSD_BOOLEAN)
+    elif isinstance(val, int):
+        return Literal(str(val), datatype=XSD_INTEGER)
     elif isinstance(val, float):
-        return Literal(str(val), datatype=XSD_FLOAT)
+        return Literal(str(val), datatype=XSD_DOUBLE)
     return Literal(str(val), datatype=XSD_STRING)
 
 
@@ -142,10 +146,19 @@ class GraphManager:
 
         if start_uri == end_uri: return
 
-        mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False,
-                                                            'swap': False}) if self.normalise_pos else {'rel': rel_type,
-                                                                                                        'relNegated': False,
-                                                                                                        'swap': False}
+        mapping = self.full_mappings.get(
+            rel_type.lower(),
+            {
+                'rel': rel_type,
+                'relNegated': False,
+                'swap': False
+            }
+        ) if self.normalise_pos else \
+            {
+                'rel': rel_type,
+                'relNegated': False,
+                'swap': False
+            }
         rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
 
         final_source_pos, final_target_pos = (target_pos, source_pos) if swap else (source_pos, target_pos)
