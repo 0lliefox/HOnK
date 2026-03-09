@@ -81,7 +81,7 @@ class OntologyBuilder:
         with self.conn.cursor() as cursor:
             try:
                 if self.config['db_config']['clear_db_on_start'] and self.mode == 'db':
-                    confirm_clear_db = self.config['general'].get('confirm_clear_db', True)
+                    confirm_clear_db = self.config['db_config'].get('confirm_clear_db', True)
                     if confirm_clear_db:
                         user_input = input("Are you sure you want to clear the database? [y/n] ")
                         if user_input.lower() != 'y':
