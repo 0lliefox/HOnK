@@ -77,66 +77,79 @@ class GeoNamesLoader(AbstractLoader):
 
         try:
             def iterate_over_file(cursor=None):
+                # reader is an iterator (if not None)
                 if reader:
                     for line in tqdm(reader, desc="Processing GeoNames", disable=not self.verbose):
-                        n_id, name, _, translations, _, _, feature_class, feature_code = line[:8]
+                        n_id, name, _, translations, _, _, feature_class, feature_code = line[
+                            :8]  # https://download.geonames.org/export/dump/readme.txt
 
                         if name in self.ignore_names:
                             continue
 
+                        # 'A' is country, state, region: http://www.geonames.org/export/codes.html
                         if feature_class == 'A':
                             pos = 'GPE'
                         else:
                             pos = 'LOC'
 
-                        # Queue concept
-                        norm_name, norm_pos = self.queue_concept(name, pos)
-
                         if n_id in needed_ids:
-                            self.id_term_map[n_id] = [norm_name, norm_pos]
+                            self.id_term_map[n_id] = [name, pos]
+                        current_id = self.get_or_create_concept(name, pos, cursor)
 
                         if n_id in self.links:
-                            self.queue_url(norm_name, norm_pos, self.links[n_id])
+                            self.add_url({'id': current_id, 'term': name, 'pos': pos}, self.links[n_id], cursor)
 
+                        # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
                             feature_instance = self.feature_codes.get(f"{feature_class}.{feature_code}")
                             if feature_instance:
-                                norm_feat, norm_feat_pos = self.queue_concept(feature_instance, "Noun")
-                                self.queue_relation(norm_name, norm_pos, norm_feat, norm_feat_pos, "instanceOf", 1)
+                                feature_db_id = self.get_or_create_concept(feature_instance, "Noun", cursor)
+                                self.add_relation(
+                                    {
+                                        'id': current_id,
+                                        'term': name,
+                                        'pos': pos
+                                    },
+                                    {
+                                        'id': feature_db_id,
+                                        'term': feature_instance,
+                                        'pos': "Noun"
+                                    },
+                                    "instanceOf", 1, cursor)
 
                         if len(translations) > 0:
-                            for translation in translations.split(','):
+                            translations = translations.split(',')
+                            for translation in translations:
                                 if name != translation and translation != '':
-                                    self.queue_property(norm_name, norm_pos, 'alternativeOf', translation)
+                                    self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation,
+                                                      cursor)
 
-                        # Flush to the database if the batch limit is reached
-                        if len(self.batch_concepts) >= self.batch_size:
-                            self.flush_batch(cursor)
-
-                    self.flush_batch(cursor)  # Flush any remaining items from Phase 1
                     self.pickle_manager.save(self.map_cache_filepath, self.id_term_map)
 
                 for parent, children in tqdm(hierarchy.items(), desc="Processing GeoNames hierarchy",
                                              total=len(hierarchy)):
                     parent = self.check_id(str(parent))
-
                     if parent and parent in self.id_term_map:
                         parent_term, parent_pos = self.id_term_map[parent]
-                        p_term, p_pos = self.queue_concept(parent_term, parent_pos)
-
+                        parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
                         for child in children:
                             child = self.check_id(str(child))
                             if child and child in self.id_term_map:
                                 child_term, child_pos = self.id_term_map[child]
-                                c_term, c_pos = self.queue_concept(child_term, child_pos)
-
-                                self.queue_relation(c_term, c_pos, p_term, p_pos, "partOf", 1)
-
-                        # Flush to the database if the batch limit is reached
-                        if len(self.batch_concepts) >= self.batch_size:
-                            self.flush_batch(cursor)
-
-                self.flush_batch(cursor)  # Flush any remaining items from Phase 2
+                                child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
+                                self.add_relation(
+                                    {
+                                        'id': child_db_id,
+                                        'term': child_term,
+                                        'pos': child_pos
+                                    },
+                                    {
+                                        'id': parent_db_id,
+                                        'term': parent_term,
+                                        'pos': parent_pos
+                                    },
+                                    "partOf",
+                                    1, cursor)
 
             if self.mode == 'db':
                 with self.conn.cursor() as cursor:

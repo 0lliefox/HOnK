@@ -5,7 +5,6 @@ from collections import defaultdict
 
 import psycopg2
 import psycopg2.extras
-import yaml
 from psycopg2._psycopg import AsIs
 from tqdm import tqdm
 
@@ -80,7 +79,7 @@ class ConceptClusterer:
             # Adjacency list
             db = self.build_adj_list(cursor)
 
-            if os.path.exists(cache_path) and self.config['general']['should_cache']:
+            if self.config['general']['should_cache']:
                 with open(cache_path, "w", encoding="utf-8") as f:
                     json.dump(db, f, ensure_ascii=False, indent=4)
 
@@ -147,18 +146,16 @@ class ConceptClusterer:
         logging.info("  - Calculating transitive closure on adjacency list...")
         for i in tqdm(adjacency_db.keys(), desc="Transitive closure", disable=not self.verbose):
             adjacency_list = adjacency_db[i]
+            seen = set(adjacency_list)
             j_idx = 0
             while j_idx < len(adjacency_list):
                 j = adjacency_list[j_idx]
                 adjacency_list_j = adjacency_db[j]
-                k_idx = 0
-                while k_idx < len(adjacency_list_j):
-                    k = adjacency_list_j[k_idx]
-                    if i != k and k not in adjacency_list:
+                for k in adjacency_list_j:
+                    if i != k and k not in seen:
+                        seen.add(k)
                         adjacency_list.append(k)
-                    k_idx += 1
                 j_idx += 1
-                adjacency_db[j] = adjacency_list_j
             adjacency_db[i] = adjacency_list
 
     @timer

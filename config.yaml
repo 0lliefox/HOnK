@@ -7,18 +7,24 @@ database:
 
 general:
   language: 'en'  # Fix a specific language for filtering the knowledge bases
-  clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
   sources: ['parmenides', 'conceptnet', 'wiktionary', 'wordnet', 'geonames']
   mapping_sources: ['wordnet', 'conceptnet', 'wiktionary']
+  mode: 'db'  # graph / db
+  should_cache: true
+  show_stats: true
+  verbose: true
+
+db_config:
   tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
   source_to_delete: []  # Set to [] to delete all sources
-  confirm_clear_db: false
-  mode: 'graph'  # graph / db
-  should_cache: true
+  clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
+  confirm_clear_db: true
   unique_source: false
-  show_stats: false
-  verbose: false
+  bulk_insert: false
   batch_size: 10000
+
+graph:
+  type: 'oxigraph' # oxigraph / rdf
 
 local_files:
   supporting_files: 'supporting_files'
@@ -62,7 +68,7 @@ local_files:
 turtle_export:
   convert: false
   normalise_pos: true
-  output_file: 'ontology_graph_clustered_test.nt'
+  output_file: 'TEST_ALL_OXIGRAPH_ontology_db_clustered_test.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"
 

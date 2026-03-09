@@ -1,79 +1,54 @@
-import urllib
+import urllib.parse
+from collections.abc import Iterable
 
-import pyoxigraph
-from pyoxigraph import NamedNode, Literal, BlankNode, Quad, DefaultGraph
+from pyoxigraph import NamedNode as OxiNamedNode, Literal as OxiLiteral, Quad, DefaultGraph, BlankNode as OxiBlankNode
+from rdflib import Namespace as RDFNamespace, URIRef as RDFURIRef, RDF, OWL, RDFS, Literal as RDFLiteral, Graph, XSD, \
+    BNode as RDFBNode
 
-# Pre-define core RDF/OWL/RDFS/XSD NamedNodes
-RDF_TYPE = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-OWL_CLASS = NamedNode("http://www.w3.org/2002/07/owl#Class")
-OWL_OBJECTPROPERTY = NamedNode("http://www.w3.org/2002/07/owl#ObjectProperty")
-RDFS_COMMENT = NamedNode("http://www.w3.org/2000/01/rdf-schema#comment")
-RDFS_LABEL = NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
-RDFS_SUBCLASSOF = NamedNode("http://www.w3.org/2000/01/rdf-schema#subClassOf")
-XSD_STRING = NamedNode("http://www.w3.org/2001/XMLSchema#string")
-XSD_BOOLEAN = NamedNode("http://www.w3.org/2001/XMLSchema#boolean")
-XSD_INTEGER = NamedNode("http://www.w3.org/2001/XMLSchema#integer")
-XSD_DOUBLE = NamedNode("http://www.w3.org/2001/XMLSchema#double")
+OXI_RDF_TYPE = OxiNamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+OXI_OWL_CLASS = OxiNamedNode("http://www.w3.org/2002/07/owl#Class")
+OXI_OWL_OBJECTPROPERTY = OxiNamedNode("http://www.w3.org/2002/07/owl#ObjectProperty")
+OXI_RDFS_SUBCLASSOF = OxiNamedNode("http://www.w3.org/2000/01/rdf-schema#subClassOf")
+OXI_RDFS_LABEL = OxiNamedNode("http://www.w3.org/2000/01/rdf-schema#label")
+OXI_RDFS_COMMENT = OxiNamedNode("http://www.w3.org/2000/01/rdf-schema#comment")
+OXI_XSD_STRING = OxiNamedNode("http://www.w3.org/2001/XMLSchema#string")
+OXI_XSD_BOOLEAN = OxiNamedNode("http://www.w3.org/2001/XMLSchema#boolean")
+OXI_XSD_DOUBLE = OxiNamedNode("http://www.w3.org/2001/XMLSchema#double")
+OXI_XSD_INTEGER = OxiNamedNode("http://www.w3.org/2001/XMLSchema#integer")
 
 
-class Namespace:
+class OxiNamespace:
     def __init__(self, base_uri):
         self.base_uri = base_uri
 
     def __getitem__(self, key):
-        return NamedNode(f"{self.base_uri}{key}")
+        return OxiNamedNode(f"{self.base_uri}{key}")
 
     def __getattr__(self, name):
-        # This catches dot notation (e.g., self.ns.hasURL)
-        return NamedNode(f"{self.base_uri}{name}")
+        return OxiNamedNode(f"{self.base_uri}{name}")
 
     def __add__(self, other):
-        return NamedNode(f"{self.base_uri}{other}")
-
-
-def literal(s: str):
-    return Literal(str(s), datatype=XSD_STRING)
-
-
-def boolean(s: bool):
-    return Literal("true" if s else "false", datatype=XSD_BOOLEAN)
-
-
-def integer(s: int):
-    return Literal(str(s), datatype=XSD_INTEGER)
-
-
-def double(s: float):
-    return Literal(str(s), datatype=XSD_DOUBLE)
-
-
-def onta(ns, s: str):
-    return NamedNode(f"{ns.base_uri}{urllib.parse.quote_plus(s)}")
+        return OxiNamedNode(f"{self.base_uri}{other}")
 
 
 class ParmenidesBuild:
-    parmenides_ns = Namespace("https://logds.github.io/parmenides#")
-
-    def create_property(self, name, comment=None):
-        if name not in self.relationships:
-            d_object = ParmenidesBuild.parmenides_ns[name]
-            self.g.add(Quad(d_object, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
-            self.relationships[name] = d_object
-            if comment is not None:
-                self.g.add(Quad(d_object, RDFS_COMMENT, literal(comment), DefaultGraph()))
-        return self.relationships[name]
-
-    def create_relationship(self, name, comment=None):
-        if name not in self.relationships:
-            self.relationships[name] = ParmenidesBuild.parmenides_ns[name]
-            if comment is not None:
-                self.g.add(Quad(self.relationships[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
-        return self.relationships[name]
+    parmenides_uri = "https://logds.github.io/parmenides#"
 
     def __init__(self, g):
+        self.g = g
+
+        # Automatically infer the graph type based on the object passed
+        if type(g).__name__ == 'Store' or hasattr(g, 'quads_for_pattern'):
+            self.graph_type = 'oxigraph'
+            self.ns = OxiNamespace(self.parmenides_uri)
+        else:
+            self.graph_type = 'rdf'
+            self.ns = RDFNamespace(self.parmenides_uri)
+            self.g.bind("parmenides", self.ns)
+            self.g.bind("rdfs", RDF)
+
         self.names = dict()
         self.relationships = dict()
-        self.g = g
         self.classes = dict()
 
         self.create_property("hasAdjective")
@@ -96,7 +71,68 @@ class ParmenidesBuild:
         self.create_relationship("eqTo")
         self.create_relationship("neqTo")
 
-    def create_concept(self, full_name, type_uri,
+    def _literal(self, s: str):
+        if self.graph_type == 'oxigraph':
+            return OxiLiteral(str(s), datatype=OXI_XSD_STRING)
+        return RDFLiteral(s, datatype=XSD.string)
+
+    def _boolean(self, s: bool):
+        if self.graph_type == 'oxigraph':
+            return OxiLiteral("true" if s else "false", datatype=OXI_XSD_BOOLEAN)
+        return RDFLiteral(s, datatype=XSD.boolean)
+
+    def _integer(self, s):
+        if self.graph_type == 'oxigraph':
+            return OxiLiteral(str(s), datatype=OXI_XSD_INTEGER)
+        return RDFLiteral(s, datatype=XSD.integer)
+
+    def _double(self, s: float):
+        if self.graph_type == 'oxigraph':
+            return OxiLiteral(str(s), datatype=OXI_XSD_DOUBLE)
+        return RDFLiteral(s, datatype=XSD.double)
+
+    def _onta(self, s: str):
+        if self.graph_type == 'oxigraph':
+            return self.ns[urllib.parse.quote_plus(s)]
+        return RDFURIRef(self.ns[urllib.parse.quote_plus(s)])
+
+    def _add_triple(self, s, p, o):
+        """Standardizes triple insertion logic safely"""
+        if self.graph_type == 'oxigraph':
+            self.g.add(Quad(s, p, o, DefaultGraph()))
+        else:
+            self.g.add((s, p, o))
+
+    def create_property(self, name, comment=None):
+        if name not in self.relationships:
+            if self.graph_type == 'oxigraph':
+                d_object = self.ns[name]
+                self._add_triple(d_object, OXI_RDF_TYPE, OXI_OWL_OBJECTPROPERTY)
+            else:
+                d_object = RDFURIRef(self.ns[name])
+                self._add_triple(d_object, RDF.type, OWL.ObjectProperty)
+
+            self.relationships[name] = d_object
+            if comment is not None:
+                if self.graph_type == 'oxigraph':
+                    self._add_triple(d_object, OXI_RDFS_COMMENT, OxiLiteral(str(comment)))
+                else:
+                    self._add_triple(d_object, RDFS.comment, RDFLiteral(comment))
+        return self.relationships[name]
+
+    def create_relationship(self, name, comment=None):
+        if name not in self.relationships:
+            if self.graph_type == 'oxigraph':
+                self.relationships[name] = self.ns[name]
+                if comment is not None:
+                    self._add_triple(self.relationships[name], OXI_RDFS_COMMENT, OxiLiteral(str(comment)))
+            else:
+                self.relationships[name] = RDFURIRef(self.ns[name])
+                if comment is not None:
+                    self._add_triple(self.relationships[name], RDFS.comment, RDFLiteral(comment))
+        return self.relationships[name]
+
+    def create_concept(self, full_name, type_val,
                        hasAdjective=None,
                        entryPoint=None,
                        subject=None,
@@ -106,7 +142,7 @@ class ParmenidesBuild:
                        **kwargs):
         if entity_name is None:
             entity_name = full_name
-        ref = self.create_entity(full_name, type_uri, label=entity_name)
+        ref = self.create_entity(full_name, type_val, label=entity_name)
 
         if entryPoint is None:
             entryPoint = ref
@@ -114,76 +150,98 @@ class ParmenidesBuild:
             assert entryPoint in self.names
             entryPoint = self.names[entryPoint]
 
-        self.g.add(Quad(ref, self.relationships["entryPoint"], entryPoint, DefaultGraph()))
+        self._add_triple(ref, self.relationships["entryPoint"], entryPoint)
 
-        from collections.abc import Iterable
         if (hasAdjective is not None) and (isinstance(hasAdjective, Iterable)):
             assert hasAdjective in self.names
-            self.g.add(Quad(ref, self.relationships["hasAdjective"], self.names[hasAdjective], DefaultGraph()))
+            self._add_triple(ref, self.relationships["hasAdjective"], self.names[hasAdjective])
 
-        if (d_object is not None):
+        if d_object is not None:
             assert subject is not None
 
         if composite_with is not None:
             assert isinstance(composite_with, list)
             for composite in composite_with:
                 assert composite in self.names
-                self.g.add(Quad(ref, self.relationships["composite_form_with"], self.names[composite], DefaultGraph()))
+                self._add_triple(ref, self.relationships["composite_form_with"], self.names[composite])
 
         if subject is not None:
             assert subject in self.names
-            self.g.add(Quad(ref, self.relationships["subject"], self.names[subject], DefaultGraph()))
+            self._add_triple(ref, self.relationships["subject"], self.names[subject])
             if d_object is not None:
-                self.g.add(Quad(ref, self.relationships["d_object"], self.names[d_object], DefaultGraph()))
+                self._add_triple(ref, self.relationships["d_object"], self.names[d_object])
 
         for k, val in kwargs.items():
             if k not in self.relationships:
-                d_obj = ParmenidesBuild.parmenides_ns[k]
-                self.g.add(Quad(d_obj, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
+                if self.graph_type == 'oxigraph':
+                    d_obj = self.ns[k]
+                    self._add_triple(d_obj, OXI_RDF_TYPE, OXI_OWL_OBJECTPROPERTY)
+                else:
+                    d_obj = RDFURIRef(self.ns[k])
+                    self._add_triple(d_obj, RDF.type, OWL.ObjectProperty)
                 self.relationships[k] = d_obj
 
             if isinstance(val, bool):
-                result = boolean(val)
+                result = self._boolean(val)
+            elif isinstance(val, str):
+                result = self._literal(val)
             elif isinstance(val, float):
-                result = double(val)
+                result = self._double(val)
             else:
-                result = literal(val)
+                result = self._literal(str(val))
 
-            self.g.add(Quad(ref, self.relationships[k], result, DefaultGraph()))
+            self._add_triple(ref, self.relationships[k], result)
 
         if comment is not None:
-            self.g.add(Quad(ref, RDFS_COMMENT, literal(comment), DefaultGraph()))
+            if self.graph_type == 'oxigraph':
+                self._add_triple(ref, OXI_RDFS_COMMENT, OxiLiteral(str(comment)))
+            else:
+                self._add_triple(ref, RDFS.comment, RDFLiteral(comment))
+
         return ref
 
     def create_relationship_instance(self, src: str, rel: str, dst: str, refl=False):
         assert src in self.names
         assert dst in self.names
-        rel_uri = self.create_relationship(rel)
-        self.g.add(Quad(self.names[src], rel_uri, self.names[dst], DefaultGraph()))
+        rel_node = self.create_relationship(rel)
+        self._add_triple(self.names[src], rel_node, self.names[dst])
         if refl:
-            self.g.add(Quad(self.names[dst], rel_uri, self.names[src], DefaultGraph()))
+            self._add_triple(self.names[dst], rel_node, self.names[src])
 
-    def create_entity(self, name: str, clazzL=None, label=None, comment=None, **kwargs):
+    def create_entity(self, name: str, clazzL=None, label=None, comment=None,
+                      **kwargs):
         if label is None:
             label = name
         if name not in self.names:
-            self.names[name] = onta(ParmenidesBuild.parmenides_ns, name)
+            self.names[name] = self._onta(name)
 
         if clazzL is not None:
             if isinstance(clazzL, list):
                 for clazz in clazzL:
                     assert clazz in self.classes
-                    clazz_uri = self.classes[clazz]
-                    self.g.add(Quad(self.names[name], RDF_TYPE, clazz_uri, DefaultGraph()))
+                    clazz_node = self.classes[clazz]
+                    if self.graph_type == 'oxigraph':
+                        self._add_triple(self.names[name], OXI_RDF_TYPE, clazz_node)
+                    else:
+                        self._add_triple(self.names[name], RDF.type, clazz_node)
             elif isinstance(clazzL, str):
-                self.g.add(Quad(self.names[name], RDF_TYPE, ParmenidesBuild.parmenides_ns[clazzL], DefaultGraph()))
+                if self.graph_type == 'oxigraph':
+                    self._add_triple(self.names[name], OXI_RDF_TYPE, self.ns[clazzL])
+                else:
+                    self._add_triple(self.names[name], RDF.type, self.ns[clazzL])
 
-            self.g.add(Quad(self.names[name], RDFS_LABEL, literal(label), DefaultGraph()))
+            if self.graph_type == 'oxigraph':
+                self._add_triple(self.names[name], OXI_RDFS_LABEL, self._literal(label))
+            else:
+                self._add_triple(self.names[name], RDFS.label, self._literal(label))
 
         self.extract_properties(self.names[name], kwargs)
 
         if comment is not None:
-            self.g.add(Quad(self.names[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
+            if self.graph_type == 'oxigraph':
+                self._add_triple(self.names[name], OXI_RDFS_COMMENT, OxiLiteral(str(comment)))
+            else:
+                self._add_triple(self.names[name], RDFS.comment, RDFLiteral(comment))
 
         return self.names[name]
 
@@ -191,57 +249,80 @@ class ParmenidesBuild:
         for k, val in kwargs.items():
             if val is not None:
                 if k not in self.relationships:
-                    rel = ParmenidesBuild.parmenides_ns[k]
-                    self.g.add(Quad(rel, RDF_TYPE, OWL_OBJECTPROPERTY, DefaultGraph()))
+                    if self.graph_type == 'oxigraph':
+                        rel = self.ns[k]
+                        self._add_triple(rel, OXI_RDF_TYPE, OXI_OWL_OBJECTPROPERTY)
+                    else:
+                        rel = RDFURIRef(self.ns[k])
+                        self._add_triple(rel, RDF.type, OWL.ObjectProperty)
                     self.relationships[k] = rel
 
                 if isinstance(val, dict):
-                    src_bnode = BlankNode()
-                    self.g.add(Quad(obj_src, self.relationships[k], src_bnode, DefaultGraph()))
+                    src_bnode = OxiBlankNode() if self.graph_type == 'oxigraph' else RDFBNode()
+                    self._add_triple(obj_src, self.relationships[k], src_bnode)
                     self.extract_properties(src_bnode, val)
-                elif isinstance(val, list) or isinstance(val, tuple):
+                elif isinstance(val, (list, tuple)):
                     for x in val:
                         if isinstance(x, bool):
-                            result = boolean(x)
-                        elif isinstance(x, float):
-                            result = double(x)
+                            result = self._boolean(x)
+                        elif isinstance(x, str):
+                            result = self._literal(x)
                         elif isinstance(x, int):
-                            result = integer(x)
+                            result = self._integer(x)
+                        elif isinstance(x, float):
+                            result = self._double(x)
                         else:
-                            result = literal(x)
-                        self.g.add(Quad(obj_src, self.relationships[k], result, DefaultGraph()))
+                            result = self._literal(str(x))
+                        self._add_triple(obj_src, self.relationships[k], result)
                 else:
                     if isinstance(val, bool):
-                        result = boolean(val)
-                    elif isinstance(val, float):
-                        result = double(val)
+                        result = self._boolean(val)
+                    elif isinstance(val, str):
+                        result = self._literal(val)
                     elif isinstance(val, int):
-                        result = integer(val)
+                        result = self._integer(val)
+                    elif isinstance(val, float):
+                        result = self._double(val)
                     else:
-                        result = literal(val)
-                    self.g.add(Quad(obj_src, self.relationships[k], result, DefaultGraph()))
+                        result = self._literal(str(val))
+                    self._add_triple(obj_src, self.relationships[k], result)
 
     def create_class(self, name, subclazzOf=None, comment=None):
         if name not in self.classes:
-            clazz = onta(ParmenidesBuild.parmenides_ns, name)
-            self.g.add(Quad(clazz, RDF_TYPE, OWL_CLASS, DefaultGraph()))
+            clazz = self._onta(name)
+
+            if self.graph_type == 'oxigraph':
+                self._add_triple(clazz, OXI_RDF_TYPE, OXI_OWL_CLASS)
+            else:
+                self._add_triple(clazz, RDF.type, OWL.Class)
 
             if subclazzOf is not None:
                 if isinstance(subclazzOf, str):
-                    subclazz_uri = self.create_class(subclazzOf)
-                    self.g.add(Quad(clazz, RDFS_SUBCLASSOF, subclazz_uri, DefaultGraph()))
+                    subclazzOf_node = self.create_class(subclazzOf)
+                    if self.graph_type == 'oxigraph':
+                        self._add_triple(clazz, OXI_RDFS_SUBCLASSOF, subclazzOf_node)
+                    else:
+                        self._add_triple(clazz, RDFS.subClassOf, subclazzOf_node)
                 elif isinstance(subclazzOf, list):
                     for x in subclazzOf:
-                        x_uri = self.create_class(x)
-                        self.g.add(Quad(clazz, RDFS_SUBCLASSOF, x_uri, DefaultGraph()))
-
+                        x_node = self.create_class(x)
+                        if self.graph_type == 'oxigraph':
+                            self._add_triple(clazz, OXI_RDFS_SUBCLASSOF, x_node)
+                        else:
+                            self._add_triple(clazz, RDFS.subClassOf, x_node)
             self.classes[name] = clazz
 
         if comment is not None:
-            self.g.add(Quad(self.classes[name], RDFS_COMMENT, literal(comment), DefaultGraph()))
+            if self.graph_type == 'oxigraph':
+                self._add_triple(self.classes[name], OXI_RDFS_COMMENT, OxiLiteral(str(comment)))
+            else:
+                self._add_triple(self.classes[name], RDFS.comment, RDFLiteral(comment))
 
         return self.classes[name]
 
     def serialize(self, filename):
-        with open(filename, 'wb') as f:
-            self.g.dump(f, format=pyoxigraph.RdfFormat.TURTLE, from_graph=pyoxigraph.DefaultGraph())
+        if self.graph_type == 'oxigraph':
+            with open(filename, 'wb') as f:
+                self.g.dump(f, "text/turtle")
+        else:
+            self.g.serialize(destination=filename)

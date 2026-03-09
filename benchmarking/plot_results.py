@@ -35,9 +35,9 @@ class ResultsPlotter:
 
         # Font setup - fallback if files don't exist
         try:
-            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
-            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
-            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
+            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=18)
         except:
             self.font = fm.FontProperties(size=14)
             self.bold_font = fm.FontProperties(weight='bold', size=14)
@@ -241,9 +241,9 @@ class BenchmarkComparator:
         
         # Font setup
         try:
-            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
-            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
-            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
+            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=18)
         except:
             self.font = fm.FontProperties(size=14)
             self.bold_font = fm.FontProperties(weight='bold', size=14)
@@ -412,9 +412,9 @@ class PipelinePerformancePlotter:
         
         # Font setup
         try:
-            self.font = fm.FontProperties(fname='../fonts/Satoshi-Medium.ttf', size=14)
-            self.bold_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=14)
-            self.title_font = fm.FontProperties(fname='../fonts/Satoshi-Bold.ttf', size=18)
+            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=14)
+            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
+            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=18)
         except:
             self.font = fm.FontProperties(size=14)
             self.bold_font = fm.FontProperties(weight='bold', size=14)

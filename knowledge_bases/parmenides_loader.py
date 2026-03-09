@@ -4,7 +4,7 @@ import logging
 from os import listdir
 from os.path import isfile, join
 
-from rdflib import Graph
+import pyoxigraph
 
 from knowledge_bases import AbstractLoader
 from supporting_files.parmenides.classes import SentenceStructure
@@ -19,7 +19,7 @@ class ParmenidesLoader(AbstractLoader):
     def parse_data(self):
         filepath = self.config['local_files']['parmenides']
         logging.info(f"Loading Parmenides from '{filepath}'")
-        
+
         data = {
             'pronouns': self.list_files('/pronouns'),
             'verbs': self.list_files('/verbs'),
@@ -41,11 +41,10 @@ class ParmenidesLoader(AbstractLoader):
             self.create_concepts(data['wh'], cursor, True)
             self.create_concepts(data['predeterminers'], cursor, True)
 
-            self.flush_batch(cursor)
-
         if self.mode == 'db':
             with self.conn.cursor() as cursor:
                 iterate_over_files(cursor)
+
                 self.conn.commit()
         else:
             iterate_over_files()
@@ -57,38 +56,34 @@ class ParmenidesLoader(AbstractLoader):
                 pos = self.get_class_name(path, trim)
                 if path.endswith('.txt'):
                     for line in dep:
-                        term = line.strip()
-                        self.queue_concept(term, pos)
-
-                        if len(self.batch_concepts) >= self.batch_size:
-                            self.flush_batch(cursor)
-
+                        line = line.strip()
+                        self.get_or_create_concept(line, pos, cursor)
+                    dep.close()
                 elif path.endswith('.json'):
                     lines = json.load(dep)
                     for term, v in lines.items():
                         if not term.startswith("__"):
-                            norm_term, norm_pos = self.queue_concept(term, pos)
-
-                            for prop_type, prop_value in v.items():
-                                self.queue_property(norm_term, norm_pos, prop_type, prop_value)
-
-                            if len(self.batch_concepts) >= self.batch_size:
-                                self.flush_batch(cursor)
+                            c_id = self.get_or_create_concept(term, pos, cursor)
+                            for prop in v:
+                                self.add_property({'id': c_id, 'term': term}, prop, v[prop], cursor)
+                    dep.close()
 
     def list_files(self, folder) -> list[str]:
         new_folder = f"{self.config['local_files']['parmenides']}{folder}"
         return [f"{new_folder}/{f}" for f in listdir(new_folder) if isfile(join(new_folder, f))]
 
     def get_class_name(self, file_name, trim):
-        name = ''.join([n.upper() if n.upper() == 'WH' else n.capitalize() for n in file_name.split('/')[-1].split('.')[:1][0].split('_')])
+        name = ''.join([n.upper() if n.upper() == 'WH' else n.capitalize() for n in
+                        file_name.split('/')[-1].split('.')[:1][0].split('_')])
         return name[:-1] if trim else name
 
     @staticmethod
-    def add_logical_functions(config, g: Graph):
+    def add_logical_functions(config, g):
         logging.info("Adding logical functions")
 
         p = ParmenidesBuild(g)
-        log_defs, log_rewr_rules = SentenceStructure.load_logical_analysis(f"{config['local_files']['parmenides']}/logical_analysis/logical_analysis.json")
+        log_defs, log_rewr_rules = SentenceStructure.load_logical_analysis(
+            f"{config['local_files']['parmenides']}/logical_analysis/logical_analysis.json")
         for name, v in log_defs.items():
             for x in v.specs:
                 d = dataclasses.asdict(x)

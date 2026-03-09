@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from benchmarking.benchmark import Benchmark
 from benchmarking.plot_results import ResultsPlotter
-from clustering.cluster_graph_concepts import ConceptGraphClusterer
+from clustering.cluster_graph_concepts_oxi import OxiConceptGraphClusterer as ConceptGraphClusterer
 from tools.config import get_config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

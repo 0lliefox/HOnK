@@ -96,7 +96,8 @@ class ConceptNetLoader(AbstractLoader):
                     relation = Relation(row)
 
                     # According to documentation, /dbpedia relations should be removed (https://github.com/commonsense/conceptnet5/wiki/Relations)
-                    if "/dbpedia" in relation.rel: continue
+                    if "/dbpedia" in relation.rel:
+                        continue
 
                     is_url = self.is_url(relation)
                     if (not is_url and (relation.langStart != lang or relation.langEnd != lang)) or (
@@ -104,22 +105,34 @@ class ConceptNetLoader(AbstractLoader):
                             relation.surfaceStart == ''):
                         continue
 
-                    # Queue the start concept
-                    start_t, start_p = self.queue_concept(relation.surfaceStart, relation.startPOS)
+                    # Use the POS extracted by the Relation class
+                    start_concept_id = self.get_or_create_concept(relation.surfaceStart, relation.startPOS, cursor)
 
-                    if is_url:
-                        self.queue_url(start_t, start_p, relation.end)
+                    if self.is_url(relation):
+                        self.add_url(
+                            {'id': start_concept_id, 'term': relation.surfaceStart, 'pos': relation.startPOS},
+                            relation.end,
+                            cursor
+                        )
                     else:
-                        # Queue the end concept and the relation
-                        end_t, end_p = self.queue_concept(relation.surfaceEnd, relation.endPOS)
-                        self.queue_relation(start_t, start_p, end_t, end_p, relation.rel, float(relation.weight))
+                        end_concept_id = self.get_or_create_concept(relation.surfaceEnd, relation.endPOS, cursor)
 
-                    # Flush if batch limit reached
-                    if len(self.batch_concepts) >= self.batch_size:
-                        self.flush_batch(cursor)
-
-                # Flush any remaining items at the end of the file
-                self.flush_batch(cursor)
+                        if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
+                            self.add_relation(
+                                {
+                                    'id': start_concept_id,
+                                    'term': relation.surfaceStart,
+                                    'pos': relation.startPOS
+                                },
+                                {
+                                    'id': end_concept_id,
+                                    'term': relation.surfaceEnd,
+                                    'pos': relation.endPOS
+                                },
+                                relation.rel,
+                                float(relation.weight),
+                                cursor
+                            )
 
             if self.mode == 'db':
                 with self.conn.cursor() as cursor:

@@ -50,7 +50,7 @@ def test_graph_db_equivalence(config_setup):
         # Apply settings
         iteration_config['general']['mode'] = variation['mode']
         iteration_config['general']['should_cache'] = True
-        iteration_config['general']['confirm_clear_db'] = False
+        iteration_config['db_config']['confirm_clear_db'] = False
         
         # En/disable clustering
         if 'clustering' not in iteration_config:

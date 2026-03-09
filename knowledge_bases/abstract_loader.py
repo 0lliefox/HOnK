@@ -1,8 +1,6 @@
 from abc import abstractmethod, ABC
 from functools import lru_cache
 
-from rdflib import OWL, Literal
-
 from tools.pickling import PickleManager
 from tools.timer import timer
 from tools.db_funcs import DBManager
@@ -28,9 +26,6 @@ class AbstractLoader(ABC):
         self._timer_stack = []
         self.pickle_manager = PickleManager(self.builder.should_cache, self.pause_timer, self.resume_timer)
 
-        self.batch_size = self.config['general']['batch_size']
-        self._clear_batches()
-
     def pause_timer(self):
         if hasattr(self, '_timer_stack') and self._timer_stack:
             self._timer_stack[-1].pause()
@@ -45,7 +40,8 @@ class AbstractLoader(ABC):
                 k.lower(): v
                 for source in [self.source.lower()]
                 for m_type in mapping_types
-                for k, v in self.graph_manager.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
+                for k, v in
+                self.graph_manager.load_mappings(self.config['local_files'][f"{source}_{m_type}_mappings_file"]).items()
             }
         return None
 
@@ -125,7 +121,6 @@ class AbstractLoader(ABC):
                 concept_uri = self.graph_manager.get_safe_uri(term)
                 self.graph_manager.add_url_to_graph(concept_uri, e_url, pos)
 
-
     @lru_cache(maxsize=1024)
     def normalise_term(self, term):
         term = term.replace('_', ' ').replace('"', '')
@@ -134,79 +129,3 @@ class AbstractLoader(ABC):
             term = term.strip()
 
         return term
-
-    def _clear_batches(self):
-        self.batch_concepts = set()
-        self.batch_relations = []
-        self.batch_urls = []
-        self.batch_properties = []
-
-    def queue_concept(self, term, pos):
-        term, pos = self.normalise_data(term, pos)
-        self.batch_concepts.add((term, pos))
-        return term, pos
-
-    def queue_relation(self, start_term, start_pos, end_term, end_pos, rel_type, weight):
-        self.batch_relations.append((start_term, start_pos, end_term, end_pos, rel_type, weight))
-
-    def queue_url(self, term, pos, e_url):
-        if self.builder.should_cluster:
-            self.batch_urls.append((term, pos, e_url))
-
-    def queue_property(self, term, pos, c_type, c_value):
-        self.batch_properties.append((term, pos, c_type, c_value))
-
-    @timer(log=False, threaded=False, independent=False, memory=False)
-    def flush_batch(self, cursor=None):
-        if not self.batch_concepts and not self.batch_relations and not self.batch_urls and not self.batch_properties:
-            return
-
-        if self.mode == 'db':
-            # Bulk resolve concepts
-            concept_map = self.db_manager.get_or_create_concepts_bulk(self.batch_concepts, cursor)
-
-            db_relations = []
-            db_urls = []
-            db_props = []
-
-            # Map IDs for Relations
-            for start_term, start_pos, end_term, end_pos, rel_type, weight in self.batch_relations:
-                start_id = concept_map.get((start_term, start_pos))
-                end_id = concept_map.get((end_term, end_pos))
-                if start_id and end_id and start_id != end_id:
-                    db_relations.append((start_id, end_id, rel_type, weight, self.source))
-
-            # Map IDs for URLs
-            for term, pos, url in self.batch_urls:
-                start_id = concept_map.get((term, pos))
-                if start_id:
-                    db_urls.append((start_id, url, self.source))
-
-            # Map IDs for Properties
-            for term, pos, c_type, c_value in self.batch_properties:
-                start_id = concept_map.get((term, pos))
-                if start_id:
-                    db_props.append((start_id, c_type, c_value, self.source))
-
-            # Execute bulk inserts
-            if db_relations: self.db_manager.add_relations_bulk(db_relations, cursor)
-            if db_urls: self.db_manager.add_urls_bulk(db_urls, cursor)
-            if db_props: self.db_manager.add_properties_bulk(db_props, cursor)
-
-            # Commit the transaction immediately to free up server RAM
-            self.conn.commit()
-
-        elif self.mode == 'graph':
-            for term, pos in self.batch_concepts:
-                self.graph_manager.add_concept_to_graph(term, pos)
-            for st, sp, et, ep, rel, w in self.batch_relations:
-                if st != et:
-                    self.graph_manager.add_relation_to_graph(st, et, rel, w, sp, ep)
-            for term, pos, url in self.batch_urls:
-                concept_uri = self.graph_manager.get_safe_uri(term)
-                self.graph_manager.add_url_to_graph(concept_uri, url, pos)
-            for term, pos, c_type, c_value in self.batch_properties:
-                self.graph_manager.add_property_to_graph(c_type, c_value, term=term)
-
-        # Reset buffers
-        self._clear_batches()

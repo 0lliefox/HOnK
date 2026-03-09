@@ -5,16 +5,13 @@ import subprocess
 from collections import defaultdict
 
 import psycopg2
-import pyoxigraph
 from psycopg2._psycopg import AsIs
 from tqdm import tqdm
 
 from benchmarking.benchmark import Benchmark
 from clustering.cluster_concepts import ConceptClusterer
-from clustering.cluster_graph_concepts import ConceptGraphClusterer
 from knowledge_bases import ConceptNetLoader
 from tools.config import get_config
-from tools.graph_funcs import GraphManager
 from tools.timer import timer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,10 +23,11 @@ from knowledge_bases.wiktionary_loader import WiktionaryLoader
 
 
 class OntologyBuilder:
-    def __init__(self, config, run_id = 0, benchmarking = None):
+    def __init__(self, config, run_id=0, benchmarking=None):
         self.run_id = run_id
         self.config = config
         self.mode = self.config['general']['mode']  # db / graph
+        self.graph_type = self.config['graph']['type']
         self.should_cache = self.config['general']['should_cache']  # Should the pipeline pickle/load from pickles at certain stages
         self.sources = self.config['general']['sources']
         self.verbose = self.config['general']['verbose']
@@ -44,8 +42,14 @@ class OntologyBuilder:
             self._connect_db()
             self._setup_database()
 
-        # Serialisation
-        self.graph_manager = GraphManager(self, config)
+        # Dynamically load the correct GraphManager based on config
+        if self.graph_type == 'oxigraph':
+            from graph.graph_funcs_oxi import OxiGraphManager
+            self.graph_manager = OxiGraphManager(self, config)
+        else:
+            from graph.graph_funcs_rdf import RDFGraphManager
+            self.graph_manager = RDFGraphManager(self, config)
+
         self.g = self.graph_manager.g
         self.convert = self.config['turtle_export']['convert']  # Should the pipeline convert from .nt to .ttl
 
@@ -76,7 +80,7 @@ class OntologyBuilder:
     def _setup_database(self):
         with self.conn.cursor() as cursor:
             try:
-                if self.config['general']['clear_db_on_start'] and self.mode == 'db':
+                if self.config['db_config']['clear_db_on_start'] and self.mode == 'db':
                     confirm_clear_db = self.config['general'].get('confirm_clear_db', True)
                     if confirm_clear_db:
                         user_input = input("Are you sure you want to clear the database? [y/n] ")
@@ -84,8 +88,8 @@ class OntologyBuilder:
                             logging.info("Database clear aborted by user.")
                             return
                     
-                    tables_to_delete = self.config['general']['tables_to_delete']
-                    sources_to_delete = self.config['general']['source_to_delete']
+                    tables_to_delete = self.config['db_config']['tables_to_delete']
+                    sources_to_delete = self.config['db_config']['source_to_delete']
 
                     if not sources_to_delete:
                         logging.info(f"Clearing existing tables ({', '.join(tables_to_delete)}) for all sources")
@@ -98,7 +102,7 @@ class OntologyBuilder:
                                 cursor.execute("DELETE FROM %s WHERE source = %s", [AsIs(table), source])
 
                 # Create tables
-                if not self.config['general']['unique_source']:
+                if not self.config['db_config']['unique_source']:
                     cursor.execute('''
                        CREATE TABLE IF NOT EXISTS concepts
                        (
@@ -269,41 +273,42 @@ class OntologyBuilder:
     @timer
     def serialise_graph(self, file_path, ont_format, g):
         try:
-            file_path = f"ontologies/{file_path}"
+            full_file_path = f"ontologies/{file_path}"
 
             if not os.path.isdir('ontologies'):
                 os.mkdir('ontologies')
 
             logging.info("Serialising ontology")
 
-            # Map Pyoxigraph MIME formats
-            rdf_format = pyoxigraph.RdfFormat.N_TRIPLES if ont_format == 'nt' else pyoxigraph.RdfFormat.TURTLE
+            if self.graph_type == 'oxigraph':
+                import pyoxigraph
+                rdf_format = pyoxigraph.RdfFormat.N_TRIPLES if ont_format == 'nt' else pyoxigraph.RdfFormat.TURTLE
+                with open(full_file_path, 'wb') as f:
+                    g.dump(f, format=rdf_format, from_graph=pyoxigraph.DefaultGraph())
+            else:
+                g.serialize(destination=full_file_path, format=ont_format)
 
-            with open(file_path, 'wb') as f:
-                g.dump(f, format=rdf_format, from_graph=pyoxigraph.DefaultGraph())
-
-            logging.info(f"Successfully saved ontology to '{file_path}'")
+            logging.info(f"Successfully saved ontology to '{full_file_path}'")
 
             if self.config['general'].get('show_stats', False):
                 logging.info(f"Final graph contains {len(g)} triples.")
 
             if ont_format == 'nt' and self.convert:
-                logging.info(f"Converting '{file_path}' to .ttl")
+                logging.info(f"Converting '{full_file_path}' to .ttl")
 
+                # Prefer a local raptor/rapper installation, fall back to system
                 project_root = os.path.dirname(os.path.abspath(__file__))
                 rapper_path = os.path.join(project_root, 'raptor', 'bin', 'rapper')
-
                 if not os.path.exists(rapper_path):
-                    logging.error(f"Rapper not found at {rapper_path}. Run install_raptor.sh")
-                    return
+                    rapper_path = 'rapper'
 
                 try:
-                    output_file_path = file_path.replace('.nt', '.ttl')
+                    output_file_path = full_file_path.replace('.nt', '.ttl')
 
                     # Stream output directly to the file handler to skip memory loading
                     with open(output_file_path, 'w') as f:
                         subprocess.run(
-                            [rapper_path, '-i', "ntriples", "-o", 'turtle', file_path],
+                            [rapper_path, '-i', "ntriples", "-o", 'turtle', full_file_path],
                             stdout=f,
                             stderr=subprocess.PIPE,
                             text=True,
@@ -314,9 +319,13 @@ class OntologyBuilder:
 
                 except subprocess.CalledProcessError as e:
                     logging.error(f"Rapper crashed with Exit Code: {e.returncode}")
-                    logging.error(f"Rapper error log: \n{e.stderr}")
+                    if e.stderr:
+                        logging.error(f"Rapper error log: \n{e.stderr}")
+                    elif e.stdout:
+                        logging.error(f"Rapper output log: \n{e.stdout}")
+
         except Exception as e:
-            logging.error(f"Failed to write Turtle file: {e}")
+            logging.error(f"Failed to write Graph file: {e}")
 
     def close(self):
         if self.conn: self.conn.close(); logging.info("Database connection closed")
@@ -337,7 +346,13 @@ def run_process(config, run_id, benchmarking):
         final_g = builder.graph_manager.g
 
         if builder.should_cluster:
-            clusterer = ConceptGraphClusterer(builder, config)
+            if builder.graph_type == 'oxigraph':
+                from clustering.cluster_graph_concepts_oxi import OxiConceptGraphClusterer
+                clusterer = OxiConceptGraphClusterer(builder, config)
+            else:
+                from clustering.cluster_graph_concepts_rdf import RDFConceptGraphClusterer
+                clusterer = RDFConceptGraphClusterer(builder, config)
+
             final_g = clusterer.run()
 
         builder.graph_manager.add_pos_tag_classes(final_g)
@@ -348,6 +363,7 @@ def run_process(config, run_id, benchmarking):
 
     if builder.mode == 'db':
         builder.close()
+
 
 def main(config_file='config.yaml', run_id=0, benchmarking=None):
     config = get_config(config_file)
