@@ -7,7 +7,7 @@ from tqdm import tqdm
 from rdflib import Literal as RDFLiteral, URIRef, Namespace as RDFNamespace, Graph, OWL, RDFS, XSD, RDF
 from knowledge_bases import ParmenidesLoader
 from tools.timer import timer
-from graph_funcs import GraphManager
+from graph.graph_funcs import GraphManager
 
 
 class RDFGraphManager(GraphManager):

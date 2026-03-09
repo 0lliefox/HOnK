@@ -2,6 +2,7 @@ import logging
 import os
 import ssl
 from collections import defaultdict
+import urllib.parse
 
 import nltk
 from nltk import word_tokenize
@@ -174,12 +175,14 @@ class WordNetLoader(AbstractLoader):
                         key=lambda x: x[1]
                     )
 
-                    for idx, db_info in enumerate(lemma_db_ids):
-                        db_id, term = db_info
-                        synset_item_to_db_id[synset_uri, list(data['lemmas'])[
-                            idx]] = [db_id, term, pos]
-                        self.add_url({'id': db_id, 'term': term, 'pos': pos}, data['lemmas'][list(data['lemmas'])[idx]],
-                                     cursor)
+                    for db_id, term in lemma_db_ids:
+                        synset_item_to_db_id[(synset_uri, term)] = [db_id, term, pos]
+
+                        self.add_url(
+                            {'id': db_id, 'term': term, 'pos': pos},
+                            data['lemmas'][term],
+                            cursor
+                        )
 
                         if lexical_domain:
                             self.add_relation(
@@ -411,9 +414,10 @@ class WordNetLoader(AbstractLoader):
 
             # Record that we have seen this label for this synset
             seen_lemmas[synset_uri].add(lemma_val)
+            member_str = urllib.parse.unquote(synset_member_val.split('/')[-1][:-2]).replace('_', ' ')
 
             # If it's an exact match, assign it the specific member URI immediately
-            if lemma_val.replace(" ", "+") == synset_member_val.split('/')[-1][:-2]:
+            if lemma_val.lower() == member_str.lower():
                 synset_data[synset_uri]['lemmas'][lemma_val] = synset_member_val
 
         # Post-processing sweep: Ensure EVERY label we saw gets mapped correctly
