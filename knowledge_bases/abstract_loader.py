@@ -48,8 +48,13 @@ class AbstractLoader(ABC):
     def load_data(self):
         if self.db_manager:
             self.db_manager.source = self.source
+
         data = self._parse_data_timed()
         self._store_data_timed(data)
+
+        # Flush remaining bulk
+        if self.mode == 'db' and getattr(self.db_manager, 'use_bulk', False):
+            self.db_manager.flush_all()
 
     @timer
     def _parse_data_timed(self):

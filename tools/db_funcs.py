@@ -17,9 +17,42 @@ class DBManager:
         self.use_bulk = db_config.get('bulk_insert', False)
         self.batch_size = db_config.get('batch_size', 10000)
 
-    # Normal insert methods
+        # Buffers for transparent bulk insertion
+        self.relation_buffer = set()
+        self.property_buffer = set()
+        self.url_buffer = set()
+
+    def flush_all(self, cursor=None):
+        # Forces all remaining items in the buffers to be inserted into the database
+        standalone = cursor is None
+        if standalone: cursor = self.conn.cursor()
+
+        self.flush_relations(cursor)
+        self.flush_properties(cursor)
+        self.flush_urls(cursor)
+
+        if standalone:
+            self.conn.commit()
+            cursor.close()
+
+    def flush_relations(self, cursor):
+        if self.relation_buffer:
+            self.add_relations_bulk(list(self.relation_buffer), cursor)
+            self.relation_buffer.clear()
+
+    def flush_properties(self, cursor):
+        if self.property_buffer:
+            self.add_properties_bulk(list(self.property_buffer), cursor)
+            self.property_buffer.clear()
+
+    def flush_urls(self, cursor):
+        if self.url_buffer:
+            self.add_urls_bulk(list(self.url_buffer), cursor)
+            self.url_buffer.clear()
+
     @timer(log=False, threaded=False, independent=False, memory=False)
     def add_or_get_concept_from_db(self, term, pos, cursor=None):
+        # This remains synchronous as it must return the specific database ID immediately
         standalone = cursor is None
         if standalone: cursor = self.conn.cursor()
         try:
@@ -51,14 +84,19 @@ class DBManager:
                 )
                 result = cursor.fetchone()
                 return result[0] if result else None
-        except Exception as e:
-            if standalone: self.conn.rollback()
-            raise e
         finally:
-            if standalone: cursor.close()
+            if standalone:
+                self.conn.commit()
+                cursor.close()
 
     @timer(log=False, threaded=False, independent=False, memory=False)
     def add_relation_to_db(self, start_id, end_id, rel_type, weight, cursor):
+        if self.use_bulk:
+            self.relation_buffer.add((start_id, end_id, rel_type, weight, self.source))
+            if len(self.relation_buffer) >= self.batch_size:
+                self.flush_relations(cursor)
+            return
+
         if not self.unique_source:
             cursor.execute(
                 "INSERT INTO relations (start_concept_id, end_concept_id, relation_type, weight, source) "
@@ -76,6 +114,12 @@ class DBManager:
 
     @timer(log=False, threaded=False, independent=False, memory=False)
     def add_property_to_db(self, c_id, c_type, c_value, cursor):
+        if self.use_bulk:
+            self.property_buffer.add((c_id, c_type, c_value, self.source))
+            if len(self.property_buffer) >= self.batch_size:
+                self.flush_properties(cursor)
+            return
+
         if not self.unique_source:
             cursor.execute(
                 "INSERT INTO properties (concept_id, type, value, source) "
@@ -93,6 +137,12 @@ class DBManager:
 
     @timer(log=False, threaded=False, independent=False, memory=False)
     def add_url_to_db(self, concept_id, e_url, cursor):
+        if self.use_bulk:
+            self.url_buffer.add((concept_id, e_url, self.source))
+            if len(self.url_buffer) >= self.batch_size:
+                self.flush_urls(cursor)
+            return
+
         if not self.unique_source:
             cursor.execute(
                 "INSERT INTO urls (concept_id, external_url, source) "
@@ -141,8 +191,7 @@ class DBManager:
                                     JOIN (VALUES %s) AS t(term, part_of_speech)
                                          ON c.term = t.term AND c.part_of_speech = t.part_of_speech; \
                            """
-            existing_rows = execute_values(cursor, select_query, missing_concepts, page_size=self.batch_size,
-                                           fetch=True)
+            existing_rows = execute_values(cursor, select_query, missing_concepts, page_size=self.batch_size, fetch=True)
 
             for row in existing_rows:
                 concept_mapping[(row[1], row[2])] = row[0]
