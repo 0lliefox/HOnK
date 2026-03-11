@@ -107,7 +107,7 @@ class AbstractLoader(ABC):
         elif self.mode == 'graph':
             start_term, start_pos = self.normalise_data(start['term'], start['pos'])
             end_term, end_pos = self.normalise_data(end['term'], end['pos'])
-            if start_term != end_term:
+            if start_term != end_term or (self.builder.should_cluster and start_pos != end_pos):
                 self.graph_manager.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
 
     def add_property(self, concept, c_type, c_value, cursor):

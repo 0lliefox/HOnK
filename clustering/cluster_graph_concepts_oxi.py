@@ -6,7 +6,6 @@ from pyoxigraph import NamedNode, Quad, DefaultGraph
 from tools.timer import timer
 from clustering.cluster_graph_concepts import AbstractConceptGraphClusterer
 
-# Pre-define core RDF type for high-speed quad matching
 RDF_TYPE = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 
@@ -33,7 +32,6 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
     @timer
     def add_unclustered_concepts(self, cluster_mappings, visited_nodes):
         logging.info("  - Fetching all concept IDs from graph (Oxigraph)...")
-
         unvisited_candidates = set()
         for quad in self.g.quads_for_pattern(None, RDF_TYPE, None):
             s_val = quad.subject.value
@@ -115,6 +113,26 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
                             cluster_relations.add((c_s_label, p_node, c_o_label))
 
         logging.info(f"  - Found {len(cluster_relations)} unique cluster-level relationships.")
+
+        # Recover cluster relations for same-term cross-POS pairs that were silently dropped
+        # in add_relation_to_graph (start_uri == end_uri)
+        # These are added in DB mode but collapse to a self-loop in graph mode
+        # Example: come_up (StativeVerb, c110230) isA come_up (MotionVerb, c107946) produces
+        # bob_up isA come_up via clustering
+        cross_pos_hints = getattr(self.graph_manager, 'cross_pos_hints', [])
+        if cross_pos_hints:
+            logging.info(f"  - Processing {len(cross_pos_hints)} cross-POS same-URI hints...")
+            recovered = 0
+            for uri, rel_uri, s_pos, t_pos in cross_pos_hints:
+                entries = raw_uri_to_cluster_info.get(uri.value, [])
+                pos_to_cluster = {pos: label for label, pos in entries}
+                c_s = pos_to_cluster.get(s_pos)
+                c_t = pos_to_cluster.get(t_pos)
+                if c_s and c_t and c_s != c_t:
+                    cluster_relations.add((c_s, rel_uri, c_t))
+                    recovered += 1
+            logging.info(f"  - Recovered {recovered} cross-POS cluster relations.")
+
         logging.info("  - Optimizing and propagating relationships to all equivalent concepts...")
 
         cluster_to_urirefs = {

@@ -100,6 +100,24 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
                             cluster_relations.add((c_s_label, p, c_o_label))
 
         logging.info(f"  - Found {len(cluster_relations)} unique cluster-level relationships.")
+
+        # Recover cluster relations for same-term cross-POS pairs that were silently dropped
+        # in add_relation_to_graph (start_uri == end_uri)
+        # These are added in DB mode but collapse to a self-loop in graph mode
+        cross_pos_hints = getattr(self.graph_manager, 'cross_pos_hints', [])
+        if cross_pos_hints:
+            logging.info(f"  - Processing {len(cross_pos_hints)} cross-POS same-URI hints...")
+            recovered = 0
+            for uri, rel_uri, s_pos, t_pos in cross_pos_hints:
+                entries = raw_uri_to_cluster_info.get(str(uri), [])
+                pos_to_cluster = {pos: label for label, pos in entries}
+                c_s = pos_to_cluster.get(s_pos)
+                c_t = pos_to_cluster.get(t_pos)
+                if c_s and c_t and c_s != c_t:
+                    cluster_relations.add((c_s, rel_uri, c_t))
+                    recovered += 1
+            logging.info(f"  - Recovered {recovered} cross-POS cluster relations.")
+
         logging.info("  - Optimizing and propagating relationships to all equivalent concepts...")
 
         cluster_to_urirefs = {

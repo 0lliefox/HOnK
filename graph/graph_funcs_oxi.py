@@ -53,6 +53,10 @@ class OxiGraphManager(GraphManager):
     def __init__(self, builder, config):
         super().__init__(builder, config)
         self.ns = OxiNamespace(self.config['turtle_export']['base_uri'])
+        # Stores (uri, rel_uri, source_pos, target_pos) for same-term cross-POS relations
+        # that cannot be written as self-loop quads. Used by the clusterer to recover
+        # the equivalent cluster-level relations (e.g. come_up StativeVerb isA come_up MotionVerb).
+        self.cross_pos_hints = []
         self.g = self.init_graph()
 
     def init_graph(self):
@@ -116,9 +120,6 @@ class OxiGraphManager(GraphManager):
                 return
             start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
 
-        if start_uri == end_uri:
-            return
-
         mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False,
                                                             'swap': False}) if self.normalise_pos else {'rel': rel_type,
                                                                                                         'relNegated': False,
@@ -158,6 +159,17 @@ class OxiGraphManager(GraphManager):
                     self.g.add(Quad(rel_uri, self.ns['source_pos'], pyoxi_literal(final_source_pos), DefaultGraph()))
                 if final_target_pos:
                     self.g.add(Quad(rel_uri, self.ns['target_pos'], pyoxi_literal(final_target_pos), DefaultGraph()))
+
+        if start_uri == end_uri:
+            # A same-term cross-POS relation (e.g. come_up StativeVerb isA come_up MotionVerb)
+            # cannot be written as a self-loop quad. In graph+cluster mode, store a hint so
+            # the clusterer can materialise the equivalent cluster-level relation instead,
+            # matching the behaviour of DB mode where these are separate concept IDs.
+            if self.mode == 'graph' and self.should_cluster \
+                    and final_source_pos and final_target_pos \
+                    and final_source_pos != final_target_pos:
+                self.cross_pos_hints.append((start_uri, rel_uri, final_source_pos, final_target_pos))
+            return
 
         s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
         self.g.add(Quad(s, rel_uri, t, DefaultGraph()))

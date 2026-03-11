@@ -14,6 +14,10 @@ class RDFGraphManager(GraphManager):
     def __init__(self, builder, config):
         super().__init__(builder, config)
         self.ns = RDFNamespace(self.config['turtle_export']['base_uri'])
+        # Stores (uri, rel_uri, source_pos, target_pos) for same-term cross-POS relations
+        # that cannot be written as self-loop triples. Used by the clusterer to recover
+        # the equivalent cluster-level relations (e.g. come_up StativeVerb isA come_up MotionVerb).
+        self.cross_pos_hints = []
         self.g = self.init_graph()
 
     def init_graph(self):
@@ -77,9 +81,6 @@ class RDFGraphManager(GraphManager):
                 return
             start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
 
-        if start_uri == end_uri:
-            return
-
         mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False,
                                                             'swap': False}) if self.normalise_pos else {'rel': rel_type,
                                                                                                         'relNegated': False,
@@ -127,6 +128,17 @@ class RDFGraphManager(GraphManager):
                     self.g.add((rel_uri, self.ns['source_pos'], RDFLiteral(final_source_pos)))
                 if final_target_pos:
                     self.g.add((rel_uri, self.ns['target_pos'], RDFLiteral(final_target_pos)))
+
+        if start_uri == end_uri:
+            # A same-term cross-POS relation (e.g. come_up StativeVerb isA come_up MotionVerb)
+            # cannot be written as a self-loop triple. In graph+cluster mode, store a hint so
+            # the clusterer can materialise the equivalent cluster-level relation instead,
+            # matching the behaviour of DB mode where these are separate concept IDs.
+            if self.mode == 'graph' and self.should_cluster \
+                    and final_source_pos and final_target_pos \
+                    and final_source_pos != final_target_pos:
+                self.cross_pos_hints.append((start_uri, rel_uri, final_source_pos, final_target_pos))
+            return
 
         s, t = (end_uri, start_uri) if swap else (start_uri, end_uri)
         self.g.add((s, rel_uri, t))
