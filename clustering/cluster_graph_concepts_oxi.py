@@ -87,27 +87,33 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
                     continue
 
                 if p_node not in predicate_constraints:
-                    s_constraint_quad = next(self.g.quads_for_pattern(p_node, self.ns.source_pos, None), None)
-                    t_constraint_quad = next(self.g.quads_for_pattern(p_node, self.ns.target_pos, None), None)
+                    s_constraints = {q.object.value for q in self.g.quads_for_pattern(p_node, self.ns.source_pos, None)}
+                    t_constraints = {q.object.value for q in self.g.quads_for_pattern(p_node, self.ns.target_pos, None)}
+                    predicate_constraints[p_node] = (s_constraints, t_constraints)
 
-                    predicate_constraints[p_node] = (
-                        s_constraint_quad.object.value if s_constraint_quad else None,
-                        t_constraint_quad.object.value if t_constraint_quad else None
-                    )
-
-                s_constraint_pos, t_constraint_pos = predicate_constraints[p_node]
+                s_constraints, t_constraints = predicate_constraints[p_node]
                 o_str = quad.object.value
 
                 if o_str in raw_uri_to_cluster_info:
                     s_clusters_info = raw_uri_to_cluster_info[s_raw]
                     o_clusters_info = raw_uri_to_cluster_info[o_str]
 
+                    # Only enforce a POS constraint if at least one cluster entry for this
+                    # URI actually satisfies it. When no entry matches, the constraint is a
+                    # cross-source artifact and should not silently drop the relation.
+                    s_has_match = not s_constraints or any(
+                        p in s_constraints for _, p in s_clusters_info if p is not None
+                    )
+                    o_has_match = not t_constraints or any(
+                        p in t_constraints for _, p in o_clusters_info if p is not None
+                    )
+
                     for c_s_label, s_member_pos in s_clusters_info:
-                        if s_constraint_pos and s_member_pos and s_constraint_pos != s_member_pos:
+                        if s_has_match and s_constraints and s_member_pos and s_member_pos not in s_constraints:
                             continue
 
                         for c_o_label, o_member_pos in o_clusters_info:
-                            if t_constraint_pos and o_member_pos and t_constraint_pos != o_member_pos:
+                            if o_has_match and t_constraints and o_member_pos and o_member_pos not in t_constraints:
                                 continue
 
                             cluster_relations.add((c_s_label, p_node, c_o_label))
@@ -128,7 +134,10 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
                 pos_to_cluster = {pos: label for label, pos in entries}
                 c_s = pos_to_cluster.get(s_pos)
                 c_t = pos_to_cluster.get(t_pos)
-                if c_s and c_t and c_s != c_t:
+                if c_s and c_t:
+                    # Include same-cluster hints (c_s == c_t): intra-cluster propagation in the
+                    # quads_generator will emit all s≠o URI pairs, matching DB mode behaviour
+                    # where these are separate concept IDs that coalesce to a self-cluster relation.
                     cluster_relations.add((c_s, rel_uri, c_t))
                     recovered += 1
             logging.info(f"  - Recovered {recovered} cross-POS cluster relations.")

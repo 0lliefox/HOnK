@@ -89,12 +89,22 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
                     s_clusters_info = raw_uri_to_cluster_info[s_raw]
                     o_clusters_info = raw_uri_to_cluster_info[o_str]
 
+                    # Only enforce a POS constraint if at least one cluster entry for this
+                    # URI actually satisfies it. When no entry matches, the constraint is a
+                    # cross-source artifact and should not silently drop the relation.
+                    s_has_match = not s_constraint_pos or any(
+                        p == s_constraint_pos for _, p in s_clusters_info if p is not None
+                    )
+                    o_has_match = not t_constraint_pos or any(
+                        p == t_constraint_pos for _, p in o_clusters_info if p is not None
+                    )
+
                     for c_s_label, s_member_pos in s_clusters_info:
-                        if s_constraint_pos and s_member_pos and s_constraint_pos != s_member_pos:
+                        if s_has_match and s_constraint_pos and s_member_pos and s_constraint_pos != s_member_pos:
                             continue
 
                         for c_o_label, o_member_pos in o_clusters_info:
-                            if t_constraint_pos and o_member_pos and t_constraint_pos != o_member_pos:
+                            if o_has_match and t_constraint_pos and o_member_pos and t_constraint_pos != o_member_pos:
                                 continue
 
                             cluster_relations.add((c_s_label, p, c_o_label))
@@ -113,7 +123,10 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
                 pos_to_cluster = {pos: label for label, pos in entries}
                 c_s = pos_to_cluster.get(s_pos)
                 c_t = pos_to_cluster.get(t_pos)
-                if c_s and c_t and c_s != c_t:
+                if c_s and c_t:
+                    # Include same-cluster hints (c_s == c_t): intra-cluster propagation in the
+                    # quads_generator will emit all s≠o URI pairs, matching DB mode behaviour
+                    # where these are separate concept IDs that coalesce to a self-cluster relation.
                     cluster_relations.add((c_s, rel_uri, c_t))
                     recovered += 1
             logging.info(f"  - Recovered {recovered} cross-POS cluster relations.")
