@@ -8,6 +8,28 @@
       },
       "db_config": {
         "bulk_insert": true,
+        "batch_size": 1000
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "bulk_db_1000_oxi_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "db_config": {
+        "bulk_insert": true,
         "batch_size": 5000
       },
       "graph": {
