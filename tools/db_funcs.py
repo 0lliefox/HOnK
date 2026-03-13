@@ -22,6 +22,7 @@ class DBManager:
         self.property_buffer = set()
         self.url_buffer = set()
 
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def flush_all(self, cursor=None):
         # Forces all remaining items in the buffers to be inserted into the database
         standalone = cursor is None
@@ -35,16 +36,19 @@ class DBManager:
             self.conn.commit()
             cursor.close()
 
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def flush_relations(self, cursor):
         if self.relation_buffer:
             self.add_relations_bulk(list(self.relation_buffer), cursor)
             self.relation_buffer.clear()
 
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def flush_properties(self, cursor):
         if self.property_buffer:
             self.add_properties_bulk(list(self.property_buffer), cursor)
             self.property_buffer.clear()
 
+    @timer(log=False, threaded=False, independent=False, memory=False)
     def flush_urls(self, cursor):
         if self.url_buffer:
             self.add_urls_bulk(list(self.url_buffer), cursor)
@@ -159,45 +163,6 @@ class DBManager:
             )
 
     # Bulk insertion methods
-    @timer(log=False, threaded=False, independent=False, memory=False)
-    def get_or_create_concepts_bulk(self, concepts_set, cursor):
-        if not concepts_set:
-            return {}
-
-        # Sort the records to guarantee consistent locking order and prevent deadlocks
-        records = sorted([(term, pos, self.source) for term, pos in concepts_set])
-
-        if not self.unique_source:
-            conflict_target = "(term, part_of_speech)"
-        else:
-            conflict_target = "(term, part_of_speech, source)"
-
-        insert_query = f"""
-                INSERT INTO concepts (term, part_of_speech, source)
-                VALUES %s
-                ON CONFLICT {conflict_target} DO NOTHING
-                RETURNING id, term, part_of_speech;
-            """
-
-        inserted_rows = execute_values(cursor, insert_query, records, page_size=self.batch_size, fetch=True)
-        concept_mapping = {(row[1], row[2]): row[0] for row in inserted_rows}
-        missing_concepts = [c for c in concepts_set if c not in concept_mapping]
-
-        if missing_concepts:
-            missing_concepts = sorted(missing_concepts)
-            select_query = """
-                           SELECT c.id, c.term, c.part_of_speech
-                           FROM concepts c
-                                    JOIN (VALUES %s) AS t(term, part_of_speech)
-                                         ON c.term = t.term AND c.part_of_speech = t.part_of_speech; \
-                           """
-            existing_rows = execute_values(cursor, select_query, missing_concepts, page_size=self.batch_size, fetch=True)
-
-            for row in existing_rows:
-                concept_mapping[(row[1], row[2])] = row[0]
-
-        return concept_mapping
-
     @timer(log=False, threaded=False, independent=False, memory=False)
     def add_relations_bulk(self, relations_list, cursor):
         if not relations_list:
