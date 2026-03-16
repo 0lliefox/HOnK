@@ -406,9 +406,11 @@ def main():
 
     if len(sys.argv) == 1 or sys.argv[1].lower() == 'auto':
         exclude_sources = []
+        if len(sys.argv) > 3:
+            exclude_sources = [s.strip() for s in sys.argv[3].split(',')]
         if len(sys.argv) > 2:
-            exclude_sources = [s.strip() for s in sys.argv[2].split(',')]
-        auto_discover_transitive(conn, reverse_edges, reverse_pos, limit=5,
+            limit = int(sys.argv[2])
+        auto_discover_transitive(conn, reverse_edges, reverse_pos, limit=limit,
                                  exclude_sources=exclude_sources)
         conn.close()
         return
