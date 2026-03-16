@@ -68,7 +68,7 @@ local_files:
 turtle_export:
   convert: false
   normalise_pos: true
-  output_file: 'TEST_ALL_OXIGRAPH_ontology_db_clustered_test.nt'
+  output_file: 'ontology_db_oxi_clustered_final.nt'
   base_uri: "https://logds.github.io/parmenides#"
   base_prefix: "parmenides"
 

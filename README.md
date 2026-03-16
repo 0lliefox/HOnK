@@ -28,7 +28,6 @@ grant all on schema public to fox;
 exit
 ```
 
-
 ### 2. Getting Supporting Files
 For this particular research, the following Knowledge Bases (KBs) were used, this does not mean other KBs could not be incorporated to enhance the final ontology further.
 
@@ -46,20 +45,14 @@ Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?t
 #### WordNet
 The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo.3739540), as an input for ConceptNet, therefore used here to ensure the best clustering possible.
 
-#### DBpedia
-The artifacts found for [en-dbpedia-enriched-with-wikidata-dbpedia](https://databus.dbpedia.org/dbpedia-enterprise/en-dbpedia-enriched-with-wikidata-dbpedia) from 2025-08-21 were used, with [truthy dump](https://dumps.wikimedia.org/wikidatawiki/entities/) from 2025-10-24.
-
 #### GeoNames
+Files for GeoNames can be found [here](https://download.geonames.org/export/dump/).
 
-
-[//]: # (```bash)
-
-[//]: # (curl "http://ldf.fi/wordnet/data?graph=http://ldf.fi/wordnet/wn31" --output supporting_files/wordnet.ttl)
-
-[//]: # (```)
+#### DBpedia
+The artifacts found for [en-dbpedia-enriched-with-wikidata-dbpedia](https://databus.dbpedia.org/dbpedia-enterprise/en-dbpedia-enriched-with-wikidata-dbpedia) from 2025-08-21 were used, with [truthy dump](https://dumps.wikimedia.org/wikidatawiki/entities/) from 2025-10-24. (The implementation for DBpedia is not fully complete yet.)
 
 ### 3. Install Packages and Run
-Setup a virtual Python environment (3.10.x tested), and run:
+Setup a virtual Python environment (3.10.x and 3.11.x tested), and run:
 ```bash
 pip install .
 ```
@@ -67,3 +60,34 @@ Then:
 ```bash
 build-ontology
 ```
+
+## Pipeline Overview
+The ontology building process is orchestrated by [`build_ontology.py`](build_ontology.py) and can be configured via [`config.yaml`](config.yaml). The pipeline operates in two main modes: `db` and `graph`.
+
+### 1. Data Ingestion
+- **Loaders**: Data is ingested from various knowledge bases using loaders found in the [`knowledge_bases/`](knowledge_bases/) directory (e.g., `ConceptNetLoader`, `WiktionaryLoader`).
+- **Mode-Specific Storage**:
+    - In `db` mode, data is parsed and stored in a PostgreSQL database.
+    - In `graph` mode, data is loaded directly into an in-memory graph (using `rdflib` or `pyoxigraph`).
+
+### 2. Clustering
+- **Purpose**: To identify and group concepts that refer to the same entity (e.g., concepts sharing the same external URL).
+- **Process**:
+    - An adjacency list is built based on shared URLs.
+    - Transitive closure is computed on this list to find all connected concepts.
+    - These connected components form the clusters.
+- **Implementation**:
+    - [`clustering/cluster_concepts.py`](clustering/cluster_concepts.py): Operates on the PostgreSQL database.
+    - [`clustering/cluster_graph_concepts.py`](clustering/cluster_graph_concepts.py): Operates on the in-memory graph.
+
+### 3. Graph Construction & Coalescing
+- **DB Mode**:
+    1. After clustering, [`clustering/cluster_concepts.py`](clustering/cluster_concepts.py) creates a `cluster_relations` table by joining the original `relations` with the new `clusters`.
+    2. [`build_ontology.py`](build_ontology.py) then reads from the database tables (including `cluster_relations`) to construct the final RDF graph.
+- **Graph Mode**:
+    1. [`clustering/cluster_graph_concepts.py`](clustering/cluster_graph_concepts.py) directly modifies the graph.
+    2. It identifies relationships between clusters and "coalesces" them, propagating relations to all member concepts within the clusters.
+
+### 4. Benchmarking
+- The pipeline is instrumented with a `@timer` decorator ([`tools/timer.py`](tools/timer.py)) to measure the performance of various stages.
+- Results are saved to CSV files in `benchmarking/results/`.
