@@ -1,0 +1,77 @@
+database:
+  dbname: 'ontology_db'
+  user: 'fox'
+  password: 'drowssap'
+  host: 'localhost'
+  port: '5432'
+
+general:
+  language: 'en'  # Fix a specific language for filtering the knowledge bases
+  sources: ['parmenides', 'conceptnet', 'wiktionary', 'wordnet', 'geonames']
+  mapping_sources: ['wordnet', 'conceptnet', 'wiktionary']
+  mode: 'graph'  # graph / db
+  should_cache: false
+  show_stats: false
+  verbose: false
+
+db_config:
+  tables_to_delete: ['relations', 'properties', 'urls', 'concepts']
+  source_to_delete: []  # Set to [] to delete all sources
+  clear_db_on_start: true  # Set to true to drop and recreate the database tables on every run
+  confirm_clear_db: false
+  unique_source: false
+  bulk_insert: false
+  batch_size: 10000
+
+graph:
+  type: 'oxigraph' # oxigraph / rdf
+
+local_files:
+  supporting_files: 'supporting_files'
+  cache: '.cache'
+
+  # Paths to the local data files for knowledge bases and their corresponding mapping configurations
+  wordnet: 'supporting_files/kb/WordNet.nt'
+  wordnet_edge_mappings_file: 'supporting_files/mappings/wn_edge_mappings.json'
+  wordnet_pos_mappings_file: 'supporting_files/mappings/wn_pos_mappings.json'
+
+  conceptnet: 'supporting_files/kb/ConceptNet.csv'
+  conceptnet_edge_mappings_file: 'supporting_files/mappings/cn_edge_mappings.json'
+  conceptnet_pos_mappings_file: 'supporting_files/mappings/cn_pos_mappings.json'
+
+  wiktionary: 'supporting_files/kb/Wiktionary.json'
+  wiktionary_edge_mappings_file: 'supporting_files/mappings/wk_edge_mappings.json'
+  wiktionary_pos_mappings_file: 'supporting_files/mappings/wk_pos_mappings.json'
+
+  parmenides: 'supporting_files/parmenides'
+
+  geonames: 'supporting_files/kb/GeoNames/all_countries.csv'
+  geonames_hierarchy: 'supporting_files/kb/GeoNames/hierarchy.json'
+  geonames_alternates: 'supporting_files/kb/GeoNames/alternates_map.json'
+  geonames_ignore: 'supporting_files/kb/GeoNames/ignored_places.txt'
+  geonames_feature_codes: 'supporting_files/kb/GeoNames/feature_map.json'
+  geonames_links: 'supporting_files/kb/GeoNames/geo_links.json'
+
+  dbpedia_labels: 'supporting_files/kb/dbpedia/dbpedia_labels_en_filtered.ttl'
+  dbpedia_types: 'supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=rdf_props=type.ttl'
+  dbpedia_ignored_uris: 'supporting_files/kb/dbpedia/ignored_uris.txt'
+  dbpedia_properties: 'supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=wdt_props=all.ttl'
+  wikidata_property_labels: 'supporting_files/kb/dbpedia/dbpedia_props.csv'
+  wikidata_labels: 'supporting_files/kb/dbpedia/latest-truthy-en-labels-only.nt'
+  wikidata_allowed_ids: 'supporting_files/kb/dbpedia/allowed_wiki_ids.txt'
+
+  ontology_classes: 'supporting_files/mappings/ontology_classes.json'
+  rejected_classes: 'supporting_files/mappings/ignored_classes.json'
+
+  pos_tag_classes: 'supporting_files/mappings/pos_tag_mappings.json'
+
+turtle_export:
+  convert: false
+  normalise_pos: true
+  output_file: 'ontology_graph_oxi_clustered_urlskept_final.nt'
+  base_uri: "https://logds.github.io/parmenides#"
+  base_prefix: "parmenides"
+
+clustering:
+  enabled: true
+  keep_url_triples: true  # Set to true to preserve hasURL triples after clustering (e.g. for scalability tests)
