@@ -156,9 +156,10 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
     @timer
     def cleanup_graph(self):
         logging.info("Cleaning up intermediate graph data (RDFLib)...")
-        self.g.remove((None, self.ns.hasURL, None))
-        self.g.remove((None, self.ns.source_pos, None))
-        self.g.remove((None, self.ns.target_pos, None))
+        if not self.config['clustering'].get('keep_url_triples', False):
+            self.g.remove((None, self.ns.hasURL, None))
+            self.g.remove((None, self.ns.source_pos, None))
+            self.g.remove((None, self.ns.target_pos, None))
 
         logging.info("Merging duplicate relationship predicates...")
         weights = {s: str(o) for s, o in self.g.subject_objects(self.ns.weight)}

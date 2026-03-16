@@ -74,3 +74,4 @@ turtle_export:
 
 clustering:
   enabled: true
+  keep_url_triples: false  # Set to true to preserve hasURL triples after clustering (e.g. for scalability tests)

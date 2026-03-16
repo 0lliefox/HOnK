@@ -1,17 +1,17 @@
+import argparse
 import logging
 import os
 import sys
-import argparse
 
 # Add the project root to sys.path to allow imports from 'tools' and 'clustering'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import psycopg2
-import yaml
 from psycopg2._psycopg import AsIs
 
+from tools.config import get_config
+
 from benchmarking.benchmark import Benchmark
-from benchmarking.plot_results import ResultsPlotter
 from clustering.cluster_concepts import ConceptClusterer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -166,20 +166,17 @@ def run_experiment(config, fractions):
             logging.info("Database connection closed.")
 
 
-def main(num_runs=1):
-    with open('../config.yaml', 'r') as f:
-        config = yaml.safe_load(f)
+def main():
+    parser = argparse.ArgumentParser(description="Test scalability of DB clustering.")
+    parser.add_argument("--runs", type=int, default=10, help="Number of runs per fraction (default: 10)")
+    args = parser.parse_args()
 
-    os.chdir('../')
-    
-    for i in range(num_runs):
+    config = get_config()
+
+    for i in range(args.runs):
+        logging.info(f"=== Run {i + 1}/{args.runs} ===")
         run_experiment(config, TEST_FRACTIONS)
-
-    os.chdir('benchmarking')
-    file_path = 'graph_benchmarking/results/clustering_benchmark.csv'
-    plotter = ResultsPlotter(file_path)
-    plotter.run()
 
 
 if __name__ == "__main__":
-    main(10)
+    main()

@@ -64,7 +64,7 @@ mkdir -p "${TASK_WORKDIR}/benchmarking/results"
 # Place a config.yaml in the task workdir pointing at this task's DB port.
 # get_config() reads config.yaml from the current working directory.
 cp "${SLURM_SUBMIT_DIR}/slurm/config_finaldb.yaml" "${TASK_WORKDIR}/config.yaml"
-sed -i "s/port: '5432'/port: '$PORT'/g" "${TASK_WORKDIR}/config.yaml"
+sed -i "s/port: '15432'/port: '$PORT'/g" "${TASK_WORKDIR}/config.yaml"
 
 export PYTHONPATH="${SLURM_SUBMIT_DIR}:${PYTHONPATH}"
 
@@ -72,12 +72,12 @@ export PYTHONPATH="${SLURM_SUBMIT_DIR}:${PYTHONPATH}"
 echo ""
 echo "--- Step 1: DB clustering scalability test (task $SLURM_ARRAY_TASK_ID) ---"
 cd "${TASK_WORKDIR}"
-python3 -m benchmarking.scalability_test --runs 1
+python3 "${SLURM_SUBMIT_DIR}/benchmarking/scalability_test.py" --runs 1
 
 # ── Step 2: Graph clustering scalability test ─────────────────────────────────
 echo ""
 echo "--- Step 2: Graph clustering scalability test (task $SLURM_ARRAY_TASK_ID) ---"
-python3 -m benchmarking.graph_scalability_test "${INPUT_FILE}" --runs 1
+python3 "${SLURM_SUBMIT_DIR}/benchmarking/graph_scalability_test.py" "${INPUT_FILE}" --runs 1
 
 echo ""
 echo "=== Task $SLURM_ARRAY_TASK_ID Completed ==="

@@ -174,9 +174,10 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
             for q in to_remove:
                 self.g.remove(q)
 
-        remove_pattern(None, self.ns.hasURL, None)
-        remove_pattern(None, self.ns.source_pos, None)
-        remove_pattern(None, self.ns.target_pos, None)
+        if not self.config['clustering'].get('keep_url_triples', False):
+            remove_pattern(None, self.ns.hasURL, None)
+            remove_pattern(None, self.ns.source_pos, None)
+            remove_pattern(None, self.ns.target_pos, None)
 
         logging.info("Merging duplicate relationship predicates...")
 

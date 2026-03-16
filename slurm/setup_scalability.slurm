@@ -41,7 +41,7 @@ psql -h localhost -p $PORT -d postgres -U fox -c "CREATE DATABASE ontology_db;"
 # Inject the setup port into a temp copy of the DB config
 DB_CONFIG="${SLURM_SUBMIT_DIR}/slurm/config_finaldb_setup.yaml"
 cp "${SLURM_SUBMIT_DIR}/slurm/config_finaldb.yaml" "$DB_CONFIG"
-sed -i "s/port: '5432'/port: '$PORT'/g" "$DB_CONFIG"
+sed -i "s/port: '15432'/port: '$PORT'/g" "$DB_CONFIG"
 
 trap 'echo "Stopping setup DB..."; pg_ctl -D "$PG_DATA" stop; rm -f "$DB_CONFIG"' EXIT
 
