@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=256G
-#SBATCH --time=08:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=logs/scalability_%A_%a.out
 #SBATCH --error=logs/scalability_%A_%a.err
 #SBATCH --array=0-9
