@@ -75,3 +75,88 @@ turtle_export:
 clustering:
   enabled: true
   keep_url_triples: false  # Set to true to preserve hasURL triples after clustering (e.g. for scalability tests)
+
+evaluator:
+  base_uri: "https://logds.github.io/parmenides"
+  output_csv: "evaluation_results.csv"
+  run_deterministic_evaluation: true
+  run_semantic_evaluation: true
+  embedding_models:
+    - "all-MiniLM-L6-v2"
+    - "sentence-transformers/all-mpnet-base-v2"
+    - "BAAI/bge-m3"
+  run_llm_evaluation: true
+  llm_iterations: 10
+  max_parallel_queries: 4
+  max_extraction_workers: 4
+  llms:
+    - "llama3.2:3b"
+    - "qwen2.5:7b"
+    - "mistral:7b"
+  bridging_limit: 100
+  summary_table_output: "evaluator/summary_table.txt"
+  max_context_triples: 100
+  max_bridge_triples: 20
+  embedding_top_k: 10        # top-K triples used for per-triple similarity mean
+
+  ontologies:
+    baseline: "../ontologies/ontology_db_CN_UNNORM_UNCLUSTERED.nt"
+    honk: "../comet/ontologies/db_oxi_clustered_final.nt"
+
+  test_cases:
+    # Biological Taxonomy
+    - sentence: "The parasitic mite belongs to the order Acarina"
+      keywords: ["mite", "order", "Acarina"]
+      label: "sent:mite"
+    - sentence: "Caenogenesis, also called kenogenesis, involves novel developmental structures"
+      keywords: ["caenogenesis", "kenogenesis", "embryology", "development"]
+      label: "sent:caenogenesis"
+
+    # Medical & Spelling Variants
+    - sentence: "The specialist treated the hematopathy, also described as a hemopathy"
+      keywords: ["hematopathy", "hemopathy", "blood disorder"]
+      label: "sent:hematopathy"
+    - sentence: "The paediatrician treats sick children"
+      keywords: ["paediatrician", "pediatrician", "children"]
+      label: "sent:paediatrician"
+
+    # Geographic & Physical Features
+    - sentence: "The wadi runs completely dry for most of the year in this arid region"
+      keywords: ["wadi", "dry", "stream", "intermittent"]
+      label: "sent:wadi"
+    - sentence: "The harbour set dockage charges, known as moorage fees, for overnight berths"
+      keywords: ["dockage", "moorage", "harbour", "berth"]
+      label: "sent:harbour"
+
+    # Lexical & Register Variation
+    - sentence: "The car bonnet is open"
+      keywords: ["bonnet", "car", "hood"]
+      label: "sent:bonnet"
+    - sentence: "The motorway connects the two cities"
+      keywords: ["motorway", "highway", "freeway", "road"]
+      label: "sent:motorway"
+    - sentence: "The aubergine is also known as eggplant"
+      keywords: ["aubergine", "eggplant", "vegetable"]
+      label: "sent:aubergine"
+    - sentence: "Letters can be posted in the pillar box, a traditional British mailbox"
+      keywords: ["pillar box", "mailbox", "postbox", "post"]
+      label: "sent:pillarbox"
+    - sentence: "The teahouse served soochong, more commonly spelt souchong"
+      keywords: ["soochong", "souchong", "tea"]
+      label: "sent:soochong"
+
+    # Scientific Precision
+    - sentence: "Students confuse entomology, the study of insects, with etymology"
+      keywords: ["entomology", "etymology", "insects", "words"]
+      label: "sent:entomology"
+
+    # Transitive Cluster Discoveries
+    - sentence: "A settee is a type of sofa, also known as a couch or divan"
+      keywords: ["settee", "sofa", "couch", "divan"]
+      label: "sent:settee"
+    - sentence: "A boomerang is a throwing stick used as a hunting device"
+      keywords: ["boomerang", "throwing stick", "device", "curved"]
+      label: "sent:boomerang"
+    - sentence: "If you bottle out, you essentially chicken out or bow out"
+      keywords: ["bottle out", "chicken out", "bow out", "withdraw"]
+      label: "sent:bottleout"

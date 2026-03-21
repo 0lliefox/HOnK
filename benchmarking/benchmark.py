@@ -42,7 +42,6 @@ class Benchmark:
                 row[phase_name] += value
             else:
                 row[phase_name] = value
-            # ----------------------
 
         else:
             new_row = {'id': id, phase_name: value}

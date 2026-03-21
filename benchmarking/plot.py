@@ -31,6 +31,15 @@ EXPECTED_LOADER_ORDER = [
 ]
 
 
+def sort_index_numerically(df):
+    def parse_key(k):
+        try:
+            return (0, float(str(k).replace(',', '')))
+        except (ValueError, AttributeError):
+            return (1, str(k))
+    return df.loc[sorted(df.index, key=parse_key)]
+
+
 def order_columns(available_columns, expected_order):
     ordered = []
     # Add expected columns in exact order if they exist
@@ -56,7 +65,6 @@ def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, capt
     csv_path = os.path.join(out_folder, f'{filename_base}.csv')
     latex_path = os.path.join(out_folder, f'{filename_base}.tex')
 
-    # --- UPDATED CSV SAVING LOGIC ---
     csv_combined = pd.DataFrame(index=df_mean.index, columns=df_mean.columns)
     for col in df_mean.columns:
         # Combined logic: if both mean and std are 0, use N/A, else format with commas
@@ -75,7 +83,6 @@ def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, capt
 
     csv_combined.to_csv(csv_path)
 
-    # --- LATEX GENERATION ---
     exp_headers = list(df_mean_t.columns)
     formatted_headers = [f"\\makecell[r]{{\\textbf{{{h}}}}}" for h in exp_headers]
     header_str = " & ".join(["\\textbf{Phase}"] + formatted_headers) + " \\\\"
@@ -220,6 +227,9 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             return
 
         # Prepare data for plotnine
+        # Capture experiment order before melting so it can be enforced as a Categorical
+        experiment_order = list(df_mean.index)
+
         df_mean_reset = df_mean.reset_index().rename(columns={'index': 'Experiment'})
         df_std_reset = df_std.reset_index().rename(columns={'index': 'Experiment'})
 
@@ -245,8 +255,10 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             plot_data['Category'] = pd.Categorical(plot_data['Category'], categories=categories, ordered=True)
             active_palette = palette
 
-        # Wrap Experiment labels for X-axis
+        # Wrap Experiment labels for X-axis, then enforce the original sorted order as a Categorical
         plot_data['Experiment'] = plot_data['Experiment'].apply(lambda x: textwrap.fill(x, 12))
+        wrapped_experiment_order = [textwrap.fill(e, 12) for e in experiment_order]
+        plot_data['Experiment'] = pd.Categorical(plot_data['Experiment'], categories=wrapped_experiment_order, ordered=True)
 
         # Calculate ymin/ymax for error bars
         if stacked:
@@ -306,9 +318,8 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         plot.save(output_path, dpi=150, width=12, height=8, units='in', verbose=False)
         print(f"Saved plot to {output_path}")
 
-    # 1. Plot Execution Time by Phase
-    df_mean = pd.DataFrame(bench_mean).T.fillna(0)
-    df_std = pd.DataFrame(bench_std).T.fillna(0)
+    df_mean = sort_index_numerically(pd.DataFrame(bench_mean).T.fillna(0))
+    df_std = sort_index_numerically(pd.DataFrame(bench_std).T.fillna(0))
 
     # Filter out phases that are all 0
     df_mean = df_mean.loc[:, (df_mean != 0).any(axis=0)]
@@ -324,9 +335,8 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
     )
     save_table(df_mean, df_std, 'benchmark_execution_times', output_dir, experiment_path, 'Execution Time by Phase (s)')
 
-    # 2. Plot Execution Time by Dataset
-    df_ds_mean = pd.DataFrame(dataset_bench_mean).T.fillna(0)
-    df_ds_std = pd.DataFrame(dataset_bench_std).T.fillna(0)
+    df_ds_mean = sort_index_numerically(pd.DataFrame(dataset_bench_mean).T.fillna(0))
+    df_ds_std = sort_index_numerically(pd.DataFrame(dataset_bench_std).T.fillna(0))
 
     create_plot(
         df_ds_mean, df_ds_std,
@@ -393,9 +403,8 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         dataset_mem_mean[name] = df_ds_maxes.mean()
         dataset_mem_std[name] = df_ds_maxes.std().fillna(0)
 
-    # 3. Plot Peak Memory by Phase
-    df_mem_mean = pd.DataFrame(mem_mean).T.fillna(0)
-    df_mem_std = pd.DataFrame(mem_std).T.fillna(0)
+    df_mem_mean = sort_index_numerically(pd.DataFrame(mem_mean).T.fillna(0))
+    df_mem_std = sort_index_numerically(pd.DataFrame(mem_std).T.fillna(0))
 
     # Filter out phases that are all 0
     df_mem_mean = df_mem_mean.loc[:, (df_mem_mean != 0).any(axis=0)]
@@ -412,9 +421,8 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
     save_table(df_mem_mean, df_mem_std, 'memory_peak_usage', output_dir, experiment_path,
                'Peak Memory Usage by Phase (MB)')
 
-    # 4. Plot Peak Memory by Dataset
-    df_ds_mem_mean = pd.DataFrame(dataset_mem_mean).T.fillna(0)
-    df_ds_mem_std = pd.DataFrame(dataset_mem_std).T.fillna(0)
+    df_ds_mem_mean = sort_index_numerically(pd.DataFrame(dataset_mem_mean).T.fillna(0))
+    df_ds_mem_std = sort_index_numerically(pd.DataFrame(dataset_mem_std).T.fillna(0))
 
     create_plot(
         df_ds_mem_mean, df_ds_mem_std,
@@ -440,11 +448,12 @@ if __name__ == '__main__':
     title = args.title if args.title else ''
 
     rename_map = {
-        'bulk_db_5000_oxi_clustered_final': '5,000',
-        'bulk_db_10000_oxi_clustered_final': '10,000',
-        'bulk_db_25000_oxi_clustered_final': '25,000',
-        'bulk_db_50000_oxi_clustered_final': '50,000',
-        'bulk_db_100000_oxi_clustered_final': '100,000',
+        'bulkfixed_db_1000_oxi_clustered_final': '1,000',
+        'bulkfixed_db_5000_oxi_clustered_final': '5,000',
+        'bulkfixed_db_10000_oxi_clustered_final': '10,000',
+        'bulkfixed_db_25000_oxi_clustered_final': '25,000',
+        'bulkfixed_db_50000_oxi_clustered_final': '50,000',
+        'bulkfixed_db_100000_oxi_clustered_final': '100,000',
         'db_CN+WK+WN_oxi_clustered_final': 'CN+WK+WN (Oxigraph)',
         'db_CN+WK+WN_rdf_clustered_final': 'CN+WK+WN (RDFLib)',
         'db_CN_oxi_clustered_final': 'CN Only (Oxigraph)',

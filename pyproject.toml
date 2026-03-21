@@ -3,7 +3,7 @@ name = "HOnK"
 authors = [
     {name = "Oliver R. Fox", email= "o.fox3@newcastle.ac.uk"}
 ]
-version = "1.0.0"
+version = "1.1.0"
 description = "."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,7 +23,9 @@ dependencies = [
     "pytest",
     "pyyaml",
     "networkx",
-    "pyoxigraph"
+    "pyoxigraph",
+    "ollama",
+    "sentence-transformers"
 ]
 
 [project.scripts]
