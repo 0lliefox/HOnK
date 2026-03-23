@@ -80,7 +80,7 @@ class AbstractLoader(ABC):
     def normalise_data(self, term, pos):
         if self.graph_manager.normalise_pos:
             term = self.normalise_term(term)
-            pos = self.get_mapped_pos(pos)
+            pos = self.get_mapped_pos(pos) if pos is not None else None
         return term, pos
 
     @lru_cache(maxsize=1024)

@@ -14,14 +14,14 @@ try:
     from .context_builder import format_context
     from .extractor import compute_differential_triples, extract_bridging_triples, extract_subgraph
     from .metrics import compute_deterministic_metrics
-    from .reporter import export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics
+    from .reporter import export_llm_by_model_csv, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics
     from .scorers import compute_embedding_similarity, ensure_models_pulled, query_llm
     from .store_loader import get_file_hash, load_graph
 except ImportError:
     from context_builder import format_context  # type: ignore[no-redef]
     from extractor import compute_differential_triples, extract_bridging_triples, extract_subgraph  # type: ignore[no-redef]
     from metrics import compute_deterministic_metrics  # type: ignore[no-redef]
-    from reporter import export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics  # type: ignore[no-redef]
+    from reporter import export_llm_by_model_csv, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics  # type: ignore[no-redef]
     from scorers import compute_embedding_similarity, ensure_models_pulled, query_llm  # type: ignore[no-redef]
     from store_loader import get_file_hash, load_graph  # type: ignore[no-redef]
 
@@ -361,6 +361,11 @@ class HonkEvaluator:
 
         csv_rows = self._build_csv_rows(processed_cases, sentence_sim, llm_scores)
         export_to_csv(csv_rows, self.output_csv, include_llm=self.run_llm and bool(self.llm_models))
+        if self.run_llm and llm_scores:
+            llm_model_csv = str(Path(self.output_csv).with_name(
+                Path(self.output_csv).stem + '_llm_by_model.csv'
+            ))
+            export_llm_by_model_csv(llm_scores, llm_model_csv)
         generate_summary_table(
             processed_cases, sentence_sim, llm_scores,
             list(self.embedders.keys()), self.summary_table_output,

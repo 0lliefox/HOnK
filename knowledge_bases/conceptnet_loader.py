@@ -95,8 +95,8 @@ class ConceptNetLoader(AbstractLoader):
                 for row in tqdm(reader, desc="Processing ConceptNet Edges", disable=not self.verbose):
                     relation = Relation(row)
 
-                    # According to documentation, /dbpedia relations should be removed (https://github.com/commonsense/conceptnet5/wiki/Relations)
-                    if "/dbpedia" in relation.rel:
+                    # According to documentation, dbpedia/ relations should be removed (https://github.com/commonsense/conceptnet5/wiki/Relations)
+                    if "dbpedia/" in relation.rel:
                         continue
 
                     is_url = self.is_url(relation)

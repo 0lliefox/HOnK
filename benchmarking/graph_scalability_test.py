@@ -39,7 +39,6 @@ class MockBuilder:
 
 
 def rdflib_to_oxi(rdf_graph):
-    """Convert an RDFLib Graph to a Pyoxigraph Store, preserving datatypes and language tags."""
     store = Store()
     for s, p, o in rdf_graph:
         if not isinstance(s, URIRef):
@@ -113,7 +112,6 @@ def run_experiment(input_file, config, fractions):
         # so both backends start from identical data.
         oxi_store = rdflib_to_oxi(rdf_subset)
 
-        # --- RDF clusterer ---
         logging.info(f"  Running RDF clusterer...")
         rdf_builder = MockBuilder(rdf_subset, rdf_ns, id_percentage, "rdf")
         rdf_builder.benchmarking.add_row(id_percentage, 'concept_count', concept_count)
@@ -125,7 +123,6 @@ def run_experiment(input_file, config, fractions):
         except Exception as e:
             logging.error(f"RDF clustering error at {id_percentage}%: {e}")
 
-        # --- Oxi clusterer ---
         logging.info(f"  Running Oxi clusterer...")
         oxi_builder = MockBuilder(oxi_store, oxi_ns, id_percentage, "oxi")
         oxi_builder.benchmarking.add_row(id_percentage, 'concept_count', concept_count)

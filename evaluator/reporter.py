@@ -29,6 +29,25 @@ def _append_mean_row(
     rows.append(f"\\textbf{{Mean}} & {mb:.2f} & {mh:.2f} & {delta_str} \\\\")
 
 
+def export_llm_by_model_csv(
+    llm_scores: Dict[Tuple[str, str], Dict[str, Any]],
+    output_csv: str,
+) -> None:
+    if not llm_scores:
+        return
+    with open(output_csv, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['Sentence', 'LLM Model', 'Baseline Score', 'HOnK Score'])
+        writer.writeheader()
+        for (sentence, model), scores in llm_scores.items():
+            writer.writerow({
+                'Sentence': sentence,
+                'LLM Model': model,
+                'Baseline Score': round(scores['b_score'], 2),
+                'HOnK Score': round(scores['h_score'], 2),
+            })
+    logger.info("LLM per-model data serialised to '%s'", output_csv)
+
+
 def export_to_csv(
     data: List[Dict[str, Any]],
     output_csv: str,
