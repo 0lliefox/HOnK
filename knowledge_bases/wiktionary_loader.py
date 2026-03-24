@@ -97,12 +97,8 @@ class WiktionaryLoader(AbstractLoader):
                 else:
                     found_poses.add(standardised_pos)
 
-                definitions = []
                 senses = data.get('senses', [])
                 for sense in senses:
-                    # glosses = sense.get('glosses')
-                    # if glosses and isinstance(glosses, list) and glosses[0]:
-                    #     definitions.append(glosses[0])
 
                     # Search through glosses to find extra POS tags
                     if searchable_classes:
@@ -120,12 +116,15 @@ class WiktionaryLoader(AbstractLoader):
                     if not main_concept_id and self.mode == 'db':
                         continue
 
-                    # if definitions:
-                    #     full_definition = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(definitions))
-                    #     self.add_undirected(main_concept_id, 'definition', full_definition, cursor)
-
                     for class_type in list(self.edge_mappings.keys()):
-                        for c_item in [s_obj.get('word') for s_obj in data.get(class_type, []) if s_obj.get('word')]:
+                        for s_obj in data.get(class_type, []):
+                            c_item = s_obj.get('word')
+                            if not c_item:
+                                continue
+
+                            sense = s_obj.get('sense', '')
+                            rel_type = 'neqTo' if 'unrelated' in sense.lower() else class_type
+
                             if class_type in {'related', 'derived'}:
                                 c_item_pos = word_to_pos.get(c_item, [])
                             else:
@@ -145,7 +144,7 @@ class WiktionaryLoader(AbstractLoader):
                                             'term': c_item,
                                             'pos': c_pos
                                         },
-                                        class_type, 1.0, cursor)
+                                        rel_type, 1.0, cursor)
 
                     for prop in found_props:
                         self.add_property({'id': main_concept_id, 'term': term}, prop, True, cursor)
