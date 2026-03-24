@@ -227,42 +227,29 @@ class WordNetLoader(AbstractLoader):
                         related_db_ids = synset_uri_to_db_ids.get(related_uri, [])
                         if len(related_db_ids) == 0: continue
 
-                        mapping = self.mappings.get(rel_fragment.lower())
-                        if not mapping: continue
-
-                        rel, negated, swap = mapping.get('rel'), mapping.get('isNegated', False), mapping.get('swap',
-                                                                                                              False)
-                        if not rel: continue
+                        # Only process relations that have a known mapping; the actual
+                        # renaming, swap, and negated flag are applied later by
+                        # add_relation_to_graph (graph_funcs_*.py) when normalise_pos=True.
+                        # Do not pre-apply the mapping here — that would cause the transform
+                        # to be applied twice in graph mode, and produce inconsistent relation
+                        # names versus other loaders in DB mode.
+                        if not self.mappings.get(rel_fragment.lower()):
+                            continue
 
                         for related_id in related_db_ids:
                             start_id, end_id = synset_item_to_db_id[l_key], related_id
-
-                            if swap:
-                                self.add_relation(
-                                    {
-                                        'id': end_id[0],
-                                        'term': end_id[1],
-                                        'pos': end_id[2]
-                                    },
-                                    {
-                                        'id': start_id[0],
-                                        'term': start_id[1],
-                                        'pos': start_id[2]
-                                    },
-                                    rel, 1.0, cursor)
-                            else:
-                                self.add_relation(
-                                    {
-                                        'id': start_id[0],
-                                        'term': start_id[1],
-                                        'pos': start_id[2]
-                                    },
-                                    {
-                                        'id': end_id[0],
-                                        'term': end_id[1],
-                                        'pos': end_id[2]
-                                    },
-                                    rel, 1.0, cursor)
+                            self.add_relation(
+                                {
+                                    'id': start_id[0],
+                                    'term': start_id[1],
+                                    'pos': start_id[2]
+                                },
+                                {
+                                    'id': end_id[0],
+                                    'term': end_id[1],
+                                    'pos': end_id[2]
+                                },
+                                rel_fragment, 1.0, cursor)
 
         if getattr(self, 'mode', None) == 'db':
             with self.conn.cursor() as cursor:
