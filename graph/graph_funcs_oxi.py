@@ -120,10 +120,20 @@ class OxiGraphManager(GraphManager):
                 return
             start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
 
-        mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False,
-                                                            'swap': False}) if self.normalise_pos else {'rel': rel_type,
-                                                                                                        'relNegated': False,
-                                                                                                        'swap': False}
+        mapping = self.full_mappings.get(
+            rel_type.lower(),
+            {
+                'rel': rel_type,
+                'relNegated': False,
+                'swap': False
+            }
+        ) if self.normalise_pos else \
+            {
+                'rel': rel_type,
+                'relNegated': False,
+                'swap': False
+            }
+
         rel, is_negated, swap = mapping.get('rel'), mapping.get('relNegated', False), mapping.get('swap', False)
 
         final_source_pos, final_target_pos = (target_pos, source_pos) if swap else (source_pos, target_pos)

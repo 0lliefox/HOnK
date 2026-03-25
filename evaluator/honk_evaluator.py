@@ -14,16 +14,18 @@ try:
     from .context_builder import format_context
     from .extractor import compute_differential_triples, extract_bridging_triples, extract_subgraph
     from .metrics import compute_deterministic_metrics
-    from .reporter import export_llm_by_model_csv, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics
+    from .reporter import export_llm_by_model_csv, export_llm_prompts_table, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics
     from .scorers import compute_embedding_similarity, ensure_models_pulled, query_llm
     from .store_loader import get_file_hash, load_graph
 except ImportError:
     from context_builder import format_context  # type: ignore[no-redef]
     from extractor import compute_differential_triples, extract_bridging_triples, extract_subgraph  # type: ignore[no-redef]
     from metrics import compute_deterministic_metrics  # type: ignore[no-redef]
-    from reporter import export_llm_by_model_csv, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics  # type: ignore[no-redef]
+    from reporter import export_llm_by_model_csv, export_llm_prompts_table, export_paper_tables, export_to_csv, generate_summary_table, report_global_statistics  # type: ignore[no-redef]
     from scorers import compute_embedding_similarity, ensure_models_pulled, query_llm  # type: ignore[no-redef]
     from store_loader import get_file_hash, load_graph  # type: ignore[no-redef]
+
+_EXTRACTION_VERSION = "2"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -99,7 +101,7 @@ class HonkEvaluator:
             sys.exit(1)
 
     def _extraction_cache_key(self, store_hash: str, keywords: List[str], query_type: str) -> str:
-        parts = [store_hash, ",".join(sorted(keywords)), query_type]
+        parts = [_EXTRACTION_VERSION, store_hash, ",".join(sorted(keywords)), query_type]
         if query_type == "bridging":
             parts.append(str(self.bridging_limit))
         return hashlib.md5("|".join(parts).encode()).hexdigest()
@@ -259,6 +261,10 @@ class HonkEvaluator:
                         'improvement': round(((h_avg - b_avg) / max(b_avg, 1e-9)) * 100, 2),
                         'b_interp': b_results[0][0].replace('\n', ' | '),
                         'h_interp': h_results[0][0].replace('\n', ' | '),
+                        'b_prompt': b_results[0][2],
+                        'h_prompt': h_results[0][2],
+                        'b_responses': [r[0] for r in b_results],
+                        'h_responses': [r[0] for r in h_results],
                     }
 
         return llm_scores
@@ -337,19 +343,29 @@ class HonkEvaluator:
             logger.error("No test cases defined in config.yaml.")
             sys.exit(1)
 
-        logger.info("Starting HOnK evaluation — %d test case(s).", len(self.test_cases))
+        logger.info(
+            "Starting HOnK evaluation — %d test case(s), %d extraction workers.",
+            len(self.test_cases), self.max_extraction_workers,
+        )
 
-        processed_cases: List[Dict[str, Any]] = []
-        with tqdm(self.test_cases, desc="Extracting subgraphs", unit="case", ncols=100) as pbar:
-            for case in pbar:
-                pbar.set_postfix_str(case.get('sentence', '')[:50])
-                result = self._extract_case(case)
-                pbar.set_postfix_str(
-                    f"CN={len(result['b_triples'])} "
-                    f"HOnK={len(result['h_triples'])} "
-                    f"bridges={len(result['h_bridges'])}"
-                )
-                processed_cases.append(result)
+        ordered: List[Optional[Dict[str, Any]]] = [None] * len(self.test_cases)
+        with ThreadPoolExecutor(max_workers=self.max_extraction_workers) as pool:
+            future_to_idx = {
+                pool.submit(self._extract_case, case): i
+                for i, case in enumerate(self.test_cases)
+            }
+            with tqdm(total=len(self.test_cases), desc="Extracting subgraphs", unit="case", ncols=100) as pbar:
+                for future in as_completed(future_to_idx):
+                    idx = future_to_idx[future]
+                    result = future.result()
+                    ordered[idx] = result
+                    pbar.update(1)
+                    pbar.set_postfix(
+                        CN=len(result['b_triples']),
+                        HOnK=len(result['h_triples']),
+                        bridges=len(result['h_bridges']),
+                    )
+        processed_cases: List[Dict[str, Any]] = [r for r in ordered if r is not None]
 
         sentence_sim: Dict[Tuple[str, str], Dict[str, float]] = {}
         if self.run_semantic:
@@ -366,6 +382,10 @@ class HonkEvaluator:
                 Path(self.output_csv).stem + '_llm_by_model.csv'
             ))
             export_llm_by_model_csv(llm_scores, llm_model_csv)
+            prompts_output = str(
+                Path(self.summary_table_output).parent / "llm_prompts_responses.txt"
+            )
+            export_llm_prompts_table(llm_scores, prompts_output)
         generate_summary_table(
             processed_cases, sentence_sim, llm_scores,
             list(self.embedders.keys()), self.summary_table_output,

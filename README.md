@@ -40,7 +40,7 @@ Files used in our experiments can be found at OSF.io here: https://osf.io/8mqs4/
 [ConceptNet](https://github.com/commonsense/conceptnet5/) was downloaded where the English Wiktionary dump from 2025-09-20 was used in experiments.
 
 #### Wiktionary
-Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?tab=readme-ov-file#pre-extracted-data), which was used for current experiments was from 2025-08-23, and was then filtered to only contain English terms.
+Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?tab=readme-ov-file#pre-extracted-data), which was used for current experiments was from 2026-03-03, and was then filtered to only contain English terms.
 
 #### WordNet
 The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo.3739540), as an input for ConceptNet, therefore used here to ensure the best clustering possible.

@@ -21,12 +21,12 @@ def extract_subgraph(
 
     branches = []
     for kw in keywords:
-        kw_norm = kw.lower().replace(' ', '_')
-        kw_space = kw.lower()
+        kw_norm = kw.replace(' ', '_')  # preserve original case
         f = (
-            f'CONTAINS(LCASE(STR(?s)), "{kw_norm}") || CONTAINS(LCASE(STR(?o)), "{kw_norm}")'
-            f' || CONTAINS(LCASE(STR(?s)), "{kw_space}") || CONTAINS(LCASE(STR(?o)), "{kw_space}")'
+            f'CONTAINS(STR(?s), "{kw_norm}") || CONTAINS(STR(?o), "{kw_norm}")'
         )
+        if kw_norm != kw:  # multi-word keyword: also match space form
+            f += f' || CONTAINS(STR(?s), "{kw}") || CONTAINS(STR(?o), "{kw}")'
         branches.append(f'{{ ?s ?p ?o . FILTER( {f} ) }}')
 
     query = "SELECT ?s ?p ?o WHERE { " + " UNION ".join(branches) + " }"
@@ -52,18 +52,20 @@ def extract_bridging_triples(
     if len(keywords) < 2:
         return []
 
+    def _kw_filter(kw: str, var: str) -> str:
+        norm = kw.replace(' ', '_')
+        if norm != kw:
+            return f'(CONTAINS(STR({var}), "{norm}") || CONTAINS(STR({var}), "{kw}"))'
+        return f'CONTAINS(STR({var}), "{norm}")'
+
     branches = []
     for kw_a, kw_b in itertools.combinations(keywords, 2):
-        kw_a_norm = kw_a.lower().replace(' ', '_')
-        kw_b_norm = kw_b.lower().replace(' ', '_')
-        kw_a_space = kw_a.lower()
-        kw_b_space = kw_b.lower()
+        fa_s, fa_o = _kw_filter(kw_a, '?s'), _kw_filter(kw_a, '?o')
+        fb_s, fb_o = _kw_filter(kw_b, '?s'), _kw_filter(kw_b, '?o')
         f = (
-            f'( (CONTAINS(LCASE(STR(?s)), "{kw_a_norm}") || CONTAINS(LCASE(STR(?s)), "{kw_a_space}"))'
-            f' && (CONTAINS(LCASE(STR(?o)), "{kw_b_norm}") || CONTAINS(LCASE(STR(?o)), "{kw_b_space}")) )'
+            f'( {fa_s} && {fb_o} )'
             f' || '
-            f'( (CONTAINS(LCASE(STR(?s)), "{kw_b_norm}") || CONTAINS(LCASE(STR(?s)), "{kw_b_space}"))'
-            f' && (CONTAINS(LCASE(STR(?o)), "{kw_a_norm}") || CONTAINS(LCASE(STR(?o)), "{kw_a_space}")) )'
+            f'( {fb_s} && {fa_o} )'
         )
         # No LIMIT per pair — a per-pair limit fills the result bucket in pyoxigraph scan order,
         # placing GeoNames/DBpedia triples before semantic bridges from ConceptNet/WordNet.

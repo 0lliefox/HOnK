@@ -25,13 +25,13 @@ def compute_deterministic_metrics(
 
     G = nx.Graph()
     for s, _, o in triples:
-        G.add_edge(s.lower(), o.lower())
+        G.add_edge(s, o)
 
     metrics["relation_diversity"] = len({p for _, p, _ in triples})
 
     def _kw_in_node(kw: str, node: str) -> bool:
-        kw_l = kw.lower()
-        return kw_l in node or kw_l.replace(' ', '_') in node
+        kw_norm = kw.replace(' ', '_')
+        return kw in node or kw_norm in node
 
     matched = [kw for kw in keywords if any(_kw_in_node(kw, node) for node in G.nodes())]
     metrics["hit_rate"] = (len(matched) / len(keywords)) * 100 if keywords else 0.0

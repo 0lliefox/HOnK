@@ -14,15 +14,13 @@ def format_context(
     if not triples and not bridging_triples:
         return ""
 
-    kw_lower = [k.lower() for k in keywords]
-
     def _relevance(triple: Tuple[str, str, str]) -> float:
         s, _, o = triple
         score = 0.0
-        for k in kw_lower:
+        for k in keywords:
             k_norm = k.replace(' ', '_')
             kw_len = max(len(k), len(k_norm))
-            for label in (s.lower(), o.lower()):
+            for label in (s, o):
                 if label == k or label == k_norm:
                     score += 3.0  # exact match
                 elif k in label or k_norm in label:

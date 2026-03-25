@@ -106,10 +106,10 @@ evaluator:
   test_cases:
     # Biological Taxonomy
     - sentence: "The parasitic mite belongs to the order Acarina"
-      keywords: ["mite", "order", "Acarina"]
+      keywords: ["mite", "Acarina", "arachnid"]
       label: "sent:mite"
     - sentence: "Caenogenesis, also called kenogenesis, involves novel developmental structures"
-      keywords: ["caenogenesis", "kenogenesis", "embryology", "development"]
+      keywords: ["caenogenesis", "kenogenesis", "ontogeny", "embryology"]
       label: "sent:caenogenesis"
 
     # Medical & Spelling Variants
@@ -117,7 +117,7 @@ evaluator:
       keywords: ["hematopathy", "hemopathy", "blood disorder"]
       label: "sent:hematopathy"
     - sentence: "The paediatrician treats sick children"
-      keywords: ["paediatrician", "pediatrician", "children"]
+      keywords: ["paediatrician", "pediatrician", "illness", "children"]
       label: "sent:paediatrician"
 
     # Geographic & Physical Features
@@ -132,12 +132,12 @@ evaluator:
     - sentence: "The car bonnet is open"
       keywords: ["bonnet", "car", "hood"]
       label: "sent:bonnet"
-    - sentence: "The motorway connects the two cities"
-      keywords: ["motorway", "highway", "freeway", "road"]
-      label: "sent:motorway"
-    - sentence: "The aubergine is also known as eggplant"
-      keywords: ["aubergine", "eggplant", "vegetable"]
-      label: "sent:aubergine"
+    - sentence: "Basketry is another word for basketwork, the craft of weaving baskets"
+      keywords: ["basketry", "basketwork", "basket"]
+      label: "sent:basketry"
+    - sentence: "A ferry is also called a ferryboat"
+      keywords: ["ferry", "ferryboat", "boat"]
+      label: "sent:ferry"
     - sentence: "Letters can be posted in the pillar box, a traditional British mailbox"
       keywords: ["pillar box", "mailbox", "postbox", "post"]
       label: "sent:pillarbox"
@@ -157,6 +157,6 @@ evaluator:
     - sentence: "A boomerang is a throwing stick used as a hunting device"
       keywords: ["boomerang", "throwing stick", "device", "curved"]
       label: "sent:boomerang"
-    - sentence: "If you bottle out, you essentially chicken out or bow out"
-      keywords: ["bottle out", "chicken out", "bow out", "withdraw"]
-      label: "sent:bottleout"
+    - sentence: "A crawdad is a common name for a crayfish"
+      keywords: ["crawdad", "crayfish", "crustacean"]
+      label: "sent:crawdad"

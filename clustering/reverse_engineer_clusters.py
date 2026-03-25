@@ -410,6 +410,8 @@ def main():
             exclude_sources = [s.strip() for s in sys.argv[3].split(',')]
         if len(sys.argv) > 2:
             limit = int(sys.argv[2])
+        else:
+            limit = 10
         auto_discover_transitive(conn, reverse_edges, reverse_pos, limit=limit,
                                  exclude_sources=exclude_sources)
         conn.close()

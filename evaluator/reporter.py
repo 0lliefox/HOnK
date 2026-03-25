@@ -29,6 +29,49 @@ def _append_mean_row(
     rows.append(f"\\textbf{{Mean}} & {mb:.2f} & {mh:.2f} & {delta_str} \\\\")
 
 
+def export_llm_prompts_table(
+    llm_scores: Dict[Tuple[str, str], Dict[str, Any]],
+    output_path: str,
+) -> None:
+    if not llm_scores:
+        return
+
+    sep = "=" * 80
+    thin = "-" * 80
+    lines = [sep, "LLM PROMPTS AND RESPONSES", sep, ""]
+
+    for (sentence, model), data in llm_scores.items():
+        lines += [
+            f"SENTENCE : {sentence}",
+            f"MODEL    : {model}",
+            thin,
+        ]
+
+        for kb_label, prompt_key, responses_key in [
+            ("Baseline (CN)", "b_prompt", "b_responses"),
+            ("HOnK",          "h_prompt", "h_responses"),
+        ]:
+            lines += [
+                f"  [{kb_label}] PROMPT:",
+                "",
+            ]
+            for prompt_line in data.get(prompt_key, "").splitlines():
+                lines.append(f"    {prompt_line}")
+            lines += ["", f"  [{kb_label}] RESPONSES:"]
+            for idx, response in enumerate(data.get(responses_key, []), start=1):
+                lines.append(f"    Run {idx}:")
+                for resp_line in response.splitlines():
+                    lines.append(f"      {resp_line}")
+            lines.append("")
+
+        lines += [sep, ""]
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines), encoding="utf-8")
+    logger.info("LLM prompts and responses written to '%s'", output_path)
+
+
 def export_llm_by_model_csv(
     llm_scores: Dict[Tuple[str, str], Dict[str, Any]],
     output_csv: str,
