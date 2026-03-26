@@ -55,7 +55,7 @@ def compute_embedding_similarity(
     for line in cleaned.splitlines():
         m = _TRIPLE_RE.match(line.strip())
         if m:
-            verbalized.append(_verbalize(m.group(1), m.group(2), m.group(3)))
+            verbalized.append(_verbalise(m.group(1), m.group(2), m.group(3)))
     if not verbalized:
         return 0.0
 
@@ -72,8 +72,9 @@ _TRIPLE_RE = re.compile(r'^\((.+?) -> (.+?) -> (.+?)\)$')
 _RELATION_GLOSSARY = (
     "Relation glossary: "
     "eq=equivalent/synonym of (same concept, different form), "
-    "isA=subtype/instance-of, partOf=component/member-of, "
-    "synonymOf/formOf=variant form of the same word, "
+    "isA=subtype/instance of, "
+    "partOf=component/member of, "
+    "formOf=variant form of the same word, "
     "relatedTo=general semantic association, "
     "derivedFrom=morphological or etymological derivation, "
     "neqTo=explicitly distinct concepts (often confused or compared), "
@@ -89,11 +90,10 @@ def _clean_term(t: str) -> str:
 
 # Natural-language templates for verbalising ontology triples before embedding.
 # Underscores in subject/object are replaced with spaces after substitution.
-_VERBALIZE_TEMPLATES = {
+_VERBALISE_TEMPLATES = {
     'eq':               '{s} is equivalent to {o}',
     'isA':              '{s} is a type of {o}',
     'partOf':           '{s} is part of {o}',
-    'synonymOf':        '{s} is a synonym of {o}',
     'formOf':           '{s} is a form of {o}',
     'relatedTo':        '{s} is related to {o}',
     'derivedFrom':      '{s} is derived from {o}',
@@ -107,7 +107,7 @@ _VERBALIZE_TEMPLATES = {
 }
 
 
-def _verbalize(s: str, p: str, o: str) -> str:
+def _verbalise(s: str, p: str, o: str) -> str:
     """Convert a cleaned (s, p, o) triple to a natural-language sentence.
 
     Falls back to '<s> <p> <o>' for unknown predicates so the term text is
@@ -115,7 +115,7 @@ def _verbalize(s: str, p: str, o: str) -> str:
     """
     s_text = s.replace('_', ' ')
     o_text = o.replace('_', ' ')
-    template = _VERBALIZE_TEMPLATES.get(p)
+    template = _VERBALISE_TEMPLATES.get(p)
     if template:
         return template.format(s=s_text, o=o_text)
     # Unknown predicate: use a generic readable form
