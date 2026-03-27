@@ -1,33 +1,65 @@
 import logging
+import re
 from typing import List, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 def format_context(
-    triples: Set[Tuple[str, str, str]],
-    keywords: List[str],
-    bridging_triples: List[Tuple[str, str, str]],
-    max_context_triples: int = 75,
-    max_bridge_triples: int = 20,
+        triples: Set[Tuple[str, str, str]],
+        keywords: List[str],
+        bridging_triples: List[Tuple[str, str, str]],
+        max_context_triples: int = 75,
+        max_bridge_triples: int = 20,
 ) -> str:
     if not triples and not bridging_triples:
         return ""
 
+    kw_regexes = {}
+    for k in keywords:
+        pattern = rf'(?:^|[^a-zA-Z0-9]){re.escape(k)}(?:[^a-zA-Z0-9]|$)'
+        kw_regexes[k] = re.compile(pattern, re.IGNORECASE)
+
+    # Generic hub nodes that bloat context without adding specific semantic value
+    generic_hubs = {'entity', 'thing', 'concept', 'node', 'item'}
+
     def _relevance(triple: Tuple[str, str, str]) -> float:
-        s, _, o = triple
+        s, p, o = triple
         score = 0.0
+
         for k in keywords:
             k_norm = k.replace(' ', '_')
             kw_len = max(len(k), len(k_norm))
+            regex = kw_regexes[k]
+
             for label in (s, o):
-                if label == k or label == k_norm:
-                    score += 3.0  # exact match
-                elif k in label or k_norm in label:
-                    # Coverage ratio: penalises long geographic named-entity labels
-                    # (e.g. "Thornbury_Neighbourhood_Centre") while preserving full
-                    # weight for short concept labels (e.g. "brightness").
+                # Exact matches score highest
+                if label.lower() == k.lower() or label.lower() == k_norm.lower():
+                    score += 3.0
+                    # Strict boundary regex match
+                elif regex.search(label):
                     score += kw_len / max(len(label), 1)
+
+                    # Penalise multi-word or hyphenated nodes if the keyword is a single word
+                    if " " not in k and (" " in label or "-" in label):
+                        score -= 0.5
+
+        # Give priority to strong semantic relationships
+        if p in ['eq', 'synonym', 'equivalentTo', 'sameAs']:
+            score += 1.5
+        elif p in ['isA', 'partOf', 'instanceOf']:
+            score += 1.0
+        elif p in ['relatedTo', 'hasContext']:
+            score += 0.2
+
+        # Heavily penalise morphological/etymological derivations
+        if p in ['derivedFrom', 'etymologicallyRelatedTo', 'formOf']:
+            score -= 1.0
+
+        # Slightly penalise highly generic hub nodes to filter out noise
+        if s.lower() in generic_hubs or o.lower() in generic_hubs:
+            score -= 0.5
+
         return score
 
     lines = []

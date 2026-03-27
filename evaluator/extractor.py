@@ -12,9 +12,14 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def _build_regex_filter(kw: str, var: str) -> str:
+    safe_kw = kw.replace('"', '')
+    return f'REGEX(STR({var}), "(^|[^a-zA-Z0-9]){safe_kw}([^a-zA-Z0-9]|$)", "i")'
+
+
 def extract_subgraph(
-    store: pyoxigraph.Store,
-    keywords: List[str],
+        store: pyoxigraph.Store,
+        keywords: List[str],
 ) -> Set[Tuple[str, str, str]]:
     if not keywords:
         return set()
@@ -22,11 +27,12 @@ def extract_subgraph(
     branches = []
     for kw in keywords:
         kw_norm = kw.replace(' ', '_')  # preserve original case
-        f = (
-            f'CONTAINS(STR(?s), "{kw_norm}") || CONTAINS(STR(?o), "{kw_norm}")'
-        )
+
+        f = f'{_build_regex_filter(kw_norm, "?s")} || {_build_regex_filter(kw_norm, "?o")}'
+
         if kw_norm != kw:  # multi-word keyword: also match space form
-            f += f' || CONTAINS(STR(?s), "{kw}") || CONTAINS(STR(?o), "{kw}")'
+            f += f' || {_build_regex_filter(kw, "?s")} || {_build_regex_filter(kw, "?o")}'
+
         branches.append(f'{{ ?s ?p ?o . FILTER( {f} ) }}')
 
     query = "SELECT ?s ?p ?o WHERE { " + " UNION ".join(branches) + " }"
@@ -45,9 +51,9 @@ def extract_subgraph(
 
 
 def extract_bridging_triples(
-    store: pyoxigraph.Store,
-    keywords: List[str],
-    bridging_limit: int = 100,  # kept for API compatibility; no longer applied in SPARQL
+        store: pyoxigraph.Store,
+        keywords: List[str],
+        bridging_limit: int = 100,  # kept for API compatibility; no longer applied in SPARQL
 ) -> List[Tuple[str, str, str]]:
     if len(keywords) < 2:
         return []
@@ -55,8 +61,8 @@ def extract_bridging_triples(
     def _kw_filter(kw: str, var: str) -> str:
         norm = kw.replace(' ', '_')
         if norm != kw:
-            return f'(CONTAINS(STR({var}), "{norm}") || CONTAINS(STR({var}), "{kw}"))'
-        return f'CONTAINS(STR({var}), "{norm}")'
+            return f'({_build_regex_filter(norm, var)} || {_build_regex_filter(kw, var)})'
+        return _build_regex_filter(norm, var)
 
     branches = []
     for kw_a, kw_b in itertools.combinations(keywords, 2):
@@ -87,7 +93,7 @@ def extract_bridging_triples(
 
 
 def compute_differential_triples(
-    baseline_triples: Set[Tuple[str, str, str]],
-    honk_triples: Set[Tuple[str, str, str]],
+        baseline_triples: Set[Tuple[str, str, str]],
+        honk_triples: Set[Tuple[str, str, str]],
 ) -> Set[Tuple[str, str, str]]:
     return honk_triples - baseline_triples

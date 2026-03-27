@@ -25,7 +25,7 @@ except ImportError:
     from scorers import compute_embedding_similarity, ensure_models_pulled, query_llm  # type: ignore[no-redef]
     from store_loader import get_file_hash, load_graph  # type: ignore[no-redef]
 
-_EXTRACTION_VERSION = "2"
+_EXTRACTION_VERSION = "3"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +41,11 @@ class HonkEvaluator:
     def __init__(self, config_path: str = "config.yaml") -> None:
         self.config = self._load_config(config_path)
         eval_cfg = self.config.get('evaluator', {})
+
+        llm_cfg = self.config.get('llm_config', {})
+        self.max_llm_workers = llm_cfg.get('max_llm_workers', 1)
+        self.llm_temperature = llm_cfg.get('temperature', 0.0)
+        self.llm_iterations = llm_cfg.get('llm_iterations', 2)
 
         self.base_uri = eval_cfg.get('base_uri', 'http://example.org/ontology/')
         self.output_csv = eval_cfg.get('output_csv', 'evaluation_results.csv')
@@ -71,7 +76,6 @@ class HonkEvaluator:
         self.embedding_top_k: int = eval_cfg.get('embedding_top_k', 5)
 
         self.llm_models: List[str] = eval_cfg.get('llms', [])
-        self.llm_iterations: int = eval_cfg.get('llm_iterations', 2)
         self.max_llm_workers: int = eval_cfg.get('max_parallel_queries', 2)
 
         if self.run_llm and self.llm_models:
@@ -224,48 +228,79 @@ class HonkEvaluator:
         return sentence_sim
 
     def _run_llm_phase(
-        self,
-        processed_cases: List[Dict[str, Any]],
+            self,
+            processed_cases: List[Dict[str, Any]],
     ) -> Dict[Tuple[str, str], Dict[str, Any]]:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from tqdm import tqdm
+        import logging
+
+        logger = logging.getLogger(__name__)
         llm_scores: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
-        for model in self.llm_models:
-            logger.info("LLM scoring with %s", model)
-            with tqdm(processed_cases, desc=f"LLM [{model}]", unit="case", ncols=100) as pbar:
-                for case in pbar:
-                    with ThreadPoolExecutor(max_workers=self.max_llm_workers) as executor:
-                        b_futures = [
-                            executor.submit(
-                                query_llm, model, case['sentence'],
-                                case['b_ctx'], case['keywords'], case['b_bridges']
-                            )
-                            for _ in range(self.llm_iterations)
-                        ]
-                        h_futures = [
-                            executor.submit(
-                                query_llm, model, case['sentence'],
-                                case['h_ctx'], case['keywords'], case['h_bridges']
-                            )
-                            for _ in range(self.llm_iterations)
-                        ]
-                        b_results = [f.result() for f in as_completed(b_futures)]
-                        h_results = [f.result() for f in as_completed(h_futures)]
+        # Temporary storage to collect async results before formatting
+        raw_results = {}
 
-                    b_avg = sum(r[1] for r in b_results) / self.llm_iterations
-                    h_avg = sum(r[1] for r in h_results) / self.llm_iterations
-                    pbar.set_postfix(CN=f"{b_avg:.1f}", HOnK=f"{h_avg:.1f}")
+        logger.info("Starting highly parallel LLM scoring phase...")
 
-                    llm_scores[(case['sentence'], model)] = {
-                        'b_score': round(b_avg, 2),
-                        'h_score': round(h_avg, 2),
-                        'improvement': round(((h_avg - b_avg) / max(b_avg, 1e-9)) * 100, 2),
-                        'b_interp': b_results[0][0].replace('\n', ' | '),
-                        'h_interp': h_results[0][0].replace('\n', ' | '),
-                        'b_prompt': b_results[0][2],
-                        'h_prompt': h_results[0][2],
-                        'b_responses': [r[0] for r in b_results],
-                        'h_responses': [r[0] for r in h_results],
-                    }
+        # Submit ALL tasks to a single global thread pool to saturate the GPU
+        with ThreadPoolExecutor(max_workers=self.max_llm_workers) as executor:
+            futures = {}
+            for model in self.llm_models:
+                for case in processed_cases:
+                    sentence = case['sentence']
+
+                    # Initialize the raw storage for this case/model
+                    if (sentence, model) not in raw_results:
+                        raw_results[(sentence, model)] = {
+                            'b_results': [],
+                            'h_results': []
+                        }
+
+                    for _ in range(self.llm_iterations):
+                        # Baseline future
+                        fut_b = executor.submit(
+                            query_llm, model, sentence,
+                            case['b_ctx'], case['keywords'], case['b_bridges'],
+                            self.llm_temperature
+                        )
+                        futures[fut_b] = (sentence, model, 'b_results')
+
+                        # HOnK future
+                        fut_h = executor.submit(
+                            query_llm, model, sentence,
+                            case['h_ctx'], case['keywords'], case['h_bridges'],
+                            self.llm_temperature
+                        )
+                        futures[fut_h] = (sentence, model, 'h_results')
+
+            # Process results as they finish with a single global progress bar
+            with tqdm(total=len(futures), desc="LLM Scoring (Parallel)", unit="req", ncols=100) as pbar:
+                for future in as_completed(futures):
+                    sentence, model, result_type = futures[future]
+                    # query_llm returns: (content, score, prompt)
+                    raw_results[(sentence, model)][result_type].append(future.result())
+                    pbar.update(1)
+
+        # Aggregate into the exact final dictionary format expected by reporter.py
+        for (sentence, model), data in raw_results.items():
+            b_results = data['b_results']
+            h_results = data['h_results']
+
+            b_avg = sum(r[1] for r in b_results) / max(self.llm_iterations, 1)
+            h_avg = sum(r[1] for r in h_results) / max(self.llm_iterations, 1)
+
+            llm_scores[(sentence, model)] = {
+                'b_score': round(b_avg, 2),
+                'h_score': round(h_avg, 2),
+                'improvement': round(((h_avg - b_avg) / max(b_avg, 1e-9)) * 100, 2),
+                'b_interp': b_results[0][0].replace('\n', ' | '),
+                'h_interp': h_results[0][0].replace('\n', ' | '),
+                'b_prompt': b_results[0][2],
+                'h_prompt': h_results[0][2],
+                'b_responses': [r[0] for r in b_results],
+                'h_responses': [r[0] for r in h_results],
+            }
 
         return llm_scores
 

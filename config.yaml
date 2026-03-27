@@ -86,9 +86,8 @@ evaluator:
     - "sentence-transformers/all-mpnet-base-v2"
     - "BAAI/bge-m3"
   run_llm_evaluation: true
-  llm_iterations: 10
-  max_parallel_queries: 4
-  max_extraction_workers: 4
+  max_parallel_queries: 8
+  max_extraction_workers: 8
   llms:
     - "llama3.2:3b"
     - "qwen2.5:7b"
@@ -97,11 +96,11 @@ evaluator:
   summary_table_output: "evaluator/summary_table.txt"
   max_context_triples: 100
   max_bridge_triples: 20
-  embedding_top_k: 10        # top-K triples used for per-triple similarity mean
+  embedding_top_k: 5        # top-K triples used for per-triple similarity mean
 
   ontologies:
     baseline: "../ontologies/ontology_db_CN_UNNORM_UNCLUSTERED.nt"
-    honk: "../comet/ontologies/db_oxi_clustered_final.nt"
+    honk: "../ontologies/ontology_db_oxi_clustered_final.nt"
 
   test_cases:
     # Biological Taxonomy
@@ -160,3 +159,8 @@ evaluator:
     - sentence: "A crawdad is a common name for a crayfish"
       keywords: ["crawdad", "crayfish", "crustacean"]
       label: "sent:crawdad"
+
+llm_config:
+  max_llm_workers: 4       # Number of concurrent requests sent to Ollama
+  temperature: 0.0         # 0.0 makes the model deterministic
+  llm_iterations: 1

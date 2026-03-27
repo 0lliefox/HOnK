@@ -1,4 +1,5 @@
 import logging
+import re
 from itertools import combinations
 from typing import Any, Dict, List, Set, Tuple
 
@@ -25,13 +26,17 @@ def compute_deterministic_metrics(
 
     G = nx.Graph()
     for s, _, o in triples:
-        G.add_edge(s, o)
+        G.add_edge(s.lower(), o.lower())
 
     metrics["relation_diversity"] = len({p for _, p, _ in triples})
 
+    kw_regexes = {}
+    for kw in keywords:
+        pattern = rf'(?:^|[^a-zA-Z0-9]){re.escape(kw)}(?:[^a-zA-Z0-9]|$)'
+        kw_regexes[kw] = re.compile(pattern, re.IGNORECASE)
+
     def _kw_in_node(kw: str, node: str) -> bool:
-        kw_norm = kw.replace(' ', '_')
-        return kw in node or kw_norm in node
+        return bool(kw_regexes[kw].search(node))
 
     matched = [kw for kw in keywords if any(_kw_in_node(kw, node) for node in G.nodes())]
     metrics["hit_rate"] = (len(matched) / len(keywords)) * 100 if keywords else 0.0
