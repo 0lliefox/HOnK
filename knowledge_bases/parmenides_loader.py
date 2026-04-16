@@ -27,7 +27,8 @@ class ParmenidesLoader(AbstractLoader):
             'prepositions': self.list_files('/prepositions'),
             'measures': self.list_files('/measures'),
             'wh': self.list_files('/wh'),
-            'predeterminers': self.list_files('/predeterminers')
+            'predeterminers': self.list_files('/predeterminers'),
+            'dependency': self.list_files('/dependency')
         }
         return data
 
@@ -36,6 +37,7 @@ class ParmenidesLoader(AbstractLoader):
             self.create_concepts(data['pronouns'], cursor, True)
             self.create_concepts(data['verbs'], cursor, True)
             self.create_concepts(data['concepts'], cursor, False)
+            self.create_concepts(data['dependency'], cursor, False)
             self.create_concepts(data['prepositions'], cursor, True)
             self.create_concepts(data['measures'], cursor, False)
             self.create_concepts(data['wh'], cursor, True)

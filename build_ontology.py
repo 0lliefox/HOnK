@@ -283,8 +283,17 @@ class OntologyBuilder:
             if self.graph_type == 'oxigraph':
                 import pyoxigraph
                 rdf_format = pyoxigraph.RdfFormat.N_TRIPLES if ont_format == 'nt' else pyoxigraph.RdfFormat.TURTLE
+                dump_kwargs = {'format': rdf_format, 'from_graph': pyoxigraph.DefaultGraph()}
+                if ont_format != 'nt':
+                    dump_kwargs['prefixes'] = {
+                        self.config['turtle_export']['base_prefix']: self.config['turtle_export']['base_uri'],
+                        'owl': 'http://www.w3.org/2002/07/owl#',
+                        'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+                        'xsd': 'http://www.w3.org/2001/XMLSchema#',
+                        'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+                    }
                 with open(full_file_path, 'wb') as f:
-                    g.dump(f, format=rdf_format, from_graph=pyoxigraph.DefaultGraph())
+                    g.dump(f, **dump_kwargs)
             else:
                 g.serialize(destination=full_file_path, format=ont_format)
 

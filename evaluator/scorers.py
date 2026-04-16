@@ -246,9 +246,7 @@ def query_llm(
         response = ollama.chat(
             model=model_name,
             messages=[{'role': 'user', 'content': prompt}],
-            options={
-                "temperature": temperature,
-            }
+            options={"temperature": temperature},
         )
         content = response.get('message', {}).get('content', '').strip()
         score_match = re.search(r'Score:\s*(\d+)', content, re.IGNORECASE)

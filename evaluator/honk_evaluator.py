@@ -45,9 +45,9 @@ class HonkEvaluator:
         llm_cfg = self.config.get('llm_config', {})
         self.max_llm_workers = llm_cfg.get('max_llm_workers', 1)
         self.llm_temperature = llm_cfg.get('temperature', 0.0)
-        self.llm_iterations = llm_cfg.get('llm_iterations', 2)
+        self.llm_iterations = llm_cfg.get('llm_iterations', 1)
 
-        self.base_uri = eval_cfg.get('base_uri', 'http://example.org/ontology/')
+        self.base_uri = self.config.get('turtle_export', {}).get('base_uri', 'http://example.org/ontology/')
         self.output_csv = eval_cfg.get('output_csv', 'evaluation_results.csv')
         self.cache_dir = self.config.get('local_files', {}).get('cache', '.cache')
         self.summary_table_output = eval_cfg.get('summary_table_output', 'evaluator/summary_table.txt')

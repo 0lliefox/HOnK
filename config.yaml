@@ -68,16 +68,15 @@ local_files:
 turtle_export:
   convert: false
   normalise_pos: true
-  output_file: 'ontology_db_oxi_clustered_final.nt'
-  base_uri: "https://logds.github.io/parmenides#"
-  base_prefix: "parmenides"
+  output_file: 'NEW_ontology_db_oxi_clustered_final.ttl'
+  base_uri: "https://ofox.co.uk/honk#"
+  base_prefix: "honk"
 
 clustering:
   enabled: true
   keep_url_triples: false  # Set to true to preserve hasURL triples after clustering (e.g. for scalability tests)
 
 evaluator:
-  base_uri: "https://logds.github.io/parmenides"
   output_csv: "evaluation_results.csv"
   run_deterministic_evaluation: true
   run_semantic_evaluation: true

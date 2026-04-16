@@ -32,7 +32,7 @@ class OxiNamespace:
 
 
 class ParmenidesBuild:
-    parmenides_uri = "https://logds.github.io/parmenides#"
+    honk_uri = "https://ofox.co.uk/honk#"
 
     def __init__(self, g):
         self.g = g
@@ -40,11 +40,11 @@ class ParmenidesBuild:
         # Automatically infer the graph type based on the object passed
         if type(g).__name__ == 'Store' or hasattr(g, 'quads_for_pattern'):
             self.graph_type = 'oxigraph'
-            self.ns = OxiNamespace(self.parmenides_uri)
+            self.ns = OxiNamespace(self.honk_uri)
         else:
             self.graph_type = 'rdf'
-            self.ns = RDFNamespace(self.parmenides_uri)
-            self.g.bind("parmenides", self.ns)
+            self.ns = RDFNamespace(self.honk_uri)
+            self.g.bind("honk", self.ns)
             self.g.bind("rdfs", RDF)
 
         self.names = dict()
@@ -322,7 +322,18 @@ class ParmenidesBuild:
 
     def serialize(self, filename):
         if self.graph_type == 'oxigraph':
+            import pyoxigraph
             with open(filename, 'wb') as f:
-                self.g.dump(f, "text/turtle")
+                self.g.dump(
+                    f, 
+                    pyoxigraph.RdfFormat.TURTLE, 
+                    from_graph=pyoxigraph.DefaultGraph(),
+                    prefixes={
+                        "honk": self.honk_uri,
+                        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+                        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+                        "owl": "http://www.w3.org/2002/07/owl#"
+                    }
+                )
         else:
             self.g.serialize(destination=filename)

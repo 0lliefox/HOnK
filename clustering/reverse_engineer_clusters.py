@@ -7,7 +7,7 @@ import json
 import os
 from collections import defaultdict, deque
 
-BASE_URI = "https://logds.github.io/parmenides#"
+BASE_URI = "https://ofox.co.uk/honk#"
 
 
 def load_db_config(config_path='config.yaml'):

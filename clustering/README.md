@@ -17,7 +17,7 @@ python reverse_engineer_clusters.py "come up"
 Pass a full URI (angle brackets and URL-encoding are handled automatically):
 
 ```bash
-python reverse_engineer_clusters.py "<https://logds.github.io/parmenides#come%20up>"
+python reverse_engineer_clusters.py "<https://ofox.co.uk/honk#come%20up>"
 ```
 
 ### Auto-discovery
