@@ -1,8 +1,9 @@
-# HOnK (Hub Ontology for Knowledge)
-Project for combining multiple knowledge bases into one, single ontology, to aid research in achieving better type resolution for work carried out in [LaSSI](https://github.com/LogDS/LaSSI).
+# <img src="honk_logo.svg" style="height:80px; width: auto;" alt="Logo: Credits to Oliver Robert Fox (2024)" /> HOnK (Hub Ontology for Knowledge)
+
+Project for combining multiple knowledge bases into one unified ontology, to aid research in achieving better type resolution for work carried out in [LaSSI](https://github.com/LogDS/LaSSI).
 
 ## Setting Up
-### 1.  Database (PostgreSQL)
+### 1. Database (PostgreSQL)
 PostgreSQL must be installed, along with a database and user:
 
 #### Installation
@@ -29,65 +30,112 @@ exit
 ```
 
 ### 2. Getting Supporting Files
-For this particular research, the following Knowledge Bases (KBs) were used, this does not mean other KBs could not be incorporated to enhance the final ontology further.
-
-The script below can be used, which will download and extract the files in the correct format: 
+The following knowledge bases are used. The download script fetches and extracts all files in the correct format:
 ```bash
 ./download_knowledge.sh
 ```
-Files used in our experiments can be found at OSF.io here: https://osf.io/8mqs4/?view_only=282c38027c8043d5abd76a98001c31fa, or can be retrieved manually using the methods below:
-#### ConceptNet
-[ConceptNet](https://github.com/commonsense/conceptnet5/) was downloaded where the English Wiktionary dump from 2025-09-20 was used in experiments.
+Files used in our experiments can also be found at OSF.io: https://osf.io/8mqs4/?view_only=282c38027c8043d5abd76a98001c31fa
 
-#### Wiktionary
-Pre-expanded data from [Wiktextract](https://github.com/tatuylonen/wiktextract?tab=readme-ov-file#pre-extracted-data), which was used for current experiments was from 2026-03-03, and was then filtered to only contain English terms.
+#### Knowledge Bases
 
-#### WordNet
-The WordNet dump file was originally found [here](https://doi.org/10.5281/zenodo.3739540), as an input for ConceptNet, therefore used here to ensure the best clustering possible.
-
-#### GeoNames
-Files for GeoNames can be found [here](https://download.geonames.org/export/dump/).
-
-#### DBpedia
-The artifacts found for [en-dbpedia-enriched-with-wikidata-dbpedia](https://databus.dbpedia.org/dbpedia-enterprise/en-dbpedia-enriched-with-wikidata-dbpedia) from 2025-08-21 were used, with [truthy dump](https://dumps.wikimedia.org/wikidatawiki/entities/) from 2025-10-24. (The implementation for DBpedia is not fully complete yet.)
+| KB | Description | Status |
+|----|-------------|--------|
+| [Parmenides](supporting_files/parmenides/) | Structured linguistic/logical resource providing nouns, verbs, adjectives, locations, dependency roles, and typed inter-concept relations for NLP type resolution | Active (default) |
+| [ConceptNet](https://github.com/commonsense/conceptnet5/) | Commonsense relational knowledge; English Wiktionary dump from 2025-09-20 used in experiments | Active |
+| [Wiktionary](https://github.com/tatuylonen/wiktextract) | Pre-expanded definitions, POS tags, lemmas, and derived/related terms; filtered to English, from 2026-03-03 | Active |
+| [WordNet](https://doi.org/10.5281/zenodo.3739540) | Lexical relations and synsets; used as a ConceptNet input to improve clustering | Active |
+| [GeoNames](https://download.geonames.org/export/dump/) | Geographic entities, feature hierarchy, and alternate names | Active |
+| [DBpedia](https://databus.dbpedia.org/dbpedia-enterprise/en-dbpedia-enriched-with-wikidata-dbpedia) | Entity labels, types, and properties enriched with Wikidata (dump 2025-08-21; truthy dump 2025-10-24) | Work in progress |
 
 ### 3. Install Packages and Run
-Setup a virtual Python environment (3.10.x and 3.11.x tested), and run:
+Set up a virtual Python environment (3.10.x and 3.11.x tested), then:
 ```bash
 pip install .
-```
-Then:
-```bash
 build-ontology
 ```
 
+With optional arguments:
+```bash
+build-ontology --config custom_config.yaml --run-id 0
+```
+
 ## Pipeline Overview
-The ontology building process is orchestrated by [`build_ontology.py`](build_ontology.py) and can be configured via [`config.yaml`](config.yaml). The pipeline operates in two main modes: `db` and `graph`.
+The pipeline is orchestrated by [`build_ontology.py`](build_ontology.py) and configured via [`config.yaml`](config.yaml). It runs in two interchangeable modes controlled by `general.mode`:
 
-### 1. Data Ingestion
-- **Loaders**: Data is ingested from various knowledge bases using loaders found in the [`knowledge_bases/`](knowledge_bases/) directory (e.g., `ConceptNetLoader`, `WiktionaryLoader`).
-- **Mode-Specific Storage**:
-    - In `db` mode, data is parsed and stored in a PostgreSQL database.
-    - In `graph` mode, data is loaded directly into an in-memory graph (using `rdflib` or `pyoxigraph`).
+| Mode | Storage | Use case |
+|------|---------|----------|
+| `db` | PostgreSQL | Default; scalable to large KB combinations |
+| `graph` | In-memory RDF | Faster feedback; no database required |
 
-### 2. Clustering
-- **Purpose**: To identify and group concepts that refer to the same entity (e.g., concepts sharing the same external URL).
-- **Process**:
-    - An adjacency list is built based on shared URLs.
-    - Transitive closure is computed on this list to find all connected concepts.
-    - These connected components form the clusters.
-- **Implementation**:
-    - [`clustering/cluster_concepts.py`](clustering/cluster_concepts.py): Operates on the PostgreSQL database.
-    - [`clustering/cluster_graph_concepts.py`](clustering/cluster_graph_concepts.py): Operates on the in-memory graph.
+The graph backend is selected via `graph.type`: `oxigraph` (Pyoxigraph, preferred) or `rdf` (RDFLib).
 
-### 3. Graph Construction & Coalescing
-- **DB Mode**:
-    1. After clustering, [`clustering/cluster_concepts.py`](clustering/cluster_concepts.py) creates a `cluster_relations` table by joining the original `relations` with the new `clusters`.
-    2. [`build_ontology.py`](build_ontology.py) then reads from the database tables (including `cluster_relations`) to construct the final RDF graph.
-- **Graph Mode**:
-    1. [`clustering/cluster_graph_concepts.py`](clustering/cluster_graph_concepts.py) directly modifies the graph.
-    2. It identifies relationships between clusters and "coalesces" them, propagating relations to all member concepts within the clusters.
+### Stages
 
-### 4. Benchmarking
-- The pipeline is instrumented with a `@timer` decorator ([`tools/timer.py`](tools/timer.py)) to measure the performance of various stages.
-- Results are saved to CSV files in `benchmarking/results/`.
+#### 1. Ingestion
+Loaders in [`knowledge_bases/`](knowledge_bases/) parse source files and write concepts, relations, properties, and external URLs. In `db` mode data goes to PostgreSQL; in `graph` mode it goes directly into the in-memory store. Results are pickled to `.cache/` when `should_cache: true` to allow incremental re-runs.
+
+#### 2. Clustering
+Groups concepts that refer to the same real-world entity using shared external URLs. An adjacency list is built from co-occurring URLs, then transitive closure identifies connected components. In `db` mode this produces `clusters` and `cluster_relations` tables ([`clustering/cluster_concepts.py`](clustering/cluster_concepts.py)); in `graph` mode the graph is modified in place ([`clustering/cluster_graph_concepts_oxi.py`](clustering/cluster_graph_concepts_oxi.py) / [`_rdf.py`](clustering/cluster_graph_concepts_rdf.py)).
+
+#### 3. Graph Construction
+In `db` mode, [`build_ontology.py`](build_ontology.py) reads the database tables and converts rows to RDF triples via the `GraphManager`. In `graph` mode the store is already populated after ingestion and clustering. POS tag classes are added at this stage.
+
+#### 4. Serialisation
+The graph is exported to `.nt` (N-Triples) or optionally converted to `.ttl` (Turtle) via `rapper`. The base URI and namespace prefix are set in the `turtle_export` section of `config.yaml`.
+
+#### 5. Benchmarking
+A `@timer` decorator ([`tools/timer.py`](tools/timer.py)) wraps each pipeline stage to capture wall time and peak memory. Results accumulate in a `Benchmark` instance and are exported to CSVs in [`benchmarking/results/`](benchmarking/results/).
+
+### Configuration
+Key sections of `config.yaml`:
+
+| Key | Description |
+|-----|-------------|
+| `general.sources` | List of KBs to load (default: `['parmenides']`) |
+| `general.mapping_sources` | KBs used for edge-type mappings (default: `['wordnet', 'conceptnet', 'wiktionary']`) |
+| `general.mode` | `'db'` or `'graph'` |
+| `graph.type` | `'oxigraph'` or `'rdf'` |
+| `clustering.enabled` | Toggle clustering stage |
+| `db_config.clear_db_on_start` | Drop and recreate tables on each run |
+| `turtle_export.convert` | Convert output `.nt` to `.ttl` after serialisation |
+
+### DB Schema (DB mode)
+Tables are created automatically. `clear_db_on_start: true` drops and recreates them before each run.
+
+| Table | Description |
+|-------|-------------|
+| `concepts` | `(id, term, part_of_speech, source)` |
+| `relations` | `(start_concept_id, end_concept_id, relation_type, weight, source)` |
+| `properties` | `(concept_id, type, value, source)` |
+| `urls` | `(concept_id, external_url, source)` |
+| `clusters` | `(concept_id, cluster_id)` — added when clustering is enabled |
+| `cluster_relations` | `(start_cluster_id, end_cluster_id, relation_type, weight)` — added when clustering is enabled |
+
+## Evaluation
+The [`evaluator/`](evaluator/) pipeline assesses ontology quality at three tiers:
+
+1. **Deterministic** — triple coverage and precision metrics against reference triples
+2. **Semantic** — embedding similarity using Sentence Transformers to score how well the ontology captures meaning
+3. **LLM-as-judge** — locally hosted models via Ollama judge triple coherence and relevance
+
+Supporting utilities: `triple_sampler.py` samples triples for evaluation; `extractor.py` builds subgraph context around them; `reporter.py` generates CSV exports and LaTeX tables for papers.
+
+Evaluation settings (models, test cases, thresholds) are configured under the `evaluator` section of `config.yaml`.
+
+## Multi-run Experiments
+[`run_experiments.py`](run_experiments.py) reads per-run config overrides from [`configurations.json`](configurations.json) and merges them with `config.yaml` to produce isolated temporary configs. [`run_iterations.sh`](run_iterations.sh) drives batch execution across multiple iterations.
+
+```bash
+python run_experiments.py --iteration 0 --config-index 0
+./run_iterations.sh
+```
+
+## Testing
+The primary correctness test runs the full pipeline in both `db` and `graph` modes and compares output triple-by-triple:
+```bash
+pytest tests/ -v
+pytest tests/test_graph_db_equivalence.py -v
+```
+
+## Future Work
+- **DBpedia** — the loader ([`knowledge_bases/dbpedia_loader.py`](knowledge_bases/dbpedia_loader.py)) can ingest entity labels and types, but property-relation extraction is incomplete. The loader is currently disabled in the pipeline pending this.
