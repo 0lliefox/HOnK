@@ -23,3 +23,5 @@ employ
 enlist
 cause
 generate
+abandon
+demolish

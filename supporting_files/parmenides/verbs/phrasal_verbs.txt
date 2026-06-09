@@ -1770,3 +1770,5 @@ zoom in
 zoom in on
 zoom off
 zoom out
+take place
+takes place

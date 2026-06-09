@@ -1,0 +1,9 @@
+close
+open
+reopen
+resume
+suspend
+cancel
+reduce
+restrict
+divert

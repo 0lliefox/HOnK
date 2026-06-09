@@ -1,0 +1,11 @@
+delay
+incursion
+closure
+congestion
+diversion
+disruption
+restriction
+obstruction
+queue
+tailback
+holdup

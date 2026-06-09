@@ -1,0 +1,7 @@
+(carry out^(Verb))-[isA]->(do^(Verb))
+(entrance^(Noun))-[partOf]->(station^(Noun))
+(expected^(Verb))-[eq]->(forecast^(Verb))
+(bus/coach station^(LOC))-[isA]->(bus station^(LOC))
+(bus/coach station^(LOC))-[isA]->(coach station^(LOC))
+(SI^(Noun))-[isA]->(pipe^(Noun))
+(LP PE^(Noun))-[isA]->(pipe^(Noun))

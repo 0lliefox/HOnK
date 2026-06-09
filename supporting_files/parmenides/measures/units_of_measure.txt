@@ -7,3 +7,21 @@ kilometres per minute
 kilometers per minute
 kilometres per hour
 kilometers per hour
+mph
+kph
+kmh
+°C
+°F
+%
+kg
+g
+mg
+lb
+oz
+ft
+in
+cm
+mm
+km
+ms
+hr

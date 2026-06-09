@@ -174,6 +174,12 @@
         "argument": "property"
       }
     ],
+    "requirement": [
+      {
+        "attachTo": "Kernel",
+        "argument": "property"
+      }
+    ],
     "punishment": [
       {
         "attachTo": "Kernel",
@@ -253,6 +259,11 @@
         "argument": "property"
       },
       {
+        "property": "near place",
+        "attachTo": "Kernel",
+        "argument": "property"
+      },
+      {
         "property": "motion to place",
         "attachTo": "Kernel",
         "argument": "property"
@@ -273,6 +284,23 @@
         "attachTo": "Kernel",
         "argument": "subject"
       }
+    ],
+    "temporal_context": [
+      {
+        "attachTo": "Kernel",
+        "argument": "subject"
+      }
+    ],
+    "time_status": [
+      {
+        "attachTo": "Singleton",
+        "argument": "property"
+      },
+      {
+        "property": "under_investigation",
+        "attachTo": "Singleton",
+        "argument": "property"
+      }
     ]
   },
   "derivation_rules": [
@@ -281,7 +309,7 @@
         "SingletonHasBeenMatchedBy": [
           "SUTime"
         ],
-        "preposition": [
+        "Preposition": [
           "on",
           "in",
           "at",
@@ -305,11 +333,12 @@
         "SingletonHasBeenMatchedBy": [
           "SUTime"
         ],
-        "preposition": [
+        "Preposition": [
           "during",
           "before",
           "after",
-          "while"
+          "while",
+          "until"
         ]
       },
       "classification": [
@@ -324,10 +353,27 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
+          "between"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "motion through place"
+        }
+      ],
+      "__sentence_examples": [
+        "trains between two stations",
+        "a route between adjacent towns"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
           "on"
         ],
-        "abstract_entity": false
+        "AbstractEntity": false
       },
       "classification": [
         {
@@ -350,13 +396,11 @@
     },
     {
       "premise": {
-        "preposition": [
-          "to",
-          "at",
-          "for"
+        "Preposition": [
+          "to"
         ],
-        "abstract_entity": false,
-        "verb_of_motion": true,
+        "AbstractEntity": false,
+        "MotionVerb": true,
         "not": {
           "SingletonHasBeenMatchedBy": [
             "SUTime"
@@ -378,10 +422,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "to"
         ],
-        "causative_verb": true
+        "CausativeVerb": true
       },
       "classification": [
         {
@@ -394,13 +438,83 @@
     },
     {
       "premise": {
-        "preposition": [
-          "to",
-          "at"
+        "CausativeVerb": true
+      },
+      "classification": [
+        {
+          "type": "causation"
+        }
+      ],
+      "__sentence_examples": [
+        "causing damage"
+      ]
+    },
+    {
+      "premise": {
+        "ConsumptionVerb": true
+      },
+      "classification": [
+        {
+          "type": "requirement"
+        }
+      ],
+      "__sentence_examples": [
+        "which require scaffolding",
+        "this needs a permit"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "due",
+          "due to"
+        ]
+      },
+      "classification": [
+        {
+          "type": "causation"
+        }
+      ],
+      "__sentence_examples": [
+        "closed due to fire safety concerns",
+        "delayed due to bad weather",
+        "cancelled due to illness"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "to"
         ],
         "not": {
           "SingletonHasBeenMatchedBy": [
-            "SUTime"
+            "SUTime",
+            "LOC",
+            "GPE"
+          ],
+          "CausativeVerb": true
+        }
+      },
+      "classification": [
+        {
+          "type": "ofTerm"
+        }
+      ],
+      "__sentence_examples": [
+        "open to the public",
+        "providing access to others"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "to"
+        ],
+        "not": {
+          "SingletonHasBeenMatchedBy": [
+            "SUTime",
+            "LOC",
+            "GPE"
           ]
         }
       },
@@ -413,14 +527,12 @@
         "providing access to medical care",
         "providing information to others",
         "coming to false conclusions",
-        "add as an ingredient to toothpaste",
-        "laughing at humor",
-        "aim at a tree"
+        "add as an ingredient to toothpaste"
       ]
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "from"
         ],
         "hasNMod": true
@@ -438,10 +550,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "from"
         ],
-        "verb_of_motion": true
+        "MotionVerb": true
       },
       "classification": [
         {
@@ -455,7 +567,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "from"
         ]
       },
@@ -470,12 +582,12 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "in",
           "into"
         ],
-        "verb_of_motion": true,
-        "abstract_entity": false
+        "MotionVerb": true,
+        "AbstractEntity": false
       },
       "classification": [
         {
@@ -489,9 +601,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "in",
-          "into"
+          "into",
+          "at"
         ],
         "SingletonHasBeenMatchedBy": [
           "GPE",
@@ -525,11 +638,37 @@
     },
     {
       "premise": {
-        "preposition": [
+        "FacilityNoun": true,
+        "Preposition": [
           "in",
-          "into"
+          "into",
+          "at"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "occurred at a commercial premises",
+        "broke into the building",
+        "at the station"
+      ]
+    },
+    {
+      "premise": {
+        "SingletonHasBeenMatchedBy": [
+          "LOC",
+          "FAC"
         ],
-        "abstract_entity": false
+        "Preposition": [
+          "in",
+          "into",
+          "at"
+        ],
+        "AbstractEntity": false
       },
       "classification": [
         {
@@ -558,10 +697,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "in"
         ],
-        "abstract_entity": true
+        "AbstractEntity": true
       },
       "classification": [
         {
@@ -574,10 +713,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "across"
         ],
-        "verb_of_motion": true
+        "MotionVerb": true
       },
       "classification": [
         {
@@ -591,7 +730,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "across"
         ]
       },
@@ -606,7 +745,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "than"
         ]
       },
@@ -621,7 +760,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "about"
         ]
       },
@@ -639,7 +778,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "by"
         ]
       },
@@ -655,7 +794,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "as"
         ]
       },
@@ -671,7 +810,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "of"
         ],
         "hasNMod": true,
@@ -693,11 +832,11 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "of"
         ],
         "hasNMod": true,
-        "verb_of_means": true
+        "MeansVerb": true
       },
       "classification": [
         {
@@ -710,9 +849,9 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "'s",
-          "’s"
+          "\u2019s"
         ],
         "hasNMod": true
       },
@@ -726,12 +865,12 @@
         "attempt to steal someone's husband",
         "emilia's short tailed opossum",
         "one person's grade",
-        "raises one’s hand to"
+        "raises one\u2019s hand to"
       ]
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "of"
         ],
         "hasNMod": true,
@@ -750,7 +889,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "of"
         ],
         "hasNMod": true
@@ -776,7 +915,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "of"
         ],
         "hasNMod": false
@@ -792,10 +931,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "into"
         ],
-        "isMaterializationVerb": true
+        "MaterialisationVerb": true
       },
       "classification": [
         {
@@ -810,8 +949,8 @@
     },
     {
       "premise": {
-        "hasNumber": true,
-        "hasUnitOfMeasure": true
+        "Number": true,
+        "UnitOfMeasure": true
       },
       "classification": [
         {
@@ -824,7 +963,25 @@
     },
     {
       "premise": {
-        "hasNumber": true
+        "Number": true,
+        "SingletonHasBeenMatchedBy": [
+          "SUTime"
+        ]
+      },
+      "classification": [
+        {
+          "type": "time",
+          "property": "defined"
+        }
+      ],
+      "__sentence_examples": [
+        "14 April 2026",
+        "January 2025"
+      ]
+    },
+    {
+      "premise": {
+        "Number": true
       },
       "classification": [
         {
@@ -837,7 +994,41 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
+          "with"
+        ],
+        "Actioned": true
+      },
+      "classification": [
+        {
+          "type": "time_status"
+        }
+      ],
+      "__sentence_examples": [
+        "with no fixed reopening date"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "under"
+        ],
+        "StatusNoun": true
+      },
+      "classification": [
+        {
+          "type": "time_status",
+          "property": "under_investigation"
+        }
+      ],
+      "__sentence_examples": [
+        "remains under investigation",
+        "is under arrest"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
           "with"
         ]
       },
@@ -855,10 +1046,10 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "for"
         ],
-        "causative_verb": true
+        "CausativeVerb": true
       },
       "classification": [
         {
@@ -877,7 +1068,7 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "for"
         ]
       },
@@ -895,11 +1086,33 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
+          "for"
+        ],
+        "SingletonHasBeenMatchedBy": [
+          "GPE",
+          "LOC",
+          "FAC"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "Met Office forecast for Newcastle upon Tyne",
+        "tickets for London"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
           "on"
         ],
-        "verb_of_motion": false,
-        "verb_of_state": false
+        "MotionVerb": false,
+        "StateVerb": false
       },
       "classification": [
         {
@@ -914,11 +1127,12 @@
     },
     {
       "premise": {
-        "preposition": [
+        "Preposition": [
           "during",
           "before",
           "after",
-          "while"
+          "while",
+          "until"
         ]
       },
       "classification": [
@@ -930,6 +1144,117 @@
       "__sentence_examples": [
         "clean up after yourself"
       ]
+    },
+    {
+      "premise": {
+        "PhrasalVerb": true
+      },
+      "classification": [
+        {
+          "type": "temporal_context"
+        }
+      ],
+      "__sentence_examples": [
+        "while maintenance work takes place"
+      ]
+    },
+    {
+      "premise": {
+        "SingletonHasBeenMatchedBy": [
+          "SUTime"
+        ],
+        "Preposition": [
+          "in"
+        ]
+      },
+      "classification": [
+        {
+          "type": "time",
+          "property": "defined"
+        }
+      ]
+    },
+    {
+      "premise": {
+        "DependencyLabel": [
+          "appos"
+        ],
+        "SingletonHasBeenMatchedBy": [
+          "GPE",
+          "LOC"
+        ],
+        "not": {
+          "SourceSingletonHasBeenMatchedBy": [
+            "GPE",
+            "LOC"
+          ]
+        }
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "Parking Area, Newcastle",
+        "the station, London"
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "on or near"
+        ],
+        "AbstractEntity": false
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        },
+        {
+          "type": "space",
+          "property": "near place"
+        }
+      ]
+    },
+    {
+      "premise": {
+        "Preposition": [
+          "near"
+        ],
+        "AbstractEntity": false
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "near place"
+        }
+      ],
+      "__sentence_examples": [
+        "recorded near Prince Albert Terrace"
+      ]
+    },
+    {
+      "premise": {
+        "hasNMod": true,
+        "SingletonHasBeenMatchedBy": [
+          "LOC",
+          "FAC",
+          "GPE"
+        ]
+      },
+      "classification": [
+        {
+          "type": "space",
+          "property": "stay in place"
+        }
+      ],
+      "__sentence_examples": [
+        "the Percy Street entrance is currently closed (entrance reattached as an nmod orphan with no preposition; default to a spatial reading)"
+      ],
+      "__doc": "Default spatial classification for an nmod-attached location/facility/GPE entity when no Preposition-specific rule has already fired. 'stay in place' is the safe default; motion/from/near readings are caught by earlier prepositional rules with higher specificity. Must precede the unconstrained hasNMod fallback below — they tie on _rule_preposition_specificity (both zero), so JSON insertion order is the tiebreaker."
     },
     {
       "premise": {

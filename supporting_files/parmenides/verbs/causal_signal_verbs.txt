@@ -1,0 +1,7 @@
+cause
+trigger
+result
+follow
+lead
+force
+require

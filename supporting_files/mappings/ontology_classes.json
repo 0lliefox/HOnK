@@ -1,4 +1,10 @@
 {
+  "GraphParse": {
+    "properties": [],
+    "classes": {
+      "Rejectable": {}
+    }
+  },
   "MetaGrammaticalFunction": {
     "properties": [],
     "classes": {
@@ -28,7 +34,9 @@
               "ParticipleAdjective": {
                 "PresentParticipleAdjective": {},
                 "PastParticipleAdjective": {}
-              }
+              },
+              "WeatherConditionAdjective": {},
+              "ProgressHedgeAdjective": {}
             }
           },
           "Adverb": {
@@ -77,6 +85,10 @@
               "CoordinatingConjunction": {},
               "SubordinatingConjunction": {}
             }
+          },
+          "CompoundForm": {
+            "properties": [],
+            "classes": {}
           },
           "Concept": {
             "properties": [],
@@ -239,30 +251,49 @@
               "TypedNoun": {
                 "BeginningNoun": {},
                 "AnimalNoun": {},
-                "ArtifactNoun": {},
+                "ArtifactNoun": {
+                  "FacilityNoun": {
+                    "AccessPointNoun": {}
+                  }
+                },
                 "ArtificialNoun": {},
-                "AttributeNoun": {},
+                "AttributeNoun": {
+                  "OrientationNoun": {}
+                },
                 "BodyNoun": {},
                 "CognitionNoun": {},
                 "CommunicationNoun": {},
-                "EventNoun": {},
+                "EventNoun": {
+                  "DisruptionNoun": {}
+                },
                 "FeelingNoun": {},
                 "FoodNoun": {},
                 "GroupNoun": {},
                 "LocationNoun": {
-                  "sameAs": "LOC"
+                  "sameAs": "LOC",
+                  "FacilityNoun": {
+                    "AccessPointNoun": {}
+                  },
+                  "RouteNoun": {},
+                  "GeoSuffixNoun": {}
                 },
                 "MotiveNoun": {},
                 "ObjectNoun": {},
                 "PersonNoun": {},
-                "PhenomenonNoun": {},
+                "PhenomenonNoun": {
+                  "WeatherConditionNoun": {}
+                },
                 "PlantNoun": {},
                 "PossessionNoun": {},
                 "ProcessNoun": {},
                 "QuantityNoun": {},
                 "RelationNoun": {},
                 "ShapeNoun": {},
-                "StateNoun": {},
+                "StateNoun": {
+                  "ServiceStateNoun": {},
+                  "StatusNoun": {},
+                  "WeatherConditionNoun": {}
+                },
                 "SubstanceNoun": {},
                 "TimeNoun": {}
               }
@@ -368,6 +399,7 @@
               "CausativeVerb": {},
               "ControlVerb": {},
               "CopulativeVerb": {},
+              "CopulaSurfaceForm": {},
               "DefectiveVerb": {},
               "DenominalVerb": {},
               "DitransitiveVerb": {},
@@ -395,9 +427,13 @@
               "InstransitiveVerb": {},
               "TypedVerb": {
                 "BodyVerb": {},
-                "ChangeVerb": {},
+                "ChangeVerb": {
+                  "LifecycleOutcomeVerb": {}
+                },
                 "CognitionVerb": {},
-                "CommunicationVerb": {},
+                "CommunicationVerb": {
+                  "ReportingVerb": {}
+                },
                 "CompetitionVerb": {},
                 "ConsumptionVerb": {},
                 "ContactVerb": {},

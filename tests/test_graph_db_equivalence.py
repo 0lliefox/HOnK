@@ -7,7 +7,7 @@ import tempfile
 import logging
 from benchmarking.benchmark import Benchmark
 import build_ontology
-from benchmarking.graph_benchmarking.compare_graphs import GraphComparator
+from benchmarking.compare_graphs import GraphComparator
 
 @pytest.fixture
 def config_setup():

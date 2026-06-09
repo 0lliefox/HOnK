@@ -1,0 +1,23 @@
+{
+  "exact_matches": {
+    "PRONOUN": "PRONOUN",
+    "PRP": "PRONOUN",
+    "PRP$": "PRONOUN",
+    "WP": "PRONOUN",
+    "WP$": "PRONOUN",
+    "HYPH": "HYPH",
+    "verb": "verb"
+  },
+  "startswith_matches": {
+    "JJ": "JJ"
+  },
+  "confidence_based_exact_matches": [
+    "∃", "RB"
+  ],
+  "confidence_based_startswith_matches": [
+    "JJ", "IN", "NEG"
+  ],
+  "meu_types": [
+    "VERB", "PERSON", "DATE", "GPE", "LOC", "ENTITY"
+  ]
+}

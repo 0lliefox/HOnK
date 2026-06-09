@@ -1,0 +1,19 @@
+{
+  "_doc": "Syntactic dependency-label and POS-tag groupings used across the LaSSI pipeline. Pure syntax — do NOT add semantic-construct names (SPACE, TIME, etc.) here; those live in logical_analysis.json.",
+
+  "copula_complement_pos_tags": ["JJ", "JJS", "RB"],
+
+  "predicative_subject_pos_tags": ["PRONOUN", "ENTITY"],
+
+  "nominal_modifier_edges": ["nmod", "nmod_poss", "obl", "acl", "acl_relcl"],
+
+  "possessive_edges": ["nmod_poss"],
+
+  "preposition_marker_labels": ["mark", "adv", "advmod", "IN", "TO", "case"],
+
+  "lexical_merge_edges": ["compound", "orig", "flat", "fixed", "mwe"],
+
+  "space_case_marker_keys": ["case", "punct"],
+
+  "verb_disqualifying_incoming_edges": ["nmod", "obl", "case"]
+}

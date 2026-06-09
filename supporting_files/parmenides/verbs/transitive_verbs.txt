@@ -401,3 +401,9 @@ prove
 traffic
 traffick
 choose
+meet
+condemn
+pray
+identify
+record
+abandon

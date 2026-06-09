@@ -1,0 +1,14 @@
+expected
+expect
+unlikely
+likely
+planned
+plan
+scheduled
+schedule
+anticipated
+anticipate
+possible
+certain
+probable
+improbable

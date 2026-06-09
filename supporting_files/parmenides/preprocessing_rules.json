@@ -1,0 +1,19 @@
+{
+  "edge_labels_to_merge_properties": [
+    "inherit_edge"
+  ],
+  "edge_labels_to_merge_and_add_target_name": [
+    "mark",
+    "punct",
+    "amod",
+    "advmod",
+    "case",
+    "adv"
+  ],
+  "edge_labels_for_special_case_propagation": [
+    "case"
+  ],
+  "edge_labels_to_flip_and_make_existential": [
+    "cop"
+  ]
+}

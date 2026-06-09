@@ -1,0 +1,9 @@
+area
+region
+district
+zone
+sector
+vicinity
+neighbourhood
+neighborhood
+part

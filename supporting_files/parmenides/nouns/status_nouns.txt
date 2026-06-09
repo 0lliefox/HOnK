@@ -1,0 +1,13 @@
+status
+outcome
+investigation
+charge
+arrest
+suspect
+court
+conviction
+caution
+referral
+disposal
+resolution
+completion

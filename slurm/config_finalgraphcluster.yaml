@@ -69,8 +69,8 @@ turtle_export:
   convert: false
   normalise_pos: true
   output_file: 'ontology_graph_oxi_clustered_urlskept_final.nt'
-  base_uri: "https://logds.github.io/parmenides#"
-  base_prefix: "parmenides"
+  base_uri: "https://logds.github.io/honk#"
+  base_prefix: "honk"
 
 clustering:
   enabled: true

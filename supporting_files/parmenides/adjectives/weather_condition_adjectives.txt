@@ -1,0 +1,5 @@
+cloudy
+sunny
+clear
+dry
+settled

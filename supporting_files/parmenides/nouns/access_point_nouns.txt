@@ -1,0 +1,17 @@
+access
+entrance
+exit
+door
+doorway
+gate
+barrier
+stair
+stairs
+staircase
+lift
+elevator
+escalator
+ramp
+platform
+footbridge
+crossing

@@ -1,0 +1,28 @@
+station
+stop
+interchange
+terminal
+depot
+hub
+airport
+car park
+parking area
+ticket hall
+concourse
+footway
+footpath
+cycleway
+bridge
+footbridge
+crossing
+subway
+underpass
+tunnel
+metro
+premises
+building
+property
+site
+location
+venue
+establishment
