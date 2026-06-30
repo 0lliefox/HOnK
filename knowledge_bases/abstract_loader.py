@@ -78,14 +78,19 @@ class AbstractLoader(ABC):
     @timer(log=False, threaded=False, independent=True, memory=False)
     @lru_cache(maxsize=1024)
     def normalise_data(self, term, pos):
-        if self.graph_manager.normalise_pos:
-            term = self.normalise_term(term)
+        # Basic surface hygiene applies in every mode so labels are well-formed.
+        term = self.normalise_term(term)
+        mode = self.graph_manager.normalisation_mode
+        if mode == 'full':
             pos = self.get_mapped_pos(pos) if pos is not None else None
+        elif mode == 'canonicalise':
+            term = self.canonicalise_term(term, pos)
+        # 'raw': keep the cleaned source label and original POS as-is.
         return term, pos
 
     @lru_cache(maxsize=1024)
     def get_mapped_pos(self, pos_tag):
-        if self.config['turtle_export']['normalise_pos']:
+        if self.graph_manager.normalise_pos:
             return self.graph_manager.full_mappings.get(pos_tag, pos_tag)
         else:
             return pos_tag
@@ -134,3 +139,31 @@ class AbstractLoader(ABC):
             term = term.strip()
 
         return term
+
+    @lru_cache(maxsize=1024)
+    def canonicalise_term(self, term, pos):
+        """Lightweight surface canonicalisation for the 'canonicalise' ablation
+        mode: lowercase + WordNet lemmatisation (matching only, no HOnK mappings).
+        Isolates trivial string variation from HOnK's semantic alignment."""
+        term = term.lower()
+        if not hasattr(self, '_lemmatizer'):
+            import nltk
+            from nltk.stem import WordNetLemmatizer
+            try:
+                nltk.data.find('corpora/wordnet')
+            except LookupError:
+                nltk.download('wordnet', quiet=True)
+            self._lemmatizer = WordNetLemmatizer()
+        nltk_pos = 'n'
+        if pos:
+            p = pos.lower()
+            if 'verb' in p:
+                nltk_pos = 'v'
+            elif 'adj' in p:
+                nltk_pos = 'a'
+            elif 'adv' in p:
+                nltk_pos = 'r'
+        try:
+            return self._lemmatizer.lemmatize(term, pos=nltk_pos)
+        except Exception:
+            return term

@@ -7,9 +7,10 @@ database:
 
 general:
   language: 'en'  # Fix a specific language for filtering the knowledge bases
-  sources: ['parmenides', 'conceptnet', 'wiktionary', 'wordnet', 'geonames']
+  sources: ['parmenides']
   mapping_sources: ['wordnet', 'conceptnet', 'wiktionary']
   mode: 'db'  # graph / db
+  normalisation: 'full'  # full = HOnK POS+edge mappings; raw = none; canonicalise = lowercase+lemma only (no HOnK mappings). Drives the method-vs-data ablation.
   should_cache: true
   show_stats: true
   verbose: true

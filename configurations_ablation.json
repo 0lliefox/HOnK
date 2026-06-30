@@ -1,0 +1,42 @@
+[
+  {
+    "name": "a_conceptnet_only_raw",
+    "config_overrides": {
+      "general": {"sources": ["conceptnet"], "normalisation": "raw", "should_cache": false},
+      "clustering": {"enabled": false},
+      "turtle_export": {"output_file": "ablation_a_conceptnet_raw.nt"}
+    }
+  },
+  {
+    "name": "b1_union_raw",
+    "config_overrides": {
+      "general": {"sources": ["conceptnet", "wordnet", "wiktionary"], "normalisation": "raw", "should_cache": false},
+      "clustering": {"enabled": false},
+      "turtle_export": {"output_file": "ablation_b1_union_raw.nt"}
+    }
+  },
+  {
+    "name": "b2_union_canonicalise",
+    "config_overrides": {
+      "general": {"sources": ["conceptnet", "wordnet", "wiktionary"], "normalisation": "canonicalise", "should_cache": false},
+      "clustering": {"enabled": false},
+      "turtle_export": {"output_file": "ablation_b2_union_canonicalise.nt"}
+    }
+  },
+  {
+    "name": "c_full_unclustered",
+    "config_overrides": {
+      "general": {"sources": ["parmenides", "conceptnet", "wordnet", "wiktionary"], "normalisation": "full", "should_cache": false},
+      "clustering": {"enabled": false},
+      "turtle_export": {"output_file": "ablation_c_full_unclustered.nt"}
+    }
+  },
+  {
+    "name": "d_full_clustered",
+    "config_overrides": {
+      "general": {"sources": ["parmenides", "conceptnet", "wordnet", "wiktionary"], "normalisation": "full", "should_cache": false},
+      "clustering": {"enabled": true},
+      "turtle_export": {"output_file": "ablation_d_full_clustered.nt"}
+    }
+  }
+]

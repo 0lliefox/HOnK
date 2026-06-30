@@ -12,7 +12,14 @@ class GraphManager(ABC):
         self.id_to_uri = {}
         self.annotation_property_list = {}
         self.prop_id = {}
-        self.normalise_pos = config['turtle_export']['normalise_pos']
+        # Normalisation mode: 'full' (HOnK POS+edge mappings), 'raw' (no mappings),
+        # 'canonicalise' (lowercase+lemma only). Falls back to the legacy
+        # turtle_export.normalise_pos boolean when 'normalisation' is unset.
+        _mode = config['general'].get('normalisation')
+        if _mode is None:
+            _mode = 'full' if config['turtle_export']['normalise_pos'] else 'raw'
+        self.normalisation_mode = _mode
+        self.normalise_pos = (_mode == 'full')  # gates POS + edge mapping application
         self.declared_base_properties = set()
 
         self.full_mappings = {

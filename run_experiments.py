@@ -19,18 +19,19 @@ def deep_merge(base, overrides):
 def main():
     parser = argparse.ArgumentParser(description='Generate configuration for a specific run.')
     parser.add_argument('--iteration', type=int, required=True, help='Current iteration index (0-based).')
-    parser.add_argument('--config-index', type=int, required=True, help='Index of the configuration in configurations.json.')
+    parser.add_argument('--config-index', type=int, required=True, help='Index of the configuration in the configurations file.')
+    parser.add_argument('--configurations-file', default=CONFIGURATIONS_FILE, help='Path to the configurations JSON (default: configurations.json).')
     args = parser.parse_args()
 
-    if not os.path.exists(CONFIGURATIONS_FILE):
-        print(f"Error: {CONFIGURATIONS_FILE} not found.")
+    if not os.path.exists(args.configurations_file):
+        print(f"Error: {args.configurations_file} not found.")
         sys.exit(1)
 
     if not os.path.exists(CONFIG_FILE):
         print(f"Error: {CONFIG_FILE} not found.")
         sys.exit(1)
 
-    with open(CONFIGURATIONS_FILE, 'r') as f:
+    with open(args.configurations_file, 'r') as f:
         configurations = json.load(f)
 
     with open(CONFIG_FILE, 'r') as f:
