@@ -58,9 +58,6 @@ class ConceptClusterer:
                             );
                         """)
             cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_cluster_id ON {AsIs(self.tables['clusters'])}(cluster_id);")
-            # Speeds the coalesce_relationships join (relations.{start,end}_concept_id -> clusters.concept_id),
-            # the I/O-bound relation-projection phase (reviewer R1-D3).
-            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_concept_id ON {AsIs(self.tables['clusters'])}(concept_id);")
 
             cursor.execute(f"""
                         CREATE TABLE IF NOT EXISTS {AsIs(self.tables['cluster_relations'])}
@@ -174,6 +171,10 @@ class ConceptClusterer:
         # Join clusters table from cluster ID to start_concept_id and end_concept_id from relations table
         logging.info("Coalescing relationships between clusters...")
         with self.conn.cursor() as cursor:
+            # The projection hash-joins all relations against the clusters table twice; at the
+            # default work_mem the hash spills to temp (the I/O cost reviewers flagged, R1-D3).
+            # Raising it for this transaction keeps the build to a single in-memory batch.
+            cursor.execute("SET LOCAL work_mem = '256MB'")
             cursor.execute(f"TRUNCATE TABLE {AsIs(self.tables['cluster_relations'])};")
             cursor.execute(f"""
                         INSERT INTO {AsIs(self.tables['cluster_relations'])} (start_cluster_id, end_cluster_id, relation_type, weight, source)
@@ -188,6 +189,11 @@ class ConceptClusterer:
                                  JOIN
                              {AsIs(self.tables['clusters'])} AS c2 ON r.end_concept_id = c2.concept_id;
                         """)
+            # Build the concept_id index AFTER the bulk projection so the planner keeps the
+            # faster hash join for the projection itself (with the index present it switches to
+            # a slower nested loop). The index then speeds downstream point-lookups: graph
+            # serialisation, word_relations, and the fidelity audit.
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_concept_id ON {AsIs(self.tables['clusters'])}(concept_id);")
             self.conn.commit()
             logging.info(f"  - {cursor.rowcount} new cluster relationships were created.")
         logging.info("Relationship coalescing complete.")
