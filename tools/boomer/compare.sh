@@ -1,0 +1,1 @@
+java -Xmx32G -jar robot.jar diff --left /Users/fox/PycharmProjects/commonsense_combiner/ontologies/ontology_final.nt --right /Users/fox/PycharmProjects/commonsense_combiner/ontologies/ontology_unique_source.nt --output comparison_report.txt

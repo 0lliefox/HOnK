@@ -1,0 +1,1 @@
+../rdfpro/rdfpro @read -w inputs/ConceptNet_unnormalised.ttl inputs/Wiktionary_unnormalised.ttl inputs/WordNet_unnormalised.ttl @write combined_graph_unnormalised.ttl

@@ -1,0 +1,1 @@
+robot convert --input boomer_output.ofn --format ttl --output boomer_output.ttl
