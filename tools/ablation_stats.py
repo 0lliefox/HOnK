@@ -12,14 +12,25 @@ Usage:  python tools/ablation_stats.py [file1.nt name1] [file2.nt name2] ...
 """
 
 import os
+import re
 import sys
 
 RDF_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+# HOnK reifies each relation occurrence as honk#<Type><N> (Desires1, Desires2,
+# DistinctFrom100...). Strip the trailing index to recover the relation *type*
+# so we report relation diversity rather than the reified-instance count.
+REIF_INDEX = re.compile(r"\d+>$")
+
+
+def _base_relation(predicate):
+    if "honk#" in predicate:
+        return REIF_INDEX.sub(">", predicate)
+    return predicate
 
 
 def arm_stats(path):
     nodes = set()
-    preds = set()
+    rel_types = set()
     type_classes = set()
     triples = 0
     with open(path, encoding="utf-8", errors="replace") as handle:
@@ -33,15 +44,16 @@ def arm_stats(path):
                 continue
             s, p, o = parts
             triples += 1
-            preds.add(p)
             nodes.add(s)
             nodes.add(o)
+            if "honk#" in p:
+                rel_types.add(_base_relation(p))
             if p == RDF_TYPE and o.startswith("<") and "owl#" not in o and "rdf-schema#" not in o:
                 type_classes.add(o)
     n = len(nodes)
     density = triples / (n * (n - 1)) if n > 1 else 0.0
     degree = (2 * triples) / n if n else 0.0
-    return {"triples": triples, "nodes": n, "relations": len(preds),
+    return {"triples": triples, "nodes": n, "relations": len(rel_types),
             "type_classes": len(type_classes), "density": density, "degree": degree}
 
 
