@@ -58,6 +58,9 @@ class ConceptClusterer:
                             );
                         """)
             cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_cluster_id ON {AsIs(self.tables['clusters'])}(cluster_id);")
+            # Speeds the coalesce_relationships join (relations.{start,end}_concept_id -> clusters.concept_id),
+            # the I/O-bound relation-projection phase (reviewer R1-D3).
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_clusters_concept_id ON {AsIs(self.tables['clusters'])}(concept_id);")
 
             cursor.execute(f"""
                         CREATE TABLE IF NOT EXISTS {AsIs(self.tables['cluster_relations'])}

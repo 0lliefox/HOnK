@@ -183,6 +183,7 @@ class OntologyBuilder:
                 cursor.execute('''
                     CREATE INDEX IF NOT EXISTS idx_relations_start_concept ON relations(start_concept_id);
                     CREATE INDEX IF NOT EXISTS idx_relations_end_concept ON relations(end_concept_id);
+                    CREATE INDEX IF NOT EXISTS idx_relations_start_end ON relations(start_concept_id, end_concept_id);
                     CREATE INDEX IF NOT EXISTS idx_properties_concept_id ON properties(concept_id);
                     CREATE INDEX IF NOT EXISTS idx_urls_concept_id ON urls(concept_id);
                     CREATE INDEX IF NOT EXISTS idx_relations_type ON relations(relation_type);

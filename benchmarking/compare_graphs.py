@@ -246,6 +246,67 @@ class GraphComparator:
             entropy = -np.sum(probs * np.log2(probs + 1e-9))
         self.stats[key]['entropy'] = entropy
 
+        nav = self._compute_navigability(pairs_path, node_count)
+        self.stats[key]['lcc_fraction'] = nav['lcc_fraction']
+        self.stats[key]['reachability'] = nav['reachability']
+        self.stats[key]['components'] = nav['components']
+
+    def _compute_navigability(self, pairs_path, num_nodes):
+        """Largest-connected-component fraction and mean reachability via a
+        memory-light union-find over the (sorted, unique) node-pair file.
+        Answers reviewer R1-D5 (is the enriched graph still navigable?) without
+        building an in-memory graph, matching the streaming design for large KGs.
+
+        reachability = expected fraction of nodes reachable from a uniformly
+        random node = sum_c (size_c / N)^2, with isolated nodes as singletons.
+        """
+        parent = {}
+
+        def find(x):
+            root = x
+            while parent[root] != root:
+                root = parent[root]
+            while parent[x] != root:
+                parent[x], x = root, parent[x]
+            return root
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        with open(pairs_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                parts = line.split(SEPARATOR)
+                if len(parts) != 2:
+                    continue
+                a, b = parts
+                if a not in parent:
+                    parent[a] = a
+                if b not in parent:
+                    parent[b] = b
+                union(a, b)
+
+        if num_nodes <= 0:
+            return {'lcc_fraction': 0.0, 'reachability': 0.0, 'components': 0}
+
+        sizes = {}
+        for node in list(parent.keys()):
+            root = find(node)
+            sizes[root] = sizes.get(root, 0) + 1
+        comp_sizes = list(sizes.values())
+        # Nodes with no edges never appear in the pairs file; count them as singletons.
+        isolated = max(0, num_nodes - len(parent))
+        largest = max(comp_sizes) if comp_sizes else 1
+        lcc_fraction = largest / num_nodes
+        reach_sq = sum(s * s for s in comp_sizes) + isolated  # singletons contribute 1 each
+        reachability = reach_sq / (num_nodes * num_nodes)
+        components = len(comp_sizes) + isolated
+        return {'lcc_fraction': lcc_fraction, 'reachability': reachability, 'components': components}
+
     def compare(self):
         print(f"\n--- Comparison: {self.g1_name} vs {self.g2_name} ---\n")
 
@@ -411,6 +472,10 @@ class GraphComparator:
             f"   Density: {self.g1_name}={self.stats['g1']['density']:.12f}, {self.g2_name}={self.stats['g2']['density']:.12f}")
         print(
             f"   Avg Degree: {self.g1_name}={self.stats['g1']['degree']:.2f}, {self.g2_name}={self.stats['g2']['degree']:.2f}")
+        print(
+            f"   LCC Fraction: {self.g1_name}={self.stats['g1']['lcc_fraction']:.4f}, {self.g2_name}={self.stats['g2']['lcc_fraction']:.4f}")
+        print(
+            f"   Reachability: {self.g1_name}={self.stats['g1']['reachability']:.4f}, {self.g2_name}={self.stats['g2']['reachability']:.4f}")
         print("")
 
         print("4. Node Entropy (Degree Distribution):")
@@ -542,6 +607,8 @@ class GraphComparator:
         \\#\\gls{{pos}}  & {fmt(s1['pos_tags'])} & {fmt(s2['pos_tags'])} \\\\
         Density      & {fmt_density(s1['density'])} & {fmt_density(s2['density'])} \\\\
         Degree       & {fmt(s1['degree'])} & {fmt(s2['degree'])} \\\\
+        LCC Fraction & {fmt(s1['lcc_fraction'])} & {fmt(s2['lcc_fraction'])} \\\\
+        Reachability & {fmt(s1['reachability'])} & {fmt(s2['reachability'])} \\\\
         Entropy      & {fmt(s1['entropy'])} & {fmt(s2['entropy'])} \\\\
         \\bottomrule
     \\end{{tabularx}}
@@ -565,6 +632,8 @@ class GraphComparator:
             writer.writerow(["POS Tags", s1['pos_tags'], s2['pos_tags']])
             writer.writerow(["Density", s1['density'], s2['density']])
             writer.writerow(["Degree", s1['degree'], s2['degree']])
+            writer.writerow(["LCC Fraction", s1['lcc_fraction'], s2['lcc_fraction']])
+            writer.writerow(["Reachability", s1['reachability'], s2['reachability']])
             writer.writerow(["Entropy", s1['entropy'], s2['entropy']])
 
     def _save_plot_data_json(self):
