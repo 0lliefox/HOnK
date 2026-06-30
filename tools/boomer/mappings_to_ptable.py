@@ -19,7 +19,7 @@ def get_prefix_from_filename(filename):
     base = os.path.basename(filename)
     # if 'wn_' in base:
     #     return 'wn'
-    return 'parmenides'
+    return 'honk'
 
 
 rows_to_write = []
@@ -36,7 +36,7 @@ for filename in input_filenames:
 
             if isinstance(val, str):
                 source = f"{source_prefix}:{clean_key}"
-                target = f"parmenides:{val.strip()}"
+                target = f"honk:{val.strip()}"
                 rows_to_write.append([source, target, "1", "1", "1", "1"])
 
             elif isinstance(val, dict):
@@ -45,7 +45,7 @@ for filename in input_filenames:
 
                 if not val.get('relNegated') and not val.get('swap'):
                     source = f"{source_prefix}:{clean_key}"
-                    target = f"parmenides:{val['rel'].strip()}"
+                    target = f"honk:{val['rel'].strip()}"
                     rows_to_write.append([source, target, "1", "1", "1", "1"])
 
     except FileNotFoundError:
