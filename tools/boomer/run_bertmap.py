@@ -28,17 +28,18 @@ def local(iri: str) -> str:
     return iri.rstrip("<>").split("#")[-1].split("/")[-1]
 
 
-def run(flavour: str) -> int:
+def run(flavour: str, bert: str = None, tag: str = None) -> int:
     from deeponto.onto import Ontology
     from deeponto.align.bertmap import BERTMapPipeline, DEFAULT_CONFIG_FILE
 
-    out_dir = os.path.join(MATCH, f"bertmap_out_{flavour}")
+    tag = tag or flavour
+    out_dir = os.path.join(MATCH, f"bertmap_out_{tag}")
     if os.path.isdir(out_dir):
         shutil.rmtree(out_dir)
 
     src = Ontology(os.path.join(MATCH, "source.owl"))
     tgt = Ontology(os.path.join(MATCH, "canonical.owl"))
-    print(f"[{flavour}] source classes={len(src.owl_classes)} "
+    print(f"[{tag}] source classes={len(src.owl_classes)} "
           f"canonical classes={len(tgt.owl_classes)}", flush=True)
 
     config = BERTMapPipeline.load_bertmap_config(DEFAULT_CONFIG_FILE)
@@ -48,10 +49,13 @@ def run(flavour: str) -> int:
     config.global_matching.enabled = True
     # keep any BERT fine-tuning cheap on this tiny vocabulary
     try:
+        if bert:
+            config.bert.pretrained_path = bert  # override the default Bio_ClinicalBERT
         config.bert.resume_training = False
         config.bert.max_length_for_input = 128
         config.bert.num_epochs_for_training = 1
         config.bert.batch_size_for_training = 8
+        print(f"[{tag}] BERT pretrained_path = {config.bert.pretrained_path}", flush=True)
     except Exception:
         pass
 
@@ -81,20 +85,23 @@ def run(flavour: str) -> int:
                 if s not in best or sc > best[s][0]:
                     best[s] = (sc, t)
 
-    out_tsv = os.path.join(MATCH, f"bertmap_predictions.{flavour}.tsv")
+    out_tsv = os.path.join(MATCH, f"bertmap_predictions.{tag}.tsv")
     with open(out_tsv, "w", encoding="utf-8") as fh:
         fh.write("source\tpredicted\tscore\n")
         for s, (sc, t) in sorted(best.items()):
             fh.write(f"{s}\t{t}\t{sc:.4f}\n")
-    print(f"[{flavour}] wrote {len(best)} predictions -> {out_tsv}", flush=True)
+    print(f"[{tag}] wrote {len(best)} predictions -> {out_tsv}", flush=True)
     return 0
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--flavour", choices=["bertmap", "bertmaplt"], default="bertmaplt")
+    ap.add_argument("--bert", default=None,
+                    help="Override BERTMap's pretrained model (default: deeponto's Bio_ClinicalBERT).")
+    ap.add_argument("--tag", default=None, help="Output label (default: flavour).")
     args = ap.parse_args()
-    return run(args.flavour)
+    return run(args.flavour, args.bert, args.tag)
 
 
 if __name__ == "__main__":

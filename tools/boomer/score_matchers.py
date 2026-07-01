@@ -78,7 +78,7 @@ def main() -> int:
     gold, flags = load_reference()
     preds = load_predictions()
 
-    order = ["lexical", "embedding", "bertmaplt", "bertmap"]
+    order = ["lexical", "embedding", "bertmaplt", "bertmap", "bertmap_bio", "bertmap_base"]
     names = [n for n in order if n in preds] + [n for n in preds if n not in order]
 
     nonid = lambda f: f["class"] == "nonidentity"
