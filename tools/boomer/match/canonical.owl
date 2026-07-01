@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+>
+  <rdf:Description rdf:about="http://honk.org/canon#usedFor">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>used for</rdfs:label>
+    <rdfs:comment>the typical purpose, function or use of something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Postposition">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>postposition</rdfs:label>
+    <rdfs:comment>part-of-speech category: a postposition</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Proverb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>proverb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a proverb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ParticipleAdjective">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>participle adjective</rdfs:label>
+    <rdfs:comment>part-of-speech category: a participle adjective</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#SubstanceNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>substance noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a substance noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#EmotionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>emotion verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a emotion verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PerceptionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>perception verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a perception verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#motivatedByGoal">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>motivated by goal</rdfs:label>
+    <rdfs:comment>an action undertaken in order to achieve a goal</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Character">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>character</rdfs:label>
+    <rdfs:comment>part-of-speech category: a character</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#derivedFrom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>derived from</rdfs:label>
+    <rdfs:comment>originates from or is derived out of a prior source</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Affix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>affix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a affix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Phrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>phrase</rdfs:label>
+    <rdfs:comment>part-of-speech category: a phrase</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#receivesAction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>receives action</rdfs:label>
+    <rdfs:comment>an action can be carried out upon the subject</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#causesDesire">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>causes desire</rdfs:label>
+    <rdfs:comment>something makes an agent want or wish for something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Interjection">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>interjection</rdfs:label>
+    <rdfs:comment>part-of-speech category: a interjection</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#atLocation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>at location</rdfs:label>
+    <rdfs:comment>the place where something is typically located or found</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Number">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>number</rdfs:label>
+    <rdfs:comment>part-of-speech category: a number</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CommunicationVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>communication verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a communication verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#SocialVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>social verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a social verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#etymology">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>etymology</rdfs:label>
+    <rdfs:comment>the historical linguistic origin of a word</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#MaterialisationVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>materialisation verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a materialisation verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#RelationalAdjective">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>relational adjective</rdfs:label>
+    <rdfs:comment>part-of-speech category: a relational adjective</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#WeatherVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>weather verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a weather verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#AttributeNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>attribute noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a attribute noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#locatedNear">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>located near</rdfs:label>
+    <rdfs:comment>typically situated in the vicinity of something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PossessionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>possession verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a possession verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#RelationNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>relation noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a relation noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PlantNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>plant noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a plant noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#AnimalNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>animal noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a animal noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Noun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#BeginningNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>beginning noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a beginning noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#madeOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>made of</rdfs:label>
+    <rdfs:comment>the material or substance the subject is composed of</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Adverb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adverb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a adverb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Adjective">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adjective</rdfs:label>
+    <rdfs:comment>part-of-speech category: a adjective</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PossessionNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>possession noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a possession noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#BodyVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>body verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a body verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CognitionNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>cognition noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a cognition noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Preposition">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>preposition</rdfs:label>
+    <rdfs:comment>part-of-speech category: a preposition</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has subevent</rdfs:label>
+    <rdfs:comment>a sub-event that occurs as part of a larger event</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#StativeVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>stative verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a stative verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#GroupNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>group noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a group noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#capableOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>capable of</rdfs:label>
+    <rdfs:comment>the subject is able to perform this action or capability</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Particle">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>particle</rdfs:label>
+    <rdfs:comment>part-of-speech category: a particle</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#entails">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>entails</rdfs:label>
+    <rdfs:comment>logically implies or necessarily brings with it</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Infix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>infix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a infix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasLastSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has last subevent</rdfs:label>
+    <rdfs:comment>the final sub-event within a larger process</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#definedAs">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>defined as</rdfs:label>
+    <rdfs:comment>a defining description or definition of the term</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ChangeVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>change verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a change verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ObjectNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>object noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a object noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ArtifactNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>artifact noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a artifact noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#FeelingNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>feeling noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a feeling noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Pronoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>pronoun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a pronoun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasProperty">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has property</rdfs:label>
+    <rdfs:comment>an attribute, quality or property that the subject has</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Prefix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>prefix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a prefix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#desires">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>desires</rdfs:label>
+    <rdfs:comment>an agent wants or wishes for something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#FoodNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>food noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a food noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasFirstSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has first subevent</rdfs:label>
+    <rdfs:comment>the initial sub-event within a larger process</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#StateNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>state noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a state noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Contraction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>contraction</rdfs:label>
+    <rdfs:comment>part-of-speech category: a contraction</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#MotiveNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>motive noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a motive noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Circumfix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>circumfix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a circumfix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#MotionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>motion verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a motion verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CompetitionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>competition verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a competition verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#createdBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>created by</rdfs:label>
+    <rdfs:comment>the agent or process that produces or authors something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#partOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>part of</rdfs:label>
+    <rdfs:comment>a component that belongs to a larger whole</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#EventNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>event noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a event noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PrepositionalPhrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>prepositional phrase</rdfs:label>
+    <rdfs:comment>part-of-speech category: a prepositional phrase</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ShapeNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>shape noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a shape noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#formOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>form of</rdfs:label>
+    <rdfs:comment>an inflected, variant or alternative form of a base word</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ContactVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>contact verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a contact verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Conjunction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>conjunction</rdfs:label>
+    <rdfs:comment>part-of-speech category: a conjunction</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Verb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Interfix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>interfix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a interfix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CommunicationNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>communication noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a communication noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#AgentNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>agent noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a agent noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#causes">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>causes</rdfs:label>
+    <rdfs:comment>one event or state brings about another</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#LocationNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>location noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a location noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ProcessNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>process noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a process noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#mannerOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>manner of</rdfs:label>
+    <rdfs:comment>a specific way or manner of performing an action</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Determiner">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>determiner</rdfs:label>
+    <rdfs:comment>part-of-speech category: a determiner</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CognitionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>cognition verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a cognition verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#symbolOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>symbol of</rdfs:label>
+    <rdfs:comment>serves as a symbol or sign standing for something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#QuantityNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>quantity noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a quantity noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#neqTo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>neq to</rdfs:label>
+    <rdfs:comment>inequality or opposition; the two differ or are opposite in sense</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasA">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has a</rdfs:label>
+    <rdfs:comment>possession; the subject has this as a component or attribute</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasPrerequisite">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has prerequisite</rdfs:label>
+    <rdfs:comment>a precondition that must hold before something occurs</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Concept">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>concept</rdfs:label>
+    <rdfs:comment>part-of-speech category: a concept</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Symbol">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>symbol</rdfs:label>
+    <rdfs:comment>part-of-speech category: a symbol</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Article">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>article</rdfs:label>
+    <rdfs:comment>part-of-speech category: a article</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#ConsumptionVerb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>consumption verb</rdfs:label>
+    <rdfs:comment>part-of-speech category: a consumption verb</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#BodyNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>body noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a body noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#product">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>product</rdfs:label>
+    <rdfs:comment>the output or product that results from something</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#eq">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>eq</rdfs:label>
+    <rdfs:comment>equivalence; the two terms denote the same thing or sense</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#relatedTo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>related to</rdfs:label>
+    <rdfs:comment>a general, unspecified association between two terms</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#instanceOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>instance of</rdfs:label>
+    <rdfs:comment>an individual instance belonging to a class</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#AdverbialPhrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adverbial phrase</rdfs:label>
+    <rdfs:comment>part-of-speech category: a adverbial phrase</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#isA">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>is a</rdfs:label>
+    <rdfs:comment>a type-of relationship; the subject is a kind of the object</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#compositeFormWith">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>composite form with</rdfs:label>
+    <rdfs:comment>combines with another element to form a compound term</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PersonNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>person noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a person noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#TimeNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>time noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a time noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#hasContext">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has context</rdfs:label>
+    <rdfs:comment>the domain, register or context in which a term is used</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#CombiningForm">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>combining form</rdfs:label>
+    <rdfs:comment>part-of-speech category: a combining form</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Suffix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>suffix</rdfs:label>
+    <rdfs:comment>part-of-speech category: a suffix</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Punctuation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>punctuation</rdfs:label>
+    <rdfs:comment>part-of-speech category: a punctuation</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#PhenomenonNoun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>phenomenon noun</rdfs:label>
+    <rdfs:comment>part-of-speech category: a phenomenon noun</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/canon#Idiom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>idiom</rdfs:label>
+    <rdfs:comment>part-of-speech category: a idiom</rdfs:comment>
+  </rdf:Description>
+</rdf:RDF>

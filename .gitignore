@@ -189,3 +189,6 @@ CLAUDE.md
 
 # Private keys / secrets
 *.key
+
+# BERTMap / DeepOnto run artifacts (fine-tuned model checkpoints, GBs)
+tools/boomer/match/bertmap_out_*/

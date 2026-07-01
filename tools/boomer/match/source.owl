@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+>
+  <rdf:Description rdf:about="http://honk.org/src#cn.SymbolOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>symbol of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_substance">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun substance</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.Adv">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adv</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.part_meronym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>part meronym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.postp">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>postp</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.CapableOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>capable of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.idiom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>idiom</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.proverb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>proverb</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.adv">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adv</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_event">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun event</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.attribute">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>attribute</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.num">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>num</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_change">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb change</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasPrerequisite">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has prerequisite</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_perception">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb perception</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.n">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>n</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_weather">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb weather</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.c">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>c</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.Entails">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>entails</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.meronyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>meronyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.det">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>det</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_time">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun time</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_consumption">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb consumption</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.suffix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>suffix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.holonyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>holonyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_act">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun act</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.MadeOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>made of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_cognition">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun cognition</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.affix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>affix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.FormOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>form of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.member_holonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>member holonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_plant">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun plant</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.SimilarTo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>similar to</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_phenomenon">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun phenomenon</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.symbol">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>symbol</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.NotDesires">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>not desires</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_motive">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun motive</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_possession">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb possession</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.circumfix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>circumfix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.a">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>a</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.Antonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>antonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_location">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun location</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_linkdef">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun linkdef</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_animal">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun animal</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_communication">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun communication</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_competition">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb competition</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.MannerOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>manner of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_emotion">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb emotion</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.infix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>infix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_body">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb body</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_process">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun process</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.name">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>name</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.character">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>character</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adj_pert">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj pert</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasLastSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has last subevent</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.NotHasProperty">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>not has property</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.hypernym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>hypernym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_communication">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb communication</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.EtymologicallyDerivedFrom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>etymologically derived from</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasA">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has a</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.adv_phrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adv phrase</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_person">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun person</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasContext">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has context</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.also">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>also</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.v">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>v</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.AtLocation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>at location</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has subevent</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_body">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun body</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.IsA">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>is a</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_stative">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb stative</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.antonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>antonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_feeling">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun feeling</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.domain_member_category">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>domain member category</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.contraction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>contraction</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasProperty">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has property</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.substance_meronym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>substance meronym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.derived">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>derived</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.Adj">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.MotivatedByGoal">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>motivated by goal</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.conj">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>conj</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.prefix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>prefix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.punct">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>punct</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.article">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>article</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.NotCapableOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>not capable of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_state">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun state</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.adjective">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adjective</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.interfix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>interfix</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.troponyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>troponyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.part_holonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>part holonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.synonyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>synonyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.HasFirstSubevent">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>has first subevent</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_shape">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun shape</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.RelatedTo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>related to</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_possession">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun possession</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.s">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>s</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.hyponym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>hyponym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.DefinedAs">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>defined as</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.substance_holonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>substance holonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.hyponyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>hyponyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.Synonym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>synonym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.Causes">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>causes</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.instance_hyponym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>instance hyponym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.adj">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.PartOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>part of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adj_ppl">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj ppl</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adj_all">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj all</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adv_all">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adv all</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_group">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun group</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.similar">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>similar</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adj">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adj</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.pron">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>pron</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.alt_of">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>alt of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.DistinctFrom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>distinct from</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.InstanceOf">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>instance of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.CreatedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>created by</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_object">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun object</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.DerivedFrom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>derived from</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.prep_phrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>prep phrase</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.r">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>r</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.prep">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>prep</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.LocatedNear">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>located near</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.particle">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>particle</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.form_of">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>form of</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.ReceivesAction">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>receives action</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_food">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun food</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_artifact">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun artifact</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_creation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb creation</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.hypernyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>hypernyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.related">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>related</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.instance_hypernym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>instance hypernym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.intj">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>intj</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.adv">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>adv</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_quantity">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun quantity</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.phrase">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>phrase</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.EtymologicallyRelatedTo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>etymologically related to</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_tops">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun tops</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.compositeFormWith">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>composite form with</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_cognition">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb cognition</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_motion">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb motion</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.noun">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.CausesDesire">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>causes desire</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.antonyms">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>antonyms</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.product">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>product</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.UsedFor">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>used for</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#cn.Desires">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>desires</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_attribute">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun attribute</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.noun_relation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>noun relation</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_social">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb social</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.domain_member_region">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>domain member region</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.member_meronym">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>member meronym</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.combining_form">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>combining form</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wn.verb_contact">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb contact</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://honk.org/src#wk.verb">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>verb</rdfs:label>
+  </rdf:Description>
+</rdf:RDF>
