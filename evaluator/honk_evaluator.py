@@ -182,6 +182,7 @@ class HonkEvaluator:
         return {
             'sentence': case.get('sentence', ''),
             'label': case.get('label', ''),
+            'provenance': case.get('provenance', ''),
             'keywords': keywords,
             'b_triples': b_triples,
             'h_triples': h_triples,

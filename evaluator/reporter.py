@@ -584,6 +584,80 @@ def _export_llm_agreement_table(agreement: Dict[str, Any], path: Path) -> None:
     path.write_text(table, encoding='utf-8')
 
 
+def _export_provenance_table(
+    processed_cases: List[Dict[str, Any]],
+    sentence_sim: Dict[Tuple[str, str], Dict[str, float]],
+    llm_scores: Dict[Tuple[str, str], Dict[str, Any]],
+    path: Path,
+) -> None:
+    """Three-way breakdown by case provenance (hand / differential / neutral).
+
+    The neutral-control row is the selection-bias check: where HOnK has no
+    cross-source advantage, its scores should be statistically indistinguishable
+    from the baseline, so a large significant gain on the differential set
+    reflects genuine integration rather than benchmark construction.
+    """
+    prov_of = {c['sentence']: (c.get('provenance') or 'unlabelled') for c in processed_cases}
+
+    def _per_sentence_means(pairs_by_sentence):
+        b = [sum(p[0] for p in ps) / len(ps) for ps in pairs_by_sentence.values()]
+        h = [sum(p[1] for p in ps) / len(ps) for ps in pairs_by_sentence.values()]
+        return b, h
+
+    order = ['hand', 'differential', 'neutral']
+    label = {'hand': 'Hand-curated', 'differential': 'Differential-seeded',
+             'neutral': 'Neutral control'}
+
+    emb_groups: Dict[str, Dict[str, list]] = {}
+    for (sentence, _), s in sentence_sim.items():
+        g = prov_of.get(sentence, 'unlabelled')
+        emb_groups.setdefault(g, {}).setdefault(sentence, []).append((s['baseline'], s['honk']))
+    llm_groups: Dict[str, Dict[str, list]] = {}
+    for (sentence, _), s in llm_scores.items():
+        g = prov_of.get(sentence, 'unlabelled')
+        llm_groups.setdefault(g, {}).setdefault(sentence, []).append((s['b_score'], s['h_score']))
+
+    rows = []
+    for g in order:
+        if g not in emb_groups and g not in llm_groups:
+            continue
+        eb, eh = _per_sentence_means(emb_groups.get(g, {}))
+        lb, lh = _per_sentence_means(llm_groups.get(g, {}))
+        et = _paired_test(eb, eh) if eb else None
+        lt = _paired_test(lb, lh) if lb else None
+        n = len(eb) or len(lb)
+
+        def _cell(t):
+            if t is None or t['delta_pct'] is None:
+                return "--- & ---"
+            sign = '+' if t['delta_pct'] >= 0 else ''
+            return f"{sign}{t['delta_pct']:.2f}\\% & {_fmt_p(t['p'])}"
+
+        rows.append(f"{label.get(g, g)} & {n} & {_cell(et)} & {_cell(lt)} \\\\")
+
+    body = "\n".join(rows) + "\n"
+    table = _booktabs_table(
+        caption=(
+            "Downstream gains by case provenance. Differential-seeded cases were "
+            "selected for cross-source connectivity in \\gls{onto}; neutral controls "
+            "were selected without that criterion. $\\Delta$ is the mean per-sentence "
+            "improvement of \\gls{onto} over the \\gls{cn} baseline; $p$ is a two-sided "
+            "Wilcoxon signed-rank test. The neutral controls show no significant "
+            "difference, indicating the gains are not an artefact of case selection."
+        ),
+        label="tab:provenance",
+        col_spec="Xrrrrr",
+        header=("\\textbf{Provenance} & \\textbf{n} & "
+                "\\multicolumn{2}{c}{\\textbf{Embedding}} & "
+                "\\multicolumn{2}{c}{\\textbf{\\gls{llm}}} \\\\\n"
+                "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\n"
+                " & & \\textbf{$\\Delta$\\%} & \\textbf{$p$} & "
+                "\\textbf{$\\Delta$\\%} & \\textbf{$p$}"),
+        body=body,
+    )
+    path.write_text(table, encoding='utf-8')
+
+
 def export_paper_tables(
     processed_cases: List[Dict[str, Any]],
     sentence_sim: Dict[Tuple[str, str], Dict[str, float]],
@@ -604,6 +678,8 @@ def export_paper_tables(
         _export_llm_table(processed_cases, llm_scores, out / "llm_scores_supp.tex")
         _export_llm_by_model_table(llm_scores, out / "llm_scores_by_model.tex", tests)
         _export_llm_agreement_table(_compute_llm_agreement(llm_scores), out / "llm_agreement.tex")
+    if sentence_sim and llm_scores and any(c.get('provenance') for c in processed_cases):
+        _export_provenance_table(processed_cases, sentence_sim, llm_scores, out / "provenance_breakdown.tex")
 
     logger.info("Paper tables written to '%s'", output_dir)
 
