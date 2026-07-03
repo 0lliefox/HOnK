@@ -434,12 +434,25 @@ class HonkEvaluator:
 
 
 if __name__ == "__main__":
-    for _candidate in ["config.yaml", "../config.yaml"]:
-        if Path(_candidate).is_file():
-            _cfg = _candidate
-            break
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the HOnK downstream evaluation.")
+    parser.add_argument("--config", default=None,
+                        help="Path to config.yaml (auto-detected from cwd or parent if omitted).")
+    args = parser.parse_args()
+
+    if args.config:
+        if not Path(args.config).is_file():
+            logger.error("Config not found: '%s'", args.config)
+            sys.exit(1)
+        _cfg = args.config
     else:
-        logger.error("config.yaml not found. Run from the project root or evaluator/ directory.")
-        sys.exit(1)
+        for _candidate in ["config.yaml", "../config.yaml"]:
+            if Path(_candidate).is_file():
+                _cfg = _candidate
+                break
+        else:
+            logger.error("config.yaml not found. Run from the project root or evaluator/ directory.")
+            sys.exit(1)
 
     HonkEvaluator(_cfg).run_evaluation()
