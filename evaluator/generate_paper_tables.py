@@ -14,24 +14,23 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, str(Path(__file__).parent))
 from reporter import _booktabs_table, _append_mean_row, _fmt_path
 
-# Maps full sentence text to its \sref label key
-SENTENCE_LABELS = {
-    "The parasitic mite belongs to the order Acarina":                              "sent:mite",
-    "Caenogenesis, also called kenogenesis, involves novel developmental structures": "sent:caenogenesis",
-    "The specialist treated the hematopathy, also described as a hemopathy":        "sent:hematopathy",
-    "The paediatrician treats sick children":                                        "sent:paediatrician",
-    "The wadi runs completely dry for most of the year in this arid region":         "sent:wadi",
-    "The harbour set dockage charges, known as moorage fees, for overnight berths":  "sent:harbour",
-    "The car bonnet is open":                                                        "sent:bonnet",
-    "The motorway connects the two cities":                                          "sent:motorway",
-    "The aubergine is also known as eggplant":                                       "sent:aubergine",
-    "Letters can be posted in the pillar box, a traditional British mailbox":        "sent:pillarbox",
-    "The teahouse served soochong, more commonly spelt souchong":                    "sent:soochong",
-    "Students confuse entomology, the study of insects, with etymology":             "sent:entomology",
-    "A settee is a type of sofa, also known as a couch or divan":                   "sent:settee",
-    "A boomerang is a throwing stick used as a hunting device":                      "sent:boomerang",
-    "If you bottle out, you essentially chicken out or bow out":                     "sent:bottleout",
-}
+def _load_sentence_labels() -> dict:
+    """sentence -> \\sref label key, from evaluator.test_cases in config.yaml
+    (the config is the single source of truth; a hardcoded map here previously
+    drifted out of date and silently fell back to raw truncated text)."""
+    import yaml
+    for candidate in ["config.yaml", "../config.yaml"]:
+        if Path(candidate).is_file():
+            with open(candidate, encoding='utf-8') as fh:
+                cfg = yaml.safe_load(fh)
+            cases = cfg.get('evaluator', {}).get('test_cases', [])
+            return {c['sentence']: c['label'] for c in cases
+                    if c.get('sentence') and c.get('label')}
+    logger.warning("config.yaml not found; sentence labels unavailable.")
+    return {}
+
+
+SENTENCE_LABELS = _load_sentence_labels()
 
 
 def _esc(s: str) -> str:
