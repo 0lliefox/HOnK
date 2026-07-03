@@ -25,6 +25,7 @@ dependencies = [
     "networkx",
     "pyoxigraph",
     "ollama",
+    "scipy",
     "sentence-transformers"
 ]
 
