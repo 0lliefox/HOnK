@@ -641,7 +641,7 @@ def _export_provenance_table(
             "Downstream gains by case provenance. Differential-seeded cases were "
             "selected for cross-source connectivity in \\gls{onto}; neutral controls "
             "were selected without that criterion. $\\Delta$ is the mean per-sentence "
-            "improvement of \\gls{onto} over the \\gls{cn} baseline; $p$ is a two-sided "
+            "improvement of \\gls{onto} over the ConceptNet baseline; $p$ is a two-sided "
             "Wilcoxon signed-rank test. The neutral controls show no significant "
             "difference, indicating the gains are not an artefact of case selection."
         ),
@@ -746,8 +746,8 @@ def _export_bridging_table(processed_cases: List[Dict[str, Any]], path: Path) ->
 
     body = "\n".join(rows) + "\n"
     table = _longtable(
-        caption="Bridging triple counts per test sentence (sentence labels refer to Table~\\ref{tab:sentences}).",
-        label="tab:bridges",
+        caption="Bridging triple counts per test sentence (sentence labels refer to Supplementary Table~\\ref{tab:sentences-full}).",
+        label="tab:bridges-sentence",
         col_spec="lrr",
         header="\\textbf{Sentence} & \\textbf{CN} & \\textbf{HOnK}",
         body=body,
@@ -872,7 +872,7 @@ def _export_llm_table(
         caption=(
             "LLM relevance scores per test sentence "
             "(mean across all LLMs and \\texttt{llm\\_iterations} runs; "
-            "sentence labels refer to Table~\\ref{tab:sentences})."
+            "sentence labels refer to Supplementary Table~\\ref{tab:sentences-full})."
         ),
         label="tab:llm-sentence",
         col_spec="lrrr",
@@ -907,7 +907,7 @@ def _export_embedding_sentence_table(
     _append_mean_row(rows, all_b, all_h, math_mode=True)
     body = "\n".join(rows) + "\n"
     table = _longtable(
-        caption="Embedding similarity per test sentence (mean across all embedding models; sentence labels refer to Table~\\ref{tab:sentences}).",
+        caption="Embedding similarity per test sentence (mean across all embedding models; sentence labels refer to Supplementary Table~\\ref{tab:sentences-full}).",
         label="tab:emb-sentence",
         col_spec="lrrr",
         header="\\textbf{Sentence} & \\textbf{CN} & \\textbf{HOnK} & \\textbf{$\\Delta$\\%}",
