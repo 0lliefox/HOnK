@@ -29,7 +29,10 @@ class GeoNamesLoader(AbstractLoader):
         with open(self.config['local_files']['geonames_alternates'], 'r') as f:
             self.alternate_names = json.load(f)  # map of alternate ID to geoname ID
         with open(self.config['local_files']['geonames_ignore'], 'r') as f:
-            self.ignore_names = f.readlines()
+            # Strip newlines and lower-case for a robust, case-insensitive
+            # membership test: readlines() previously kept the trailing "\n",
+            # so "city center\n" never matched the newline-free GeoNames name.
+            self.ignore_names = {line.strip().lower() for line in f if line.strip()}
         with open(self.config['local_files']['geonames_feature_codes'], 'r') as f:
             self.feature_codes = json.load(f)
         with open(self.config['local_files']['geonames_links'], 'r') as f:
@@ -83,7 +86,7 @@ class GeoNamesLoader(AbstractLoader):
                         n_id, name, _, translations, _, _, feature_class, feature_code = line[
                             :8]  # https://download.geonames.org/export/dump/readme.txt
 
-                        if name in self.ignore_names:
+                        if name.strip().lower() in self.ignore_names:
                             continue
 
                         # 'A' is country, state, region: http://www.geonames.org/export/codes.html
