@@ -109,16 +109,28 @@ def sample_pos(cur, quota, seed, rev_pos, fraction=0.5):
 
 
 def sample_edge(cur, quota, seed, fwd_edge, fraction=0.5):
+    # Stratify by relation_type so the sample is not dominated by the most frequent
+    # type (previously the whole edge_mapping stratum was AtLocation, leaving the
+    # meronym/holonym/hypernym mappings unaudited). A deterministic hashtext
+    # prefilter keeps it scale-safe; ROW_NUMBER per type then ORDER BY rn draws one
+    # of each type before a second of any, maximising relation-type coverage.
     cur.execute(
-        f"""
-        SELECT r.id, c1.term, r.relation_type, c2.term, r.source
-        FROM relations r TABLESAMPLE SYSTEM (%s) REPEATABLE (%s)
-        JOIN concepts c1 ON r.start_concept_id = c1.id
-        JOIN concepts c2 ON r.end_concept_id   = c2.id
-        WHERE LOWER(r.source) = ANY(%s)
+        """
+        SELECT id, s_term, relation_type, o_term, source FROM (
+            SELECT r.id, c1.term AS s_term, r.relation_type, c2.term AS o_term, r.source,
+                   ROW_NUMBER() OVER (PARTITION BY r.relation_type
+                                      ORDER BY abs(hashtext(r.id::text))) AS rn
+            FROM relations r
+            JOIN concepts c1 ON r.start_concept_id = c1.id
+            JOIN concepts c2 ON r.end_concept_id   = c2.id
+            WHERE LOWER(r.source) = ANY(%s)
+              AND (abs(hashtext(r.id::text)) %% 50) = (%s %% 50)
+        ) t
+        WHERE rn <= 5
+        ORDER BY rn, relation_type
         LIMIT %s
         """,
-        (fraction, seed, MAPPED_SOURCES, quota),
+        (MAPPED_SOURCES, seed, quota),
     )
     rows = []
     for rid, s_term, rel, o_term, source in cur.fetchall():
@@ -146,7 +158,7 @@ def sample_url_cluster(cur, quota, seed):
             GROUP BY external_url HAVING count(*) >= 2
             LIMIT %s
         )
-        SELECT s.external_url, c.term, c.source, c.part_of_speech
+        SELECT s.external_url, c.term, c.source, c.part_of_speech, c.sense
         FROM shared s
         JOIN urls u ON u.external_url = s.external_url
         JOIN concepts c ON c.id = u.concept_id
@@ -155,8 +167,12 @@ def sample_url_cluster(cur, quota, seed):
         (seed, quota),
     )
     by_url = defaultdict(list)
-    for url, term, source, pos in cur.fetchall():
-        by_url[url].append((term, source))
+    for url, term, source, pos, sense in cur.fetchall():
+        # Show the sense discriminator so a sense-scoped merge (e.g. the *battle*
+        # sense of magenta with the Battle of Magenta synset) is distinguishable
+        # from the pre-fix false merge that conflated it with the colour.
+        label = f"{term} ({sense})" if sense else term
+        by_url[url].append((label, source))
     rows = []
     for url, members in by_url.items():
         terms = "; ".join(f"{t} [{s}]" for t, s in members)
