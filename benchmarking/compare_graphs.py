@@ -28,13 +28,19 @@ SEPARATOR = "|||"
 
 class GraphComparator:
     def __init__(self, graph1_path, graph2_path, format1='turtle', format2='turtle', name1=None, name2=None,
-                 ignore_bnodes=True, ontology_path=None):
+                 ignore_bnodes=True, ontology_path=None, light=False):
         self.graph1_path = graph1_path
         self.graph2_path = graph2_path
         self.format1 = format1
         self.format2 = format2
         # Now defaults to True
         self.ignore_bnodes = ignore_bnodes
+        # Light mode: skip the per-node degree/navigability stats (which hold
+        # 100M+-entry dicts in memory and OOM on the geonameid-scale ontology).
+        # The equivalence assertion (triples/nodes/relations counts + unique
+        # triples) is unaffected; only the density/degree/entropy/navigability
+        # paper-table stats are omitted. Use for the equivalence gate on large builds.
+        self.light = light
 
         self.g1_name = name1 if name1 else os.path.basename(graph1_path)
         self.g2_name = name2 if name2 else os.path.basename(graph2_path)
@@ -186,8 +192,9 @@ class GraphComparator:
                                 not o.startswith("<http://www.w3.org/2000/01/rdf-schema#"):
                             pos_counts[o] += 1
 
-                    degree_counts[s] += 1
-                    degree_counts[o] += 1
+                    if not self.light:
+                        degree_counts[s] += 1
+                        degree_counts[o] += 1
 
                     # Write to files using the safe SEPARATOR
                     f_nodes.write(f"{s}\n")
@@ -233,6 +240,14 @@ class GraphComparator:
 
         num_nodes = node_count
         num_edges = triple_count
+
+        if self.light:
+            # Skip the memory-heavy per-node stats; keep only what the equivalence
+            # assertion needs (triples/nodes/relations already recorded above).
+            for stat in ('density', 'degree', 'entropy', 'lcc_fraction', 'reachability', 'components'):
+                self.stats[key][stat] = 0
+            return
+
         density = num_edges / (num_nodes * (num_nodes - 1)) if num_nodes > 1 else 0
         avg_degree = (2 * num_edges) / num_nodes if num_nodes > 0 else 0
 

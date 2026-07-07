@@ -88,6 +88,18 @@ def load_graph(file_path: str, base_uri: str, cache_dir: str) -> pyoxigraph.Stor
             logger.warning("Cache load failed, reading source: %s", e)
 
     try:
+        # For large RDF files (e.g. the 10 GB+ HOnK build) stream directly from
+        # disk into the store. Reading the whole file into a bytes buffer AND
+        # pickling it roughly doubles peak memory on top of the store itself and
+        # can OOM a 48 GB machine; the pickle cache only pays off for the small,
+        # derived (csv) case. Streaming keeps peak at the store's own footprint.
+        LARGE = 2 * 1024 ** 3  # 2 GB
+        if path.suffix != ".csv" and stat.st_size > LARGE:
+            with path.open('rb') as f:
+                store.load(f, rdf_format)
+            logger.info("Loaded '%s' (streamed, uncached).", file_path)
+            return store
+
         if path.suffix == ".csv":
             data = parse_csv_to_ntriples(path, base_uri)
             rdf_format = pyoxigraph.RdfFormat.N_TRIPLES
