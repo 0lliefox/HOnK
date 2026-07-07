@@ -20,7 +20,7 @@
     "HasPrerequisite": {"rel": "hasPrerequisite", "relNegated": false},
     "HasProperty": {"rel": "hasProperty", "relNegated": false},
     "HasSubevent": {"rel": "hasSubevent", "relNegated": false},
-    "InstanceOf": {"rel": "isA", "relNegated": false},
+    "InstanceOf": {"rel": "instanceOf", "relNegated": false},
     "IsA": {"rel": "isA", "relNegated": false},
     "LocatedNear": {"rel": "locatedNear", "relNegated": false},
     "MadeOf": {"rel": "madeOf", "relNegated": false},

@@ -4,7 +4,7 @@
     "domain_member_region": {"rel": "relatedTo", "relNegated": false},
     "domain_member_category": {"rel": "relatedTo", "relNegated": false},
     "hypernym": {"rel": "isA", "relNegated": false},
-    "instance_hypernym": {"rel": "isA", "relNegated": false},
+    "instance_hypernym": {"rel": "instanceOf", "relNegated": false},
     "hyponym": {"rel": "isA", "relNegated": false, "swap": true},
     "instance_hyponym": {"rel": "instanceOf", "relNegated": false, "swap": true},
     "compositeFormWith": {"rel": "compositeFormWith", "relNegated": false},
