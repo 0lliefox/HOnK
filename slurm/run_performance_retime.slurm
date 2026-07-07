@@ -71,8 +71,9 @@ OUTPUT=$(python3 run_experiments.py --iteration $ITERATION --config-index $CONFI
 read -r TEMP_CONFIG_FILE RUN_ID <<< "$OUTPUT"
 echo "Global Run ID: $RUN_ID using $TEMP_CONFIG_FILE"
 
-# 5. Inject the unique dynamic port into the generated YAML
-sed -i "s/port: '15432'/port: '$PORT'/g" "$TEMP_CONFIG_FILE"
+# 5. Inject the unique dynamic port into the generated YAML (robust to whatever
+#    port the base config carries, e.g. 5432 or 15432)
+sed -i -E "s/port: *'[0-9]+'/port: '$PORT'/g" "$TEMP_CONFIG_FILE"
 
 # 6. Execute the pipeline (-u prevents output buffering)
 python3 -u build_ontology.py --config "$TEMP_CONFIG_FILE" --run-id "$RUN_ID"
