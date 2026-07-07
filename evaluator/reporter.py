@@ -36,6 +36,21 @@ def _append_mean_row(
     rows.append(f"\\textbf{{Mean}} & {mb:.2f} & {mh:.2f} & {delta_str} \\\\")
 
 
+def _delta_str(avg_b: float, avg_h: float, math_mode: bool = True) -> str:
+    """Percentage-change cell, guarding a zero baseline.
+
+    When the baseline has no matching triples (avg_b == 0) a percentage change is
+    undefined; render ``new`` (HOnK introduces a link the baseline lacks) rather
+    than dividing by a tiny epsilon, which otherwise prints spurious values like
+    ``+51068580150%``.
+    """
+    if avg_b <= 1e-9:
+        return "\\emph{new}" if avg_h > 1e-9 else "--"
+    delta = ((avg_h - avg_b) / avg_b) * 100
+    sign = '+' if delta >= 0 else ''
+    return f"${sign}{delta:.2f}$\\%" if math_mode else f"{sign}{delta:.2f}\\%"
+
+
 def export_llm_prompts_table(
     llm_scores: Dict[Tuple[str, str], Dict[str, Any]],
     output_path: str,
@@ -860,9 +875,7 @@ def _export_llm_table(
             continue
         avg_b = sum(e['b_score'] for e in entries) / len(entries)
         avg_h = sum(e['h_score'] for e in entries) / len(entries)
-        delta = ((avg_h - avg_b) / max(avg_b, 1e-9)) * 100
-        sign = '+' if delta >= 0 else ''
-        rows.append(f"{ref} & {avg_b:.2f} & {avg_h:.2f} & ${sign}{delta:.2f}$\\% \\\\")
+        rows.append(f"{ref} & {avg_b:.2f} & {avg_h:.2f} & {_delta_str(avg_b, avg_h)} \\\\")
         all_b.append(avg_b)
         all_h.append(avg_h)
 
@@ -898,9 +911,7 @@ def _export_embedding_sentence_table(
             continue
         avg_b = sum(s['baseline'] for s in scores) / len(scores)
         avg_h = sum(s['honk'] for s in scores) / len(scores)
-        delta = ((avg_h - avg_b) / max(avg_b, 1e-9)) * 100
-        sign = '+' if delta >= 0 else ''
-        rows.append(f"{ref} & {avg_b:.2f} & {avg_h:.2f} & ${sign}{delta:.2f}$\\% \\\\")
+        rows.append(f"{ref} & {avg_b:.2f} & {avg_h:.2f} & {_delta_str(avg_b, avg_h)} \\\\")
         all_b.append(avg_b)
         all_h.append(avg_h)
 

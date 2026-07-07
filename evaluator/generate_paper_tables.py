@@ -217,10 +217,14 @@ def write_embedding_sentence_table(sentences, sim, out_dir: Path) -> None:
             continue
         avg_b = sum(sc['baseline'] for sc in scores) / len(scores)
         avg_h = sum(sc['honk'] for sc in scores) / len(scores)
-        delta = ((avg_h - avg_b) / max(avg_b, 1e-9)) * 100
-        sign = '+' if delta >= 0 else ''
-        rows_tex.append(f"{lbl} & {avg_b:.2f} & {avg_h:.2f} & ${sign}{delta:.2f}$\\% \\\\")
-        rows_csv.append([s, f"{avg_b:.2f}", f"{avg_h:.2f}", f"{sign}{delta:.2f}%"])
+        if avg_b <= 1e-9:  # no baseline link to grow from; a percentage is undefined
+            tex_delta, csv_delta = ("\\emph{new}", "new") if avg_h > 1e-9 else ("--", "n/a")
+        else:
+            delta = ((avg_h - avg_b) / avg_b) * 100
+            sign = '+' if delta >= 0 else ''
+            tex_delta, csv_delta = f"${sign}{delta:.2f}$\\%", f"{sign}{delta:.2f}%"
+        rows_tex.append(f"{lbl} & {avg_b:.2f} & {avg_h:.2f} & {tex_delta} \\\\")
+        rows_csv.append([s, f"{avg_b:.2f}", f"{avg_h:.2f}", csv_delta])
         all_b.append(avg_b)
         all_h.append(avg_h)
 
