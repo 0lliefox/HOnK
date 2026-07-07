@@ -125,10 +125,7 @@ class WiktionaryLoader(AbstractLoader):
                             sense = s_obj.get('sense', '')
                             rel_type = 'neqTo' if 'unrelated' in sense.lower() else class_type
 
-                            if class_type in {'related', 'derived'}:
-                                c_item_pos = word_to_pos.get(c_item, [])
-                            else:
-                                c_item_pos = [pos]
+                            c_item_pos = self.resolve_target_pos(c_item, pos, class_type, word_to_pos)
 
                             for c_pos in c_item_pos:
                                 c_id = self.get_or_create_concept(c_item, c_pos, cursor)
@@ -158,6 +155,31 @@ class WiktionaryLoader(AbstractLoader):
             iterate_over_file()
 
         logging.info("Finished loading Wiktionary data from file.")
+
+    def resolve_target_pos(self, c_item, source_pos, class_type, word_to_pos):
+        """Part(s) of speech to use for a relation *target* word.
+
+        Previously every relation except ``related``/``derived`` forced the
+        *source* word's POS onto the target, producing wrong-POS edges and
+        phantom nodes (e.g. ``nonsense`` (noun) --synonym--> ``unreasoning``
+        typed as a noun though it is only an adjective).
+
+        - ``related``/``derived``: use the target's own POS(es); derivation is
+          routinely cross-POS (``happy`` -> ``happiness``). Unknown target: drop.
+        - other relations (synonym, antonym, hypernym, meronym, troponym, ...):
+          POS-preserving when the target actually has the source POS (the common
+          case, and avoids fanning out to every sense of a multi-POS target);
+          otherwise use the target's real POS(es); if the target is unknown, fall
+          back to the source POS as a best effort rather than dropping the edge.
+        """
+        target_poses = word_to_pos.get(c_item)
+        if class_type in {'related', 'derived'}:
+            return list(target_poses) if target_poses else []
+        if target_poses and source_pos in target_poses:
+            return [source_pos]
+        if target_poses:
+            return list(target_poses)
+        return [source_pos]
 
     def extract_classes(self, categories, found_poses, searchable_classes):
         for category in categories:
