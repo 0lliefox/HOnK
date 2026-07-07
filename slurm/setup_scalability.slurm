@@ -29,6 +29,7 @@ PORT=15432
 PG_DATA="/nobackup/proj/comet_honkstar/postgres_scalability_setup"
 DB_DUMP="/nobackup/proj/comet_honkstar/scalability_db.dump"
 
+rm -rf "$PG_DATA"   # clean any stale cluster so initdb does not fail on re-run
 initdb -D "$PG_DATA" -U fox
 
 trap 'echo "Stopping setup DB..."; pg_ctl -D "$PG_DATA" stop' EXIT

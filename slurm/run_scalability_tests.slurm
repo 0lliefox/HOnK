@@ -41,6 +41,7 @@ fi
 PORT=$((15432 + SLURM_ARRAY_TASK_ID))
 PG_DATA="/nobackup/proj/comet_honkstar/postgres_scalability_${SLURM_ARRAY_TASK_ID}"
 
+rm -rf "$PG_DATA"   # clean any stale cluster so initdb does not fail on re-run
 initdb -D "$PG_DATA" -U fox
 
 trap 'echo "Cleaning up DB..."; pg_ctl -D "$PG_DATA" stop; rm -rf "$PG_DATA"' EXIT

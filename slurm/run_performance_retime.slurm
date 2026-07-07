@@ -59,6 +59,9 @@ echo "Task $SLURM_ARRAY_TASK_ID -> Iteration $ITERATION, Config $CONFIG_INDEX"
 PORT=$((15432 + SLURM_ARRAY_TASK_ID))
 PG_DATA="/nobackup/proj/comet_honkstar/postgres_data_$SLURM_ARRAY_TASK_ID"
 
+# On a preemptible partition a killed task can leave $PG_DATA behind, which makes
+# initdb fail on requeue; clean any stale cluster first so the task is re-runnable.
+rm -rf "$PG_DATA"
 initdb -D "$PG_DATA" -U fox
 trap 'echo "Cleaning up DB..."; pg_ctl -D "$PG_DATA" stop; rm -rf "$PG_DATA"' EXIT
 
