@@ -2,11 +2,57 @@ import json
 from abc import ABC, abstractmethod
 
 class GraphManager(ABC):
+    # Base relations (after mapping) whose same-label endpoints are always
+    # degenerate: nothing is a proper part/subtype/instance of itself. Used by the
+    # reflexive self-loop filter (Fix C) to drop e.g. `Alabama partOf Alabama`
+    # while leaving non-structural same-label edges (eq, relatedTo, the cross-POS
+    # `bob_up isA come_up`, which has *different* endpoint labels) untouched.
+    STRUCTURAL_IRREFLEXIVE_RELS = frozenset({'partOf', 'isA', 'instanceOf'})
+
+    @staticmethod
+    def _normalise_label(label):
+        return label.strip().lower() if label is not None else None
+
+    @staticmethod
+    def _norm_sense(sense):
+        """URI-safe form of a sense discriminator (ConceptNet subsense or WordNet
+        lexical_domain), e.g. 'n/wn/act' -> 'n-wn-act', 'paris rer' -> 'paris-rer'."""
+        import re
+        return re.sub(r'[^a-zA-Z0-9_-]', '-', sense)
+
+    _CN_POS_TO_WORD = {'n': 'noun', 'v': 'verb', 'a': 'adj', 's': 'adj', 'r': 'adv'}
+
+    @classmethod
+    def supersense_of_sense(cls, sense):
+        """WordNet supersense (lexical domain) for a sense discriminator, used by the
+        type-coherence merge guard (Fix B). Returns a comparable `pos.domain` string,
+        or None when no clean WordNet supersense is available (bare/POS-only/DBpedia
+        senses are left unguarded to avoid false splits).
+
+          WordNet lexical_domain 'noun.location' -> 'noun.location'
+          ConceptNet subsense    'n/wn/act'      -> 'noun.act'
+          'a/wn', 'n/wp/paris rer', None          -> None
+        """
+        if not sense:
+            return None
+        if '.' in sense and '/' not in sense:      # WordNet lexical_domain
+            return sense
+        parts = sense.split('/')                    # ConceptNet subsense
+        if len(parts) >= 3 and parts[1] == 'wn':
+            return f"{cls._CN_POS_TO_WORD.get(parts[0], parts[0])}.{parts[2]}"
+        return None
+
     def __init__(self, builder, config):
         self.config = config
         self.builder = builder
         self.mode = config['general']['mode']
         self.should_cluster = config['clustering']['enabled']
+        # Lazily built caches for the self-loop filter (Fix C).
+        self._label_index = None      # uri.value -> normalised rdfs:label
+        self._rel_base_cache = {}     # relation-instance uri.value -> base relation name
+        # uri.value -> WordNet supersense, for the type-coherence merge guard (Fix B),
+        # populated during ingestion (graph mode). DB mode derives it from the sense column.
+        self.node_supersense = {}
 
         self.equivalent_classes = {}
         self.id_to_uri = {}
@@ -53,15 +99,16 @@ class GraphManager(ABC):
         pass
 
     @abstractmethod
-    def add_concept_to_graph(self, term, pos, cid=None):
+    def add_concept_to_graph(self, term, pos, sense=None, cid=None):
         pass
 
     @abstractmethod
-    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None):
+    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None,
+                              start_sense=None, end_sense=None):
         pass
 
     @abstractmethod
-    def add_property_to_graph(self, c_type, c_value, term=None, cid=None):
+    def add_property_to_graph(self, c_type, c_value, term=None, cid=None, sense=None):
         pass
 
     @abstractmethod

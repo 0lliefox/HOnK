@@ -58,22 +58,42 @@ class AbstractConceptGraphClusterer(ABC):
         cluster_mappings = []
         visited_nodes = set()
 
-        visited_clusters = dict()
+        node_supersense = getattr(self.graph_manager, 'node_supersense', {})
+        visited_clusters = set()
+        cluster_id = 0
+        split_count = 0
         for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters", disable=not self.verbose):
             cluster_nodes = set(adjacency_list)
             cluster_nodes.add(key_node)
 
             c_key = tuple(sorted(tuple(map(str, cluster_nodes))))
-            if not (c_key in visited_clusters.keys()):
-                cluster_id = len(visited_clusters)
-                visited_clusters[c_key] = cluster_id
+            if c_key in visited_clusters:
+                continue
+            visited_clusters.add(c_key)
 
-                for node in cluster_nodes:
-                    if node.startswith(self.base_uri):
-                        cluster_mappings.append((node, f"c{cluster_id}"))
+            # Fix B (type-coherence guard): partition concept members of this
+            # URL-connected component by WordNet supersense so a URL collision cannot
+            # merge disjoint-supersense senses (e.g. a colour with a battle). Members
+            # without a supersense (hubs, unsensed) group under None and are not pulled
+            # across a boundary. Groups are keyed deterministically (sorted) so both
+            # modes assign identical memberships.
+            groups = defaultdict(list)
+            for node in cluster_nodes:
+                visited_nodes.add(node)
+                if node.startswith(self.base_uri):
+                    groups[node_supersense.get(node.split('==', 1)[0])].append(node)
 
-                    visited_nodes.add(node)
+            if sum(1 for g in groups if g is not None) > 1:
+                split_count += 1
 
+            for ss in sorted(groups.keys(), key=lambda x: (x is not None, x or '')):
+                label = f"c{cluster_id}"
+                cluster_id += 1
+                for node in groups[ss]:
+                    cluster_mappings.append((node, label))
+
+        if split_count:
+            logging.info(f"  - Fix B: type-coherence guard split {split_count} disjoint-supersense clusters.")
         return cluster_mappings, visited_nodes
 
     @timer

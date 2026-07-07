@@ -95,12 +95,19 @@ class GeoNamesLoader(AbstractLoader):
                         else:
                             pos = 'LOC'
 
+                        # Key each GeoNames place by its geonameid, i.e. its source-level
+                        # identity. Preserving source-level identity granularity is HOnK's core
+                        # fidelity principle, so distinct same-name places (a city vs a building
+                        # named "San Francisco") must stay distinct nodes rather than collapse to
+                        # a surface name. The per-place Wikipedia URL then re-merges, through
+                        # clustering, only the entries that are genuinely the same place.
                         if n_id in needed_ids:
                             self.id_term_map[n_id] = [name, pos]
-                        current_id = self.get_or_create_concept(name, pos, cursor)
+                        current_id = self.get_or_create_concept(name, pos, cursor, sense=n_id)
 
                         if n_id in self.links:
-                            self.add_url({'id': current_id, 'term': name, 'pos': pos}, self.links[n_id], cursor)
+                            self.add_url({'id': current_id, 'term': name, 'pos': pos, 'sense': n_id},
+                                         self.links[n_id], cursor)
 
                         # Feature code might be empty, feature class is too general for instanceOf relationship (?)
                         if feature_code != '':
@@ -111,7 +118,8 @@ class GeoNamesLoader(AbstractLoader):
                                     {
                                         'id': current_id,
                                         'term': name,
-                                        'pos': pos
+                                        'pos': pos,
+                                        'sense': n_id
                                     },
                                     {
                                         'id': feature_db_id,
@@ -124,8 +132,8 @@ class GeoNamesLoader(AbstractLoader):
                             translations = translations.split(',')
                             for translation in translations:
                                 if name != translation and translation != '':
-                                    self.add_property({'id': current_id, 'term': name}, 'alternativeOf', translation,
-                                                      cursor)
+                                    self.add_property({'id': current_id, 'term': name, 'sense': n_id},
+                                                      'alternativeOf', translation, cursor)
 
                     self.pickle_manager.save(self.map_cache_filepath, self.id_term_map)
 
@@ -134,22 +142,24 @@ class GeoNamesLoader(AbstractLoader):
                     parent = self.check_id(str(parent))
                     if parent and parent in self.id_term_map:
                         parent_term, parent_pos = self.id_term_map[parent]
-                        parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor)
+                        parent_db_id = self.get_or_create_concept(parent_term, parent_pos, cursor, sense=parent)
                         for child in children:
                             child = self.check_id(str(child))
                             if child and child in self.id_term_map:
                                 child_term, child_pos = self.id_term_map[child]
-                                child_db_id = self.get_or_create_concept(child_term, child_pos, cursor)
+                                child_db_id = self.get_or_create_concept(child_term, child_pos, cursor, sense=child)
                                 self.add_relation(
                                     {
                                         'id': child_db_id,
                                         'term': child_term,
-                                        'pos': child_pos
+                                        'pos': child_pos,
+                                        'sense': child
                                     },
                                     {
                                         'id': parent_db_id,
                                         'term': parent_term,
-                                        'pos': parent_pos
+                                        'pos': parent_pos,
+                                        'sense': parent
                                     },
                                     "partOf",
                                     1, cursor)

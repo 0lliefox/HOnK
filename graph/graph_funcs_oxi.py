@@ -71,9 +71,58 @@ class OxiGraphManager(GraphManager):
             self.g.add(Quad(prop_uri, OXI_RDF_TYPE, owl_type, DefaultGraph()))
             self.declared_base_properties.add(prop_uri.value)
 
-    @lru_cache(maxsize=1024)
-    def get_safe_uri(self, term):
-        return NamedNode(self.ns.base_uri + quote(term)) if re.search(r'[^a-zA-Z0-9_-]', term) else self.ns[term]
+    @lru_cache(maxsize=4096)
+    def get_safe_uri(self, term, sense=None):
+        local = quote(term) if re.search(r'[^a-zA-Z0-9_-]', term) else term
+        if sense:
+            local = f"{local}--{self._norm_sense(sense)}"
+        return NamedNode(self.ns.base_uri + local)
+
+    # --- Reflexive self-loop filter (Fix C) helpers ---
+    def _ensure_label_index(self):
+        if self._label_index is None:
+            idx = {}
+            for q in self.g.quads_for_pattern(None, OXI_RDFS_LABEL, None):
+                idx[q.subject.value] = self._normalise_label(q.object.value)
+            self._label_index = idx
+        return self._label_index
+
+    def _same_label(self, a_value, b_value):
+        idx = self._ensure_label_index()
+        la = idx.get(a_value)
+        return la is not None and la == idx.get(b_value)
+
+    def rel_base_of(self, rel_uri):
+        """Base relation name for a reified relation-instance URI, via its rdf:type."""
+        key = rel_uri.value
+        if key not in self._rel_base_cache:
+            base = None
+            for q in self.g.quads_for_pattern(rel_uri, OXI_RDF_TYPE, None):
+                v = q.object.value
+                base = v.rsplit('#', 1)[-1].rsplit('/', 1)[-1]
+                break
+            self._rel_base_cache[key] = base
+        return self._rel_base_cache[key]
+
+    def remove_structural_self_loops(self):
+        """Fix C: drop degenerate same-label structural self-loops (e.g. `Alabama
+        partOf Alabama`) from the finished graph, so nothing is asserted to be a
+        proper part/subtype/instance of itself. Runs once, mode-agnostic (both DB
+        and graph modes), after all labels are present, so the two modes stay
+        triple-equivalent. Targeted: only visits edges under partOf/isA/instanceOf.
+        Non-structural same-label edges (eq, relatedTo, the cross-POS
+        `bob_up isA come_up`, which has different endpoint labels) are untouched."""
+        self._ensure_label_index()
+        removed = 0
+        for base in self.STRUCTURAL_IRREFLEXIVE_RELS:
+            for type_q in list(self.g.quads_for_pattern(None, OXI_RDF_TYPE, self.ns[base])):
+                rel_uri = type_q.subject
+                for q in list(self.g.quads_for_pattern(None, rel_uri, None)):
+                    if self._same_label(q.subject.value, q.object.value):
+                        self.g.remove(q)
+                        removed += 1
+        logging.info(f"Fix C: removed {removed} same-label structural self-loops.")
+        return removed
 
     def create_classes(self, g):
         logging.info("Creating ontology classes (Oxigraph)")
@@ -98,11 +147,11 @@ class OxiGraphManager(GraphManager):
                 self.equivalent_classes[child] = [child, children[child]['sameAs']]
 
     @timer(log=False, threaded=False, independent=False, memory=False)
-    def add_concept_to_graph(self, term, pos, cid=None):
+    def add_concept_to_graph(self, term, pos, sense=None, cid=None):
         if pos.lower() in self.rejected_classes:
             return
 
-        uri = self.get_safe_uri(term)
+        uri = self.get_safe_uri(term, sense)
         if cid is not None:
             self.id_to_uri[cid] = uri
 
@@ -111,14 +160,28 @@ class OxiGraphManager(GraphManager):
 
         self.g.add(Quad(uri, OXI_RDFS_LABEL, OxiLiteral(str(term), datatype=OXI_XSD_STRING), DefaultGraph()))
 
+        # Fix A: sense-scoped node. Link it to the bare-lemma hub with `withSense`
+        # (a navigational annotation, NOT a clustering edge) and ensure the hub
+        # carries the bare label. Clustering stays URL-driven so senses remain
+        # isolated (no transitive re-conflation); the hub keeps its own bare/
+        # POS-only edges and both share the label for label-keyed consumers.
+        if sense:
+            hub_uri = self.get_safe_uri(term)
+            self.g.add(Quad(uri, self.ns.withSense, hub_uri, DefaultGraph()))
+            self.g.add(Quad(hub_uri, OXI_RDFS_LABEL, OxiLiteral(str(term), datatype=OXI_XSD_STRING), DefaultGraph()))
+            ss = self.supersense_of_sense(sense)  # Fix B: record supersense for the merge guard
+            if ss is not None:
+                self.node_supersense[uri.value] = ss
+
     @timer(log=False, threaded=False, independent=False, memory=False)
-    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None):
+    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None,
+                              start_sense=None, end_sense=None):
         try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
         except KeyError:
             if isinstance(start_id, int):
                 return
-            start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
+            start_uri, end_uri = self.get_safe_uri(start_id, start_sense), self.get_safe_uri(end_id, end_sense)
 
         mapping = self.full_mappings.get(
             rel_type.lower(),
@@ -185,9 +248,9 @@ class OxiGraphManager(GraphManager):
         self.g.add(Quad(s, rel_uri, t, DefaultGraph()))
 
     @timer(log=False, threaded=False, independent=False, memory=False)
-    def add_property_to_graph(self, c_type, c_value, term=None, cid=None):
+    def add_property_to_graph(self, c_type, c_value, term=None, cid=None, sense=None):
         concept_uri = self.id_to_uri.get(cid) if cid is not None else (
-            self.get_safe_uri(term) if term is not None else None)
+            self.get_safe_uri(term, sense) if term is not None else None)
 
         if concept_uri is not None:
             prop_uri = self.get_safe_uri(c_type)

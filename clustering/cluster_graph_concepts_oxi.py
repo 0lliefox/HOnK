@@ -72,7 +72,9 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
 
         cluster_relations = set()
         predicate_constraints = {}
-        excluded_predicates = {self.ns.hasURL.value, RDF_TYPE.value}
+        # withSense links a sense node to its bare-lemma hub; it is a navigational
+        # annotation, not a semantic relation to coalesce (Fix A).
+        excluded_predicates = {self.ns.hasURL.value, RDF_TYPE.value, self.ns.withSense.value}
 
         logging.info(f"  - Scanning {len(raw_uri_to_cluster_info)} unique concepts for existing relations...")
 
@@ -156,11 +158,17 @@ class OxiConceptGraphClusterer(AbstractConceptGraphClusterer):
         def quads_generator():
             for (c_start, p_node), target_nodes in tqdm(grouped_targets.items(), desc="Materialising triples",
                                                         disable=not self.verbose):
+                # Fix C: for structural (irreflexive) predicates, drop edges whose
+                # endpoints share a normalised label (e.g. Alabama partOf Alabama).
+                drop_same_label = self.graph_manager.rel_base_of(p_node) in self.graph_manager.STRUCTURAL_IRREFLEXIVE_RELS
                 start_nodes = cluster_to_urirefs[c_start]
                 for s in start_nodes:
                     for o in target_nodes:
-                        if s.value != o.value:
-                            yield Quad(s, p_node, o, DefaultGraph())
+                        if s.value == o.value:
+                            continue
+                        if drop_same_label and self.graph_manager._same_label(s.value, o.value):
+                            continue
+                        yield Quad(s, p_node, o, DefaultGraph())
 
         self.g.extend(quads_generator())
         logging.info("Relationship coalescing complete.")

@@ -95,13 +95,18 @@ class AbstractLoader(ABC):
         else:
             return pos_tag
 
-    def get_or_create_concept(self, term, pos, cursor=None):
+    def get_or_create_concept(self, term, pos, cursor=None, sense=None):
+        # `sense` is an optional source-provided discriminator (ConceptNet subsense
+        # or WordNet lexical_domain) that scopes a distinct sense node; when None the
+        # concept resolves to the bare-lemma hub (Fix A). It is deliberately not run
+        # through normalise_data so sense identity is stable across ablation modes.
+        # `sense` is keyword-last so existing positional `cursor` callers are unaffected.
         term, pos = self.normalise_data(term, pos)
 
         if self.mode == 'db':
-            return self.db_manager.add_or_get_concept_from_db(term, pos, cursor)
+            return self.db_manager.add_or_get_concept_from_db(term, pos, cursor, sense)
         elif self.mode == 'graph':
-            self.graph_manager.add_concept_to_graph(term, pos)
+            self.graph_manager.add_concept_to_graph(term, pos, sense)
         return None
 
     def add_relation(self, start, end, rel_type, weight, cursor):
@@ -112,15 +117,20 @@ class AbstractLoader(ABC):
         elif self.mode == 'graph':
             start_term, start_pos = self.normalise_data(start['term'], start['pos'])
             end_term, end_pos = self.normalise_data(end['term'], end['pos'])
-            if start_term != end_term or (self.builder.should_cluster and start_pos != end_pos):
-                self.graph_manager.add_relation_to_graph(start_term, end_term, rel_type, weight, start_pos, end_pos)
+            start_sense, end_sense = start.get('sense'), end.get('sense')
+            # Distinct sense nodes of the same lemma are distinct endpoints, so the
+            # loop-avoidance guard must also consider the sense discriminator.
+            if start_term != end_term or start_sense != end_sense \
+                    or (self.builder.should_cluster and start_pos != end_pos):
+                self.graph_manager.add_relation_to_graph(
+                    start_term, end_term, rel_type, weight, start_pos, end_pos, start_sense, end_sense)
 
     def add_property(self, concept, c_type, c_value, cursor):
         if self.mode == 'db':
             self.db_manager.add_property_to_db(concept['id'], c_type, c_value, cursor)
         elif self.mode == 'graph':
             term, _ = self.normalise_data(concept['term'], None)
-            self.graph_manager.add_property_to_graph(c_type, c_value, term=term)
+            self.graph_manager.add_property_to_graph(c_type, c_value, term=term, sense=concept.get('sense'))
 
     def add_url(self, concept, e_url, cursor):
         if self.builder.should_cluster:
@@ -128,7 +138,7 @@ class AbstractLoader(ABC):
                 self.db_manager.add_url_to_db(concept['id'], e_url, cursor)
             elif self.mode == 'graph':
                 term, pos = self.normalise_data(concept['term'], concept['pos'])
-                concept_uri = self.graph_manager.get_safe_uri(term)
+                concept_uri = self.graph_manager.get_safe_uri(term, concept.get('sense'))
                 self.graph_manager.add_url_to_graph(concept_uri, e_url, pos)
 
     @lru_cache(maxsize=1024)

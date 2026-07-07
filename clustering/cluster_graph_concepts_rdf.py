@@ -65,7 +65,9 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
 
         cluster_relations = set()
         predicate_constraints = {}
-        excluded_predicates = {self.ns.hasURL, RDF.type}
+        # withSense links a sense node to its bare-lemma hub; navigational
+        # annotation, not a semantic relation to coalesce (Fix A).
+        excluded_predicates = {self.ns.hasURL, RDF.type, self.ns.withSense}
 
         logging.info(f"  - Scanning {len(raw_uri_to_cluster_info)} unique concepts for existing relations...")
 
@@ -144,11 +146,17 @@ class RDFConceptGraphClusterer(AbstractConceptGraphClusterer):
 
         def triples_generator():
             for (c_start, p), target_uris in tqdm(grouped_targets.items(), desc="Materialising triples", disable=not self.verbose):
+                # Fix C: for structural (irreflexive) predicates, drop edges whose
+                # endpoints share a normalised label (e.g. Alabama partOf Alabama).
+                drop_same_label = self.graph_manager.rel_base_of(p) in self.graph_manager.STRUCTURAL_IRREFLEXIVE_RELS
                 start_uris = cluster_to_urirefs[c_start]
                 for s in start_uris:
                     for o in target_uris:
-                        if s != o:
-                            yield (s, p, o, self.g)
+                        if s == o:
+                            continue
+                        if drop_same_label and self.graph_manager._same_label(str(s), str(o)):
+                            continue
+                        yield (s, p, o, self.g)
 
         self.g.addN(triples_generator())
         logging.info("Relationship coalescing complete.")

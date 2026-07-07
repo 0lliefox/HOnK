@@ -124,21 +124,48 @@ class ConceptClusterer:
         cluster_mappings = []
         visited_nodes = set()
 
-        visited_clusters = dict()
+        # Fix B (type-coherence guard): concept_id -> WordNet supersense, derived from
+        # the sense column via the same function graph mode uses, so both modes
+        # partition disjoint-supersense URL-clusters into identical memberships.
+        supersense_of = self.builder.graph_manager.supersense_of_sense
+        concept_supersense = {}
+        with self.conn.cursor() as cur:
+            cur.execute(f"SELECT id, sense FROM {AsIs(self.tables['concepts'])} "
+                        f"WHERE sense IS NOT NULL AND sense != ''")
+            for cid, sense in cur.fetchall():
+                ss = supersense_of(sense)
+                if ss is not None:
+                    concept_supersense[cid] = ss
+
+        visited_clusters = set()
+        cluster_id = 0
+        split_count = 0
         for key_node, adjacency_list in tqdm(db.items(), desc="Building clusters", disable=not self.verbose):
             cluster_nodes = set(adjacency_list)
             cluster_nodes.add(key_node)
 
             c_key = tuple(sorted(tuple(map(str, cluster_nodes))))
-            if not (c_key in visited_clusters.keys()):
-                cluster_id = len(visited_clusters)
-                visited_clusters[c_key] = cluster_id
+            if c_key in visited_clusters:
+                continue
+            visited_clusters.add(c_key)
 
-                c_ids = {c_id for c_id in cluster_nodes if isinstance(c_id, int)}
-                for c_id in c_ids:
-                    cluster_mappings.append((c_id, f"c{cluster_id}"))
-                for node in cluster_nodes:
-                    visited_nodes.add(node)
+            groups = defaultdict(list)
+            for node in cluster_nodes:
+                visited_nodes.add(node)
+                if isinstance(node, int):
+                    groups[concept_supersense.get(node)].append(node)
+
+            if sum(1 for g in groups if g is not None) > 1:
+                split_count += 1
+
+            for ss in sorted(groups.keys(), key=lambda x: (x is not None, x or '')):
+                label = f"c{cluster_id}"
+                cluster_id += 1
+                for c_id in groups[ss]:
+                    cluster_mappings.append((c_id, label))
+
+        if split_count:
+            logging.info(f"  - Fix B: type-coherence guard split {split_count} disjoint-supersense clusters.")
         return cluster_mappings, visited_nodes
 
     @timer

@@ -169,17 +169,23 @@ class WordNetLoader(AbstractLoader):
                     else:
                         lexical_domain = None
 
+                    # Fix A: WordNet senses are keyed by lexical_domain so distinct synsets
+                    # sharing a lemma (e.g. the four "Alabama" noun senses) become distinct
+                    # nodes at source. sense=None for unlabelled/phrase synsets (hub).
+                    synset_sense = data['lexical_domain'] if data['lexical_domain'] not in ('', 'unlabeled') else None
+
                     # Sorted alphabetically by the lemma term (x[1]) to guarantee identical 'eq' edge directions
                     lemma_db_ids = sorted(
-                        [[self.get_or_create_concept(term, pos, cursor), term] for term, uri in data['lemmas'].items()],
+                        [[self.get_or_create_concept(term, pos, cursor, sense=synset_sense), term]
+                         for term, uri in data['lemmas'].items()],
                         key=lambda x: x[1]
                     )
 
                     for db_id, term in lemma_db_ids:
-                        synset_item_to_db_id[(synset_uri, term)] = [db_id, term, pos]
+                        synset_item_to_db_id[(synset_uri, term)] = [db_id, term, pos, synset_sense]
 
                         self.add_url(
-                            {'id': db_id, 'term': term, 'pos': pos},
+                            {'id': db_id, 'term': term, 'pos': pos, 'sense': synset_sense},
                             data['lemmas'][term],
                             cursor
                         )
@@ -189,7 +195,8 @@ class WordNetLoader(AbstractLoader):
                                 {
                                     'id': db_id,
                                     'term': term,
-                                    'pos': pos
+                                    'pos': pos,
+                                    'sense': synset_sense
                                 },
                                 {
                                     'id': lexical_domain_db_id,
@@ -204,12 +211,14 @@ class WordNetLoader(AbstractLoader):
                                 self.add_relation({
                                     'id': lemma_db_ids[i][0],
                                     'term': lemma_db_ids[i][1],
-                                    'pos': pos
+                                    'pos': pos,
+                                    'sense': synset_sense
                                 },
                                     {
                                         'id': lemma_db_ids[j][0],
                                         'term': lemma_db_ids[j][1],
-                                        'pos': pos
+                                        'pos': pos,
+                                        'sense': synset_sense
                                     }, 'eq', 1.0, cursor)
 
             synset_uri_to_db_ids = defaultdict(list)
@@ -242,12 +251,14 @@ class WordNetLoader(AbstractLoader):
                                 {
                                     'id': start_id[0],
                                     'term': start_id[1],
-                                    'pos': start_id[2]
+                                    'pos': start_id[2],
+                                    'sense': start_id[3]
                                 },
                                 {
                                     'id': end_id[0],
                                     'term': end_id[1],
-                                    'pos': end_id[2]
+                                    'pos': end_id[2],
+                                    'sense': end_id[3]
                                 },
                                 rel_fragment, 1.0, cursor)
 

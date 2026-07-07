@@ -33,9 +33,51 @@ class RDFGraphManager(GraphManager):
         self.create_classes(g)
         return g
 
-    @lru_cache(maxsize=1024)
-    def get_safe_uri(self, term):
-        return URIRef(self.ns + quote(term)) if re.search(r'[^a-zA-Z0-9_-]', term) else self.ns[term]
+    @lru_cache(maxsize=4096)
+    def get_safe_uri(self, term, sense=None):
+        local = quote(term) if re.search(r'[^a-zA-Z0-9_-]', term) else term
+        if sense:
+            local = f"{local}--{self._norm_sense(sense)}"
+        return URIRef(self.ns + local)
+
+    # --- Reflexive self-loop filter (Fix C) helpers ---
+    def _ensure_label_index(self):
+        if self._label_index is None:
+            idx = {}
+            for s, o in self.g.subject_objects(RDFS.label):
+                idx[str(s)] = self._normalise_label(str(o))
+            self._label_index = idx
+        return self._label_index
+
+    def _same_label(self, a_value, b_value):
+        idx = self._ensure_label_index()
+        la = idx.get(a_value)
+        return la is not None and la == idx.get(b_value)
+
+    def rel_base_of(self, rel_uri):
+        """Base relation name for a reified relation-instance URI, via its rdf:type."""
+        key = str(rel_uri)
+        if key not in self._rel_base_cache:
+            base = None
+            t = self.g.value(rel_uri, RDF.type)
+            if t is not None:
+                base = str(t).rsplit('#', 1)[-1].rsplit('/', 1)[-1]
+            self._rel_base_cache[key] = base
+        return self._rel_base_cache[key]
+
+    def remove_structural_self_loops(self):
+        """Fix C: drop degenerate same-label structural self-loops from the finished
+        graph; mode-agnostic mirror of the Oxigraph pass so the two modes stay equal."""
+        self._ensure_label_index()
+        removed = 0
+        for base in self.STRUCTURAL_IRREFLEXIVE_RELS:
+            for rel_uri in list(self.g.subjects(RDF.type, self.ns[base])):
+                for s, o in list(self.g.subject_objects(rel_uri)):
+                    if self._same_label(str(s), str(o)):
+                        self.g.remove((s, rel_uri, o))
+                        removed += 1
+        logging.info(f"Fix C: removed {removed} same-label structural self-loops.")
+        return removed
 
     def create_classes(self, g):
         logging.info("Creating ontology classes (RDFLib)")
@@ -60,11 +102,11 @@ class RDFGraphManager(GraphManager):
                 self.equivalent_classes[child] = [child, children[child]['sameAs']]
 
     @timer(log=False, threaded=False, independent=True, memory=False)
-    def add_concept_to_graph(self, term, pos, cid=None):
+    def add_concept_to_graph(self, term, pos, sense=None, cid=None):
         if pos.lower() in self.rejected_classes:
             return
 
-        uri = self.get_safe_uri(term)
+        uri = self.get_safe_uri(term, sense)
         if cid is not None:
             self.id_to_uri[cid] = uri
 
@@ -72,14 +114,25 @@ class RDFGraphManager(GraphManager):
             self.g.add((uri, RDF.type, self.ns[i_pos]))
         self.g.add((uri, RDFS.label, RDFLiteral(term, datatype=XSD.string)))
 
+        # Fix A: link a sense node to the bare-lemma hub via `withSense` (annotation
+        # only, excluded from clustering); mirror of the Oxigraph path.
+        if sense:
+            hub_uri = self.get_safe_uri(term)
+            self.g.add((uri, self.ns.withSense, hub_uri))
+            self.g.add((hub_uri, RDFS.label, RDFLiteral(term, datatype=XSD.string)))
+            ss = self.supersense_of_sense(sense)  # Fix B: record supersense for the merge guard
+            if ss is not None:
+                self.node_supersense[str(uri)] = ss
+
     @timer(log=False, threaded=False, independent=True, memory=False)
-    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None):
+    def add_relation_to_graph(self, start_id, end_id, rel_type, weight, source_pos=None, target_pos=None,
+                              start_sense=None, end_sense=None):
         try:
             start_uri, end_uri = self.id_to_uri[start_id], self.id_to_uri[end_id]
         except KeyError:
             if isinstance(start_id, int):
                 return
-            start_uri, end_uri = self.get_safe_uri(start_id), self.get_safe_uri(end_id)
+            start_uri, end_uri = self.get_safe_uri(start_id, start_sense), self.get_safe_uri(end_id, end_sense)
 
         mapping = self.full_mappings.get(rel_type.lower(), {'rel': rel_type, 'relNegated': False,
                                                             'swap': False}) if self.normalise_pos else {'rel': rel_type,
@@ -144,9 +197,9 @@ class RDFGraphManager(GraphManager):
         self.g.add((s, rel_uri, t))
 
     @timer(log=False, threaded=False, independent=True, memory=False)
-    def add_property_to_graph(self, c_type, c_value, term=None, cid=None):
+    def add_property_to_graph(self, c_type, c_value, term=None, cid=None, sense=None):
         concept_uri = self.id_to_uri.get(cid) if cid is not None else (
-            self.get_safe_uri(term) if term is not None else None)
+            self.get_safe_uri(term, sense) if term is not None else None)
 
         if concept_uri is not None:
             prop_uri = self.get_safe_uri(c_type)

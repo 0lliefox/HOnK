@@ -109,8 +109,9 @@ class OntologyBuilder:
                            id             SERIAL PRIMARY KEY,
                            term           TEXT NOT NULL,
                            part_of_speech TEXT NOT NULL,
+                           sense          TEXT NOT NULL DEFAULT '',
                            source         TEXT,
-                           UNIQUE (term, part_of_speech)
+                           UNIQUE (term, part_of_speech, sense)
                        );
                        CREATE TABLE IF NOT EXISTS relations
                        (
@@ -147,8 +148,9 @@ class OntologyBuilder:
                            id             SERIAL PRIMARY KEY,
                            term           TEXT NOT NULL,
                            part_of_speech TEXT NOT NULL,
+                           sense          TEXT NOT NULL DEFAULT '',
                            source         TEXT,
-                           UNIQUE (term, part_of_speech, source)
+                           UNIQUE (term, part_of_speech, sense, source)
                        );
                        CREATE TABLE IF NOT EXISTS relations
                        (
@@ -220,9 +222,9 @@ class OntologyBuilder:
             total_concepts = count_cursor.fetchone()[0]
 
         with self.conn.cursor(name='concepts') as cursor:
-            cursor.execute("SELECT id, term, part_of_speech, source FROM concepts")
-            for cid, term, pos, source in tqdm(cursor, total=total_concepts, desc="Processing concepts", disable=not self.verbose):
-                self.graph_manager.add_concept_to_graph(term, pos, cid)
+            cursor.execute("SELECT id, term, part_of_speech, sense, source FROM concepts")
+            for cid, term, pos, sense, source in tqdm(cursor, total=total_concepts, desc="Processing concepts", disable=not self.verbose):
+                self.graph_manager.add_concept_to_graph(term, pos, sense or None, cid)
 
         if not self.should_cluster:
             with self.conn.cursor(name='relations') as cursor:
@@ -351,6 +353,7 @@ def run_process(config, run_id, benchmarking):
             clusterer.run()
 
         builder.build_graph_from_db(output_file)
+        builder.graph_manager.remove_structural_self_loops()  # Fix C
         builder.serialise_graph(output_file, output_file.split('.')[-1], builder.graph_manager.g)
     elif builder.mode == 'graph':
         final_g = builder.graph_manager.g
@@ -366,6 +369,7 @@ def run_process(config, run_id, benchmarking):
             final_g = clusterer.run()
 
         builder.graph_manager.add_pos_tag_classes(final_g)
+        builder.graph_manager.remove_structural_self_loops()  # Fix C
         builder.serialise_graph(output_file, output_file.split('.')[-1], final_g)
 
     benchmarking.to_csv(filename=f'benchmark_{output_file.split(".")[0]}', data_length=False, append=True)

@@ -55,36 +55,40 @@ class DBManager:
             self.url_buffer.clear()
 
     @timer(log=False, threaded=False, independent=False, memory=False)
-    def add_or_get_concept_from_db(self, term, pos, cursor=None):
-        # This remains synchronous as it must return the specific database ID immediately
+    def add_or_get_concept_from_db(self, term, pos, cursor=None, sense=None):
+        # This remains synchronous as it must return the specific database ID immediately.
+        # `sense` (Fix A) is a source-provided sense discriminator; '' marks the bare-lemma
+        # hub. It is part of concept identity so DB-mode serialisation rebuilds the same
+        # sense URIs as graph mode (kept keyword-last so positional-cursor callers work).
         standalone = cursor is None
         if standalone: cursor = self.conn.cursor()
+        sense = sense or ''
         try:
             if not self.unique_source:
                 cursor.execute("""
-                               INSERT INTO concepts (term, part_of_speech, source)
-                               VALUES (%s, %s, %s)
-                               ON CONFLICT (term, part_of_speech) DO NOTHING
+                               INSERT INTO concepts (term, part_of_speech, sense, source)
+                               VALUES (%s, %s, %s, %s)
+                               ON CONFLICT (term, part_of_speech, sense) DO NOTHING
                                RETURNING id;
                                """,
-                               (term, pos, self.source)
+                               (term, pos, sense, self.source)
                                )
             else:
                 cursor.execute("""
-                               INSERT INTO concepts (term, part_of_speech, source)
-                               VALUES (%s, %s, %s)
-                               ON CONFLICT (term, part_of_speech, source) DO NOTHING
+                               INSERT INTO concepts (term, part_of_speech, sense, source)
+                               VALUES (%s, %s, %s, %s)
+                               ON CONFLICT (term, part_of_speech, sense, source) DO NOTHING
                                RETURNING id;
                                """,
-                               (term, pos, self.source)
+                               (term, pos, sense, self.source)
                                )
             result = cursor.fetchone()
             if result:
                 return result[0]
             else:
                 cursor.execute(
-                    "SELECT id FROM concepts WHERE term = %s AND part_of_speech = %s",
-                    (term, pos)
+                    "SELECT id FROM concepts WHERE term = %s AND part_of_speech = %s AND sense = %s",
+                    (term, pos, sense)
                 )
                 result = cursor.fetchone()
                 return result[0] if result else None

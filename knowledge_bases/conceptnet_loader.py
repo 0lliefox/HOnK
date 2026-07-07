@@ -19,6 +19,8 @@ class Relation:
     langEnd: str
     startPOS: str
     endPOS: str
+    startSubSense: str
+    endSubSense: str
 
     def __init__(self, line: List[str], headers: List[str] = None):
         if headers is None:
@@ -44,6 +46,10 @@ class Relation:
         self.startRS = self.startR.split('/')
         self.langStart = self.startRS[2] if len(self.startRS) > 2 else None
         self.startPOS = self.startRS[4] if len(self.startRS) > 4 else self.startRS[1]
+        # ConceptNet disambiguation suffix after the POS, e.g. "wn/act",
+        # "wp/paris_rer". Retained for sense-aware identity (Fix A); a bare or
+        # POS-only URI has no suffix (hub). Inert until identity keying is active.
+        self.startSubSense = '/'.join(self.startRS[5:]) if len(self.startRS) > 5 else None
         if self.surfaceStart is None and len(self.startRS) > 3:
             self.surfaceStart = self.startRS[3]
 
@@ -61,6 +67,7 @@ class Relation:
             self.endRS = self.endR.split('/')
             self.langEnd = self.endRS[2] if len(self.endRS) > 2 else None
             self.endPOS = self.endRS[4] if len(self.endRS) > 4 else self.endRS[1]
+            self.endSubSense = '/'.join(self.endRS[5:]) if len(self.endRS) > 5 else None
             if self.surfaceEnd is None and len(self.endRS) > 3:
                 self.surfaceEnd = self.endRS[3]
 
@@ -105,29 +112,39 @@ class ConceptNetLoader(AbstractLoader):
                             relation.surfaceStart == ''):
                         continue
 
-                    # Use the POS extracted by the Relation class
-                    start_concept_id = self.get_or_create_concept(relation.surfaceStart, relation.startPOS, cursor)
+                    # Use the POS + sense-suffix extracted by the Relation class.
+                    # A sense discriminator exists only when ConceptNet disambiguates
+                    # the lemma (e.g. magenta/n/wn/act); bare and POS-only edges have
+                    # sense=None and resolve to the bare-lemma hub (Fix A).
+                    start_sense = f"{relation.startPOS}/{relation.startSubSense}" if relation.startSubSense else None
+                    start_concept_id = self.get_or_create_concept(
+                        relation.surfaceStart, relation.startPOS, cursor, sense=start_sense)
 
                     if self.is_url(relation):
                         self.add_url(
-                            {'id': start_concept_id, 'term': relation.surfaceStart, 'pos': relation.startPOS},
+                            {'id': start_concept_id, 'term': relation.surfaceStart,
+                             'pos': relation.startPOS, 'sense': start_sense},
                             relation.end,
                             cursor
                         )
                     else:
-                        end_concept_id = self.get_or_create_concept(relation.surfaceEnd, relation.endPOS, cursor)
+                        end_sense = f"{relation.endPOS}/{relation.endSubSense}" if relation.endSubSense else None
+                        end_concept_id = self.get_or_create_concept(
+                            relation.surfaceEnd, relation.endPOS, cursor, sense=end_sense)
 
                         if (self.mode == 'db' and start_concept_id and end_concept_id) or self.mode == 'graph':
                             self.add_relation(
                                 {
                                     'id': start_concept_id,
                                     'term': relation.surfaceStart,
-                                    'pos': relation.startPOS
+                                    'pos': relation.startPOS,
+                                    'sense': start_sense
                                 },
                                 {
                                     'id': end_concept_id,
                                     'term': relation.surfaceEnd,
-                                    'pos': relation.endPOS
+                                    'pos': relation.endPOS,
+                                    'sense': end_sense
                                 },
                                 relation.rel,
                                 float(relation.weight),
