@@ -33,8 +33,21 @@ def read_benchmark_csv(path, expect_rows=None):
     return pd.read_csv(path)
 from plotnine import (
     ggplot, aes, geom_bar, geom_errorbar, scale_fill_manual, labs, theme_minimal, theme, element_text, position_dodge,
-    element_blank, guide_legend, guides
+    element_blank, guide_legend, guides, coord_flip
 )
+
+# Logical grouping for the full-configuration supplementary figures, so related
+# configurations sit together instead of in filesystem order. Names not listed
+# fall to the end. Read top-to-bottom in the horizontal layout.
+DISPLAY_ORDER = [
+    'Database (Oxigraph)', 'Database (RDFLib)', 'Graph (Oxigraph)', 'Graph (RDFLib)',
+    'Database (.ttl)', 'Database RDFLib (.ttl)', 'DB rapper (Oxigraph)', 'DB rapper (RDFLib)',
+    '1,000', '5,000', '10,000', '25,000', '50,000', '100,000',
+    'CN Only (Oxigraph)', 'CN Only (RDFLib)', 'CN+WK+WN (Oxigraph)', 'CN+WK+WN (RDFLib)',
+    'DB unclustered (Oxigraph)', 'DB unclustered (RDFLib)',
+    'DB unnormalised (Oxigraph)', 'DB unnorm. unclustered (Oxigraph)', 'DB source-keyed (Oxigraph)',
+    'Graph unclustered (Oxigraph)', 'Graph unclustered (RDFLib)',
+]
 
 # Universal Colorblind-friendly palette (Okabe-Ito)
 CB_PALETTE = ["#E69F00", "#56B4E9", "#009E73", "#D4AC0D", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#003771"]
@@ -272,10 +285,14 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         # Prepare data for plotnine
         # Capture experiment order before melting so it can be enforced as a Categorical
         experiment_order = list(df_mean.index)
-        # With only a handful of bars, horizontal wrapped labels read best. Once the figure
-        # carries the full configuration matrix, horizontal labels collide into an illegible
-        # smear, so rotate them upright and keep each name on a single line.
+        # With only a handful of bars, vertical bars with wrapped labels read best. Once the
+        # figure carries the full configuration matrix, vertical bars squash the plot area to
+        # a sliver above a wall of colliding labels, so switch to a horizontal layout where
+        # each configuration gets its own row and its full name sits legibly on the axis.
         many_bars = len(experiment_order) > 8
+        if many_bars:
+            rank = {name: i for i, name in enumerate(DISPLAY_ORDER)}
+            experiment_order = sorted(experiment_order, key=lambda n: (rank.get(n, len(rank)), n))
 
         df_mean_reset = df_mean.reset_index().rename(columns={'index': 'Experiment'})
         df_std_reset = df_std.reset_index().rename(columns={'index': 'Experiment'})
@@ -285,17 +302,21 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
 
         plot_data = pd.merge(melted_mean, melted_std, on=['Experiment', 'Category'])
 
-        # Wrap Category labels
-        plot_data['Category'] = plot_data['Category'].apply(lambda x: textwrap.fill(x, 35))
+        # Wrap Category labels, dropping the redundant "Loader" suffix so the dataset legend
+        # ("GeoNames" rather than "GeoNamesLoader") stays compact and does not overrun the canvas.
+        def clean_cat(x):
+            x = x[:-6] if x.endswith('Loader') else x
+            return textwrap.fill(x, 18)
+        plot_data['Category'] = plot_data['Category'].apply(clean_cat)
 
         # Enforce category order if needed
         if color_map:
-            wrapped_color_map = {textwrap.fill(k, 35): v for k, v in color_map.items()}
+            wrapped_color_map = {clean_cat(k): v for k, v in color_map.items()}
             categories = [c for c in wrapped_color_map.keys() if c in plot_data['Category'].unique()]
             plot_data['Category'] = pd.Categorical(plot_data['Category'], categories=categories, ordered=True)
             active_palette = wrapped_color_map
         elif palette:
-            wrapped_expected = [textwrap.fill(c, 35) for c in EXPECTED_LOADER_ORDER]
+            wrapped_expected = [clean_cat(c) for c in EXPECTED_LOADER_ORDER]
             categories = [c for c in wrapped_expected if c in plot_data['Category'].unique()]
             others = [c for c in plot_data['Category'].unique() if c not in categories]
             categories.extend(others)
@@ -306,7 +327,10 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         wrap = (lambda x: x) if many_bars else (lambda x: textwrap.fill(x, 12))
         plot_data['Experiment'] = plot_data['Experiment'].apply(wrap)
         wrapped_experiment_order = [wrap(e) for e in experiment_order]
-        plot_data['Experiment'] = pd.Categorical(plot_data['Experiment'], categories=wrapped_experiment_order, ordered=True)
+        # coord_flip renders the first category at the bottom; reverse so the horizontal
+        # layout reads top-to-bottom in DISPLAY_ORDER.
+        cat_order = list(reversed(wrapped_experiment_order)) if many_bars else wrapped_experiment_order
+        plot_data['Experiment'] = pd.Categorical(plot_data['Experiment'], categories=cat_order, ordered=True)
 
         # Calculate ymin/ymax for error bars
         if stacked:
@@ -342,13 +366,17 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             fill=''
         )
 
+        # Horizontal layout for the full matrix: configuration names run along the (flipped)
+        # y-axis where they read left-to-right, and the bars extend across the value axis.
+        if many_bars:
+            plot += coord_flip()
+
         plot += theme_minimal()
         plot += theme(
             plot_title=element_text(fontproperties=title_font, ha='center'),
             axis_title_x=element_text(fontproperties=bold_font),
             axis_title_y=element_text(fontproperties=bold_font),
-            axis_text_x=element_text(fontproperties=font, angle=90, ha='right', va='center')
-            if many_bars else element_text(fontproperties=font, ha='center'),
+            axis_text_x=element_text(fontproperties=font, ha='center'),
             axis_text_y=element_text(fontproperties=font),
             legend_text=element_text(fontproperties=font),
             legend_position='bottom',
@@ -356,14 +384,22 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             legend_box_margin=10
         )
 
-        # Programmatically dictate row count based on number of items
-        # (1 row if it fits, 2 if it's too long)
+        # Cap the legend at three entries per row so the widest labels (e.g. "Database
+        # staging") never run off the right edge of the canvas.
         unique_cats = len(plot_data['Category'].unique())
-        legend_rows = 2 if unique_cats > 3 else 1
+        legend_rows = (unique_cats + 2) // 3
         plot += guides(fill=guide_legend(nrow=legend_rows, byrow=True))
 
+        # A horizontal figure needs vertical room proportional to the number of configurations
+        # (a little extra per dodged sub-bar) so the bars do not crush together.
+        if many_bars:
+            per_bar = 0.34 if stacked else 0.34 * max(1, unique_cats) * 0.55
+            width, height = 14, min(24, max(8, per_bar * len(experiment_order) + 3))
+        else:
+            width, height = 12, 8
+
         output_path = os.path.join(output_dir, f'{experiment_path}/{filename}')
-        plot.save(output_path, dpi=150, width=12, height=8, units='in', verbose=False)
+        plot.save(output_path, dpi=150, width=width, height=height, units='in', verbose=False)
         print(f"Saved plot to {output_path}")
 
     df_mean = sort_index_numerically(pd.DataFrame(bench_mean).T.fillna(0))
@@ -392,7 +428,10 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         f'Comparison of Execution Time by Dataset' + (f' for {title}' if title else ''),
         'Time (s)',
         'dataset_execution_times.png',
-        stacked=False,
+        # Per-source load times are sequential and additive, so stack them into one bar per
+        # configuration: the total load time is the bar length and each source's share is a
+        # segment, which reads far more cleanly than five dodged bars across many configs.
+        stacked=True,
         palette=CB_PALETTE
     )
     save_table(df_ds_mean, df_ds_std, 'dataset_execution_times', output_dir, experiment_path,
