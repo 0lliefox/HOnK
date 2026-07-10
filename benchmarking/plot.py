@@ -1,9 +1,36 @@
 import argparse
+import csv
 import pandas as pd
 import glob
 import matplotlib.font_manager as fm
 import os
 import textwrap
+
+
+def read_benchmark_csv(path, expect_rows=None):
+    """Read a benchmark/memory CSV, refusing anything that mixes runs.
+
+    Benchmark rows are appended across runs. If a later run recorded a different set
+    of phases, its rows are written in that run's column order against the original
+    header, which silently misaligns every column. Rather than aggregate nonsense,
+    fail loudly and let the caller aggregate a single-campaign dataset.
+    """
+    with open(path, newline='') as handle:
+        rows = list(csv.reader(handle))
+    if not rows:
+        raise ValueError(f"{path}: empty benchmark file")
+    header, data = rows[0], [r for r in rows[1:] if r and r[0] != 'id']
+    widths = {len(r) for r in data}
+    if widths and widths != {len(header)}:
+        raise ValueError(
+            f"{path}: data rows have widths {sorted(widths)} but the header has "
+            f"{len(header)} columns. This file mixes runs with different phase "
+            f"schemas; aggregate a single-campaign dataset instead.")
+    if expect_rows is not None and len(data) != expect_rows:
+        raise ValueError(
+            f"{path}: {len(data)} data rows, expected {expect_rows}. The file likely "
+            f"holds results from more than one campaign.")
+    return pd.read_csv(path)
 from plotnine import (
     ggplot, aes, geom_bar, geom_errorbar, scale_fill_manual, labs, theme_minimal, theme, element_text, position_dodge,
     element_blank, guide_legend, guides
@@ -140,7 +167,7 @@ def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, capt
         f.write(latex_code)
 
 
-def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=''):
+def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title='', expect_rows=None):
     # Font setup
     try:
         font_path_medium = 'fonts/Satoshi-Medium.ttf'
@@ -174,7 +201,7 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         if rename_map and name in rename_map:
             name = rename_map[name]
 
-        df = pd.read_csv(file)
+        df = read_benchmark_csv(file, expect_rows)
 
         # Phase columns mappings
         parse_cols = [c for c in df.columns if 'parse_data' in c]
@@ -358,7 +385,7 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         if rename_map and name in rename_map:
             name = rename_map[name]
 
-        df = pd.read_csv(file)
+        df = read_benchmark_csv(file, expect_rows)
 
         parse_cols = [c for c in df.columns if 'parse_data' in c]
         norm_cols = [c for c in df.columns if 'normalise_data' in c]
@@ -440,6 +467,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Graphs for execution times and memory usage.")
     parser.add_argument("--experiment", help="Path to experiment folder")
     parser.add_argument("--title", help="Graph title")
+    parser.add_argument("--expect-rows", type=int, default=None,
+                        help="Assert every benchmark CSV holds exactly this many rows "
+                             "(i.e. one campaign's iterations). Guards against silently "
+                             "aggregating results from more than one run.")
 
     args = parser.parse_args()
     experiment_path = 'all'
@@ -448,12 +479,12 @@ if __name__ == '__main__':
     title = args.title if args.title else ''
 
     rename_map = {
-        'bulkfixed_db_1000_oxi_clustered_final': '1,000',
-        'bulkfixed_db_5000_oxi_clustered_final': '5,000',
-        'bulkfixed_db_10000_oxi_clustered_final': '10,000',
-        'bulkfixed_db_25000_oxi_clustered_final': '25,000',
-        'bulkfixed_db_50000_oxi_clustered_final': '50,000',
-        'bulkfixed_db_100000_oxi_clustered_final': '100,000',
+        'bulk_db_1000_oxi_clustered_final': '1,000',
+        'bulk_db_5000_oxi_clustered_final': '5,000',
+        'bulk_db_10000_oxi_clustered_final': '10,000',
+        'bulk_db_25000_oxi_clustered_final': '25,000',
+        'bulk_db_50000_oxi_clustered_final': '50,000',
+        'bulk_db_100000_oxi_clustered_final': '100,000',
         'db_CN+WK+WN_oxi_clustered_final': 'CN+WK+WN (Oxigraph)',
         'db_CN+WK+WN_rdf_clustered_final': 'CN+WK+WN (RDFLib)',
         'db_CN_oxi_clustered_final': 'CN Only (Oxigraph)',
@@ -466,4 +497,5 @@ if __name__ == '__main__':
 
     }
 
-    plot_benchmarks(rename_map=rename_map, experiment_path=experiment_path, title=title)
+    plot_benchmarks(rename_map=rename_map, experiment_path=experiment_path, title=title,
+                    expect_rows=args.expect_rows)

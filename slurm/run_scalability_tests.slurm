@@ -4,7 +4,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=256G
+# Step 2 clusters the full graph in memory (RDFLib peaks ~130 GB on the v1.5.0 build)
+# and was OOM-killed at 256G; 512G gives the in-memory backends adequate headroom.
+#SBATCH --mem=512G
 #SBATCH --time=48:00:00
 #SBATCH --output=logs/scalability_%A_%a.out
 #SBATCH --error=logs/scalability_%A_%a.err

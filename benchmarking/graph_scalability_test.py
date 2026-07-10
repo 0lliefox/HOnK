@@ -7,7 +7,7 @@ import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef, RDF
 from rdflib import Literal as RDFLiteral
 from pyoxigraph import Store, NamedNode, Quad, DefaultGraph
 from pyoxigraph import Literal as OxiLiteral
@@ -15,6 +15,7 @@ from pyoxigraph import Literal as OxiLiteral
 from benchmarking.benchmark import Benchmark
 from clustering.cluster_graph_concepts_oxi import OxiConceptGraphClusterer
 from clustering.cluster_graph_concepts_rdf import RDFConceptGraphClusterer
+from graph.graph_funcs import GraphManager
 from graph.graph_funcs_oxi import OxiNamespace
 from tools.config import get_config
 
@@ -22,17 +23,43 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 TEST_FRACTIONS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
+_OXI_RDF_TYPE = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+
 
 class MockGraphManager:
-    def __init__(self, graph, ns):
+    """Stand-in for the real graph managers, exposing what the graph clusterers use:
+    the reified-relation base-name lookup and the structural relation set behind the
+    reflexive self-loop filter."""
+    STRUCTURAL_IRREFLEXIVE_RELS = GraphManager.STRUCTURAL_IRREFLEXIVE_RELS
+
+    def __init__(self, graph, ns, backend):
         self.g = graph
         self.ns = ns
-        self.cross_pos_hints = []  # Required by OxiConceptGraphClusterer
+        self.backend = backend
+        self.cross_pos_hints = []   # Required by OxiConceptGraphClusterer
+        self.node_supersense = {}   # sampled subgraphs carry no sense discriminators
+        self._rel_base_cache = {}
+
+    def rel_base_of(self, rel_uri):
+        """Base relation name for a reified relation-instance URI, via its rdf:type."""
+        key = rel_uri.value if self.backend == "oxi" else str(rel_uri)
+        if key not in self._rel_base_cache:
+            base = None
+            if self.backend == "oxi":
+                for q in self.g.quads_for_pattern(rel_uri, _OXI_RDF_TYPE, None):
+                    base = q.object.value.rsplit('#', 1)[-1].rsplit('/', 1)[-1]
+                    break
+            else:
+                t = self.g.value(rel_uri, RDF.type)
+                if t is not None:
+                    base = str(t).rsplit('#', 1)[-1].rsplit('/', 1)[-1]
+            self._rel_base_cache[key] = base
+        return self._rel_base_cache[key]
 
 
 class MockBuilder:
     def __init__(self, graph, ns, run_id, backend):
-        self.graph_manager = MockGraphManager(graph, ns)
+        self.graph_manager = MockGraphManager(graph, ns, backend)
         self.benchmarking = Benchmark(f"graph_{backend}_scalability")
         self.memory_benchmarking = Benchmark(f"graph_{backend}_memory")
         self.run_id = run_id
@@ -100,6 +127,8 @@ def run_experiment(input_file, config, fractions):
     rdf_ns = Namespace(base_uri)
     oxi_ns = OxiNamespace(base_uri)
 
+    failures = []
+
     for frac in fractions:
         rdf_subset, concept_count = create_subset_graph(full_graph, frac)
         if concept_count == 0:
@@ -120,8 +149,9 @@ def run_experiment(input_file, config, fractions):
             rdf_clusterer.run()
             rdf_builder.benchmarking.to_csv("graph_rdf_clustering_benchmark", data_length=False, append=True)
             rdf_builder.memory_benchmarking.to_csv("graph_rdf_memory_benchmark", data_length=False, append=True)
-        except Exception as e:
-            logging.error(f"RDF clustering error at {id_percentage}%: {e}")
+        except Exception:
+            logging.exception(f"RDF clustering failed at {id_percentage}%")
+            failures.append(f"rdf@{id_percentage}%")
 
         logging.info(f"  Running Oxi clusterer...")
         oxi_builder = MockBuilder(oxi_store, oxi_ns, id_percentage, "oxi")
@@ -131,11 +161,16 @@ def run_experiment(input_file, config, fractions):
             oxi_clusterer.run()
             oxi_builder.benchmarking.to_csv("graph_oxi_clustering_benchmark", data_length=False, append=True)
             oxi_builder.memory_benchmarking.to_csv("graph_oxi_memory_benchmark", data_length=False, append=True)
-        except Exception as e:
-            logging.error(f"Oxi clustering error at {id_percentage}%: {e}")
+        except Exception:
+            logging.exception(f"Oxi clustering failed at {id_percentage}%")
+            failures.append(f"oxi@{id_percentage}%")
 
         del rdf_subset, oxi_store
         gc.collect()
+
+    if failures:
+        # A run that produced no usable measurements must not exit successfully.
+        raise RuntimeError(f"graph clustering failed for: {', '.join(failures)}")
 
 
 def main():

@@ -13,6 +13,7 @@ from tools.config import get_config
 
 from benchmarking.benchmark import Benchmark
 from clustering.cluster_concepts import ConceptClusterer
+from graph.graph_funcs import GraphManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -31,9 +32,16 @@ TEST_TABLES = {
     "cluster_relations": "cluster_relations_test"
 }
 
+class MockGraphManager:
+    """Stand-in exposing the only GraphManager API the database clusterer uses: the
+    supersense lookup behind the type-coherence merge guard."""
+    supersense_of_sense = staticmethod(GraphManager.supersense_of_sense)
+
+
 class MockBuilder:
     def __init__(self, conn, run_id):
         self.conn = conn
+        self.graph_manager = MockGraphManager()
         self.benchmarking = Benchmark("scalability")
         self.memory_benchmarking = Benchmark("memory")
         self.run_id = run_id
@@ -154,12 +162,12 @@ def run_experiment(config, fractions):
             mock_builder.benchmarking.to_csv("clustering_benchmark", data_length=False, append=True)
 
             drop_subset_tables(conn)
-    except psycopg2.Error as e:
-        logging.error(f"Database connection error: {e}")
-        return None
-    except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
-        return None
+    except Exception:
+        # A failed run must not be mistaken for a successful one. Previously this was
+        # swallowed and the process still exited 0, so a broken test looked like a
+        # test that simply produced no results.
+        logging.exception("Scalability run failed")
+        raise
     finally:
         if conn:
             conn.close()
