@@ -60,11 +60,30 @@ class Benchmark:
             os.mkdir('benchmarking/results')
 
         file_exists = os.path.isfile(filename)
+        header = ['id'] + self.phase_names
+
+        # Appending rows written in this run's phase order onto a file whose header
+        # was written by a different run silently misaligns every column (and can
+        # mix results from two different builds). If the schema has changed, keep
+        # the old results under a .legacy name and start a fresh, well-formed file.
+        if file_exists and append:
+            with open(filename, newline='') as existing_file:
+                existing_header = next(csv.reader(existing_file), None)
+            if existing_header != header:
+                stem = filename[:-4]
+                legacy, n = f"{stem}.legacy.csv", 1
+                while os.path.isfile(legacy):
+                    legacy = f"{stem}.legacy{n}.csv"
+                    n += 1
+                os.rename(filename, legacy)
+                print(f"WARNING: benchmark schema changed for {filename}; "
+                      f"previous results moved to {legacy}")
+                file_exists = False
+
         mode = 'a' if append else 'w'
 
         try:
             with open(filename, mode, newline='') as csvfile:
-                header = ['id'] + self.phase_names
                 writer = csv.DictWriter(csvfile, fieldnames=header)
                 if not file_exists or not append:
                     writer.writeheader()
