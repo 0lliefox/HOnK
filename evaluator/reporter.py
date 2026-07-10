@@ -719,9 +719,13 @@ def _booktabs_table(caption: str, label: str, col_spec: str,
 
 
 def _longtable(caption: str, label: str, col_spec: str,
-               header: str, body: str) -> str:
-    """Page-breaking table for the supplementary document (plain column
-    types only; requires \\usepackage{longtable})."""
+               header: str, body: str, ncols: int = None) -> str:
+    """Page-breaking table for the supplementary document (requires
+    \\usepackage{longtable}). ncols sets the span of the "(continued)" banner;
+    when omitted it is inferred by counting column-type letters, which only
+    works for plain specs without @{...} inserts."""
+    if ncols is None:
+        ncols = sum(col_spec.count(c) for c in 'lcrXpmb')
     return (
         "\\begin{longtable}{" + col_spec + "}\n"
         f"\\caption{{{caption}}}\\label{{{label}}} \\\\\n"
@@ -729,7 +733,7 @@ def _longtable(caption: str, label: str, col_spec: str,
         f"{header} \\\\\n"
         "\\midrule\n"
         "\\endfirsthead\n"
-        f"\\multicolumn{{{len(col_spec.replace(' ', ''))}}}{{l}}"
+        f"\\multicolumn{{{ncols}}}{{l}}"
         f"{{\\small\\emph{{(continued)}}}} \\\\\n"
         "\\toprule\n"
         f"{header} \\\\\n"
@@ -752,20 +756,48 @@ def _sentence_ref(case: Dict[str, Any]) -> str:
 
 
 def _export_bridging_table(processed_cases: List[Dict[str, Any]], path: Path) -> None:
-    rows = []
+    # Most test sentences produce no bridges under either configuration, so listing all
+    # of them down a single narrow column wastes most of the page on zero rows. Keep only
+    # the sentences that bridge under either system, order them by HOnK's count so the
+    # strongest cases lead, and lay them out in two side-by-side panels.
+    records = []
     for case in processed_cases:
-        ref = _sentence_ref(case)
         b = len(case['b_bridges'])
         h = len(case['h_bridges'])
-        rows.append(f"{ref} & {b} & {h} \\\\")
+        if b == 0 and h == 0:
+            continue
+        records.append((_sentence_ref(case), b, h))
+    omitted = len(processed_cases) - len(records)
+    records.sort(key=lambda r: (-r[2], -r[1], r[0]))
 
-    body = "\n".join(rows) + "\n"
+    def _cell(rec):
+        if rec is None:
+            return " & & "
+        ref, b, h = rec
+        dagger = "$^{\\dagger}$" if (b == 0 and h > 0) else ""
+        return f"{ref}{dagger} & {b} & {h}"
+
+    half = (len(records) + 1) // 2
+    left, right = records[:half], records[half:]
+    right += [None] * (len(left) - len(right))
+    body = "\n".join(f"{_cell(l)} & {_cell(r)} \\\\" for l, r in zip(left, right)) + "\n"
+
+    header = ("\\textbf{Sentence} & \\textbf{CN} & \\textbf{HOnK} & "
+              "\\textbf{Sentence} & \\textbf{CN} & \\textbf{HOnK}")
+    caption = (
+        f"Bridging triple counts per test sentence, for the {len(records)} sentences that produced "
+        f"at least one bridging triple under either configuration; the remaining {omitted} sentences "
+        f"yielded zero under both and are omitted. Rows are ordered by \\gls{{onto}} bridging count. "
+        f"A dagger ($\\dagger$) marks cases where the ConceptNet baseline finds no bridges at all, so "
+        f"every bridge is newly recovered. Sentence labels refer to Supplementary "
+        f"Table~\\ref{{tab:sentences-full}}.")
     table = _longtable(
-        caption="Bridging triple counts per test sentence (sentence labels refer to Supplementary Table~\\ref{tab:sentences-full}).",
+        caption=caption,
         label="tab:bridges-sentence",
-        col_spec="lrr",
-        header="\\textbf{Sentence} & \\textbf{CN} & \\textbf{HOnK}",
+        col_spec="@{}lrr@{\\hspace{2.5em}}lrr@{}",
+        header=header,
         body=body,
+        ncols=6,
     )
     path.write_text(table, encoding='utf-8')
 
