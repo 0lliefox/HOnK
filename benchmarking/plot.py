@@ -272,6 +272,10 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         # Prepare data for plotnine
         # Capture experiment order before melting so it can be enforced as a Categorical
         experiment_order = list(df_mean.index)
+        # With only a handful of bars, horizontal wrapped labels read best. Once the figure
+        # carries the full configuration matrix, horizontal labels collide into an illegible
+        # smear, so rotate them upright and keep each name on a single line.
+        many_bars = len(experiment_order) > 8
 
         df_mean_reset = df_mean.reset_index().rename(columns={'index': 'Experiment'})
         df_std_reset = df_std.reset_index().rename(columns={'index': 'Experiment'})
@@ -299,8 +303,9 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             active_palette = palette
 
         # Wrap Experiment labels for X-axis, then enforce the original sorted order as a Categorical
-        plot_data['Experiment'] = plot_data['Experiment'].apply(lambda x: textwrap.fill(x, 12))
-        wrapped_experiment_order = [textwrap.fill(e, 12) for e in experiment_order]
+        wrap = (lambda x: x) if many_bars else (lambda x: textwrap.fill(x, 12))
+        plot_data['Experiment'] = plot_data['Experiment'].apply(wrap)
+        wrapped_experiment_order = [wrap(e) for e in experiment_order]
         plot_data['Experiment'] = pd.Categorical(plot_data['Experiment'], categories=wrapped_experiment_order, ordered=True)
 
         # Calculate ymin/ymax for error bars
@@ -342,8 +347,8 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
             plot_title=element_text(fontproperties=title_font, ha='center'),
             axis_title_x=element_text(fontproperties=bold_font),
             axis_title_y=element_text(fontproperties=bold_font),
-            # axis_text_x=element_text(fontproperties=font, angle=45, ha='right'),
-            axis_text_x=element_text(fontproperties=font, ha='center'),
+            axis_text_x=element_text(fontproperties=font, angle=90, ha='right', va='center')
+            if many_bars else element_text(fontproperties=font, ha='center'),
             axis_text_y=element_text(fontproperties=font),
             legend_text=element_text(fontproperties=font),
             legend_position='bottom',
@@ -510,8 +515,18 @@ if __name__ == '__main__':
         'db_rdf_clustered_final': 'Database (RDFLib)',
         'graph_oxi_clustered_final': 'Graph (Oxigraph)',
         'graph_rdf_clustered_final': 'Graph (RDFLib)',
-        'db_oxi_direct_to_turtle_clustered_final': 'Database (.ttl)'
-
+        'db_oxi_direct_to_turtle_clustered_final': 'Database (.ttl)',
+        # Remaining configurations, shown only in the full-matrix supplementary figures.
+        'db_rdf_direct_to_turtle_clustered_final': 'Database RDFLib (.ttl)',
+        'db_oxi_turtle_converted_clustered_final': 'DB rapper (Oxigraph)',
+        'db_rdf_turtle_converted_clustered_final': 'DB rapper (RDFLib)',
+        'db_oxi_unclustered_final': 'DB unclustered (Oxigraph)',
+        'db_rdf_unclustered_final': 'DB unclustered (RDFLib)',
+        'db_oxi_unique_source_clustered_final': 'DB source-keyed (Oxigraph)',
+        'db_oxi_unnormalised_clustered_final': 'DB unnormalised (Oxigraph)',
+        'db_oxi_unnormalised_unclustered_final': 'DB unnorm. unclustered (Oxigraph)',
+        'graph_oxi_unclustered_final': 'Graph unclustered (Oxigraph)',
+        'graph_rdf_unclustered_final': 'Graph unclustered (RDFLib)',
     }
 
     plot_benchmarks(rename_map=rename_map, experiment_path=experiment_path, title=title,
