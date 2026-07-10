@@ -80,7 +80,7 @@ def order_columns(available_columns, expected_order):
     return ordered
 
 
-def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, caption):
+def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, caption, totals=None):
     # Transpose so Phases (categories) are rows and Experiments are columns
     df_mean_t = df_mean.T
     df_std_t = df_std.T
@@ -102,7 +102,14 @@ def save_table(df_mean, df_std, filename_base, output_dir, experiment_path, capt
 
     if 'execution_times' in filename_base:
         total_mean = df_mean.sum(axis=1)
-        total_std = (df_std ** 2).sum(axis=1) ** 0.5
+        if totals is not None:
+            # Summing per-phase standard deviations in quadrature assumes the phases vary
+            # independently. On a shared filesystem they do not: contention slows every
+            # I/O-bound phase of an iteration together, so the quadrature figure overstates
+            # the spread. Take the spread of the per-iteration totals directly instead.
+            total_std = pd.Series({k: v.std(ddof=1) for k, v in totals.items()}).reindex(df_mean.index).fillna(0)
+        else:
+            total_std = (df_std ** 2).sum(axis=1) ** 0.5
         csv_combined['Total Runtime'] = [
             f"{m:,.2f} ± {s:,.2f}" if m > 0 else "N/A"
             for m, s in zip(total_mean, total_std)
@@ -193,7 +200,7 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
                  if 'peak_usage' not in f]
 
     # Dictionaries to store Mean and STD dev
-    bench_mean, bench_std = {}, {}
+    bench_mean, bench_std, bench_totals = {}, {}, {}
     dataset_bench_mean, dataset_bench_std = {}, {}
 
     for file in bench_files:
@@ -212,24 +219,33 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
         graph_final_cols = [c for c in df.columns if 'OntologyBuilder.build_graph_from_db' in c]
         serial_cols = [c for c in df.columns if 'OntologyBuilder.serialise_graph' in c]
 
+        zeros = pd.Series([0.0] * len(df), index=df.index)
+        graph_stage = df[graph_stage_cols].sum(axis=1) if graph_stage_cols else zeros.copy()
+        final_graph = df[graph_final_cols].sum(axis=1) if graph_final_cols else zeros.copy()
+
+        # In DB mode build_graph_from_db calls the timed GraphManager.add_*_to_graph
+        # methods, so graph staging is nested inside final graph construction. Charting
+        # or summing both counts the insert time twice; subtract it out to leave the
+        # residual (fetching rows from the database) and keep the buckets disjoint.
+        if graph_final_cols and graph_stage_cols:
+            final_graph = (final_graph - graph_stage).clip(lower=0)
+
         row_sums = {
-            'Parsing/ingestion': df[parse_cols].sum(axis=1) if parse_cols else pd.Series([0] * len(df)),
-            'Normalisation': df[norm_cols].sum(axis=1) if norm_cols else pd.Series([0] * len(df)),
-            'Clustering': df[clust_cols].sum(axis=1) if clust_cols else pd.Series([0] * len(df)),
-            'Final graph construction': df[graph_final_cols].sum(axis=1) if graph_final_cols else pd.Series(
-                [0] * len(df)),
-            'Serialisation': df[serial_cols].sum(axis=1) if serial_cols else pd.Series(
-                [0] * len(df)),
+            'Parsing/ingestion': df[parse_cols].sum(axis=1) if parse_cols else zeros.copy(),
+            'Normalisation': df[norm_cols].sum(axis=1) if norm_cols else zeros.copy(),
+            'Clustering': df[clust_cols].sum(axis=1) if clust_cols else zeros.copy(),
+            'Final graph construction': final_graph,
+            'Serialisation': df[serial_cols].sum(axis=1) if serial_cols else zeros.copy(),
         }
 
         row_sums['Database staging'] = df[db_cols].sum(axis=1)
-        row_sums['Graph staging'] = df[graph_stage_cols].sum(axis=1) if graph_stage_cols else pd.Series(
-            [0] * len(df))
+        row_sums['Graph staging'] = graph_stage
 
         # Average and standard deviation for overall phases
         df_sums = pd.DataFrame(row_sums)
         bench_mean[name] = df_sums.mean()
         bench_std[name] = df_sums.std().fillna(0)
+        bench_totals[name] = df_sums.sum(axis=1)
 
         # Identify all loaders in this file and force the expected order
         file_loaders = set(c.split('.')[0] for c in df.columns if 'Loader' in c.split('.')[0])
@@ -354,20 +370,21 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
 
     create_plot(
         df_mean, df_std,
-        f'Comparison of Execution Time by Phase for {title}',
+        f'Comparison of Execution Time by Phase' + (f' for {title}' if title else ''),
         'Time (s)',
         'benchmark_execution_times.png',
         stacked=True,
         color_map=COLOR_MAP
     )
-    save_table(df_mean, df_std, 'benchmark_execution_times', output_dir, experiment_path, 'Execution Time by Phase (s)')
+    save_table(df_mean, df_std, 'benchmark_execution_times', output_dir, experiment_path,
+               'Execution Time by Phase (s)', totals=bench_totals)
 
     df_ds_mean = sort_index_numerically(pd.DataFrame(dataset_bench_mean).T.fillna(0))
     df_ds_std = sort_index_numerically(pd.DataFrame(dataset_bench_std).T.fillna(0))
 
     create_plot(
         df_ds_mean, df_ds_std,
-        f'Comparison of Execution Time by Dataset for {title}',
+        f'Comparison of Execution Time by Dataset' + (f' for {title}' if title else ''),
         'Time (s)',
         'dataset_execution_times.png',
         stacked=False,
@@ -439,7 +456,7 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
 
     create_plot(
         df_mem_mean, df_mem_std,
-        f'Comparison of Peak Memory Usage by Phase for {title}',
+        f'Comparison of Peak Memory Usage by Phase' + (f' for {title}' if title else ''),
         'Memory (MB)',
         'memory_peak_usage.png',
         stacked=False,
@@ -453,7 +470,7 @@ def plot_benchmarks(output_dir='.', rename_map=None, experiment_path='.', title=
 
     create_plot(
         df_ds_mem_mean, df_ds_mem_std,
-        f'Comparison of Peak Memory Usage by Source Dataset for {title}',
+        f'Comparison of Peak Memory Usage by Source Dataset' + (f' for {title}' if title else ''),
         'Memory (MB)',
         'dataset_memory_peak_usage.png',
         stacked=False,
