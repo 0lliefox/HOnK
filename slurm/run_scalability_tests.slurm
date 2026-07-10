@@ -24,6 +24,17 @@ conda activate pg_env
 export PYTHONNOUSERSITE=1
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
+# Fail fast on the wrong interpreter. A python3 without the project's dependencies
+# previously produced tracebacks that the script walked straight past, so the job
+# reported COMPLETED while writing no results at all.
+echo "CONDA_PREFIX = ${CONDA_PREFIX}"
+echo "python3      = $(command -v python3)"
+if ! python3 -c "import psycopg2, rdflib, pyoxigraph" 2>/dev/null; then
+    echo "ERROR: python3 ($(command -v python3)) is missing project dependencies."
+    python3 -c "import psycopg2, rdflib, pyoxigraph"
+    exit 1
+fi
+
 # ── Paths set by setup_scalability.slurm ─────────────────────────────────────
 DB_DUMP="/nobackup/proj/comet_honkstar/scalability_db.dump"
 INPUT_FILE="${SLURM_SUBMIT_DIR}/ontologies/ontology_graph_oxi_clustered_urlskept_final.nt"
@@ -75,12 +86,14 @@ export PYTHONPATH="${SLURM_SUBMIT_DIR}:${PYTHONPATH}"
 echo ""
 echo "--- Step 1: DB clustering scalability test (task $SLURM_ARRAY_TASK_ID) ---"
 cd "${TASK_WORKDIR}"
-python3 "${SLURM_SUBMIT_DIR}/benchmarking/scalability_test.py" --runs 1
+python3 "${SLURM_SUBMIT_DIR}/benchmarking/scalability_test.py" --runs 1 \
+    || { echo "ERROR: Step 1 (DB clustering scalability) failed"; exit 1; }
 
 # ── Step 2: Graph clustering scalability test ─────────────────────────────────
 echo ""
 echo "--- Step 2: Graph clustering scalability test (task $SLURM_ARRAY_TASK_ID) ---"
-python3 "${SLURM_SUBMIT_DIR}/benchmarking/graph_scalability_test.py" "${INPUT_FILE}" --runs 1
+python3 "${SLURM_SUBMIT_DIR}/benchmarking/graph_scalability_test.py" "${INPUT_FILE}" --runs 1 \
+    || { echo "ERROR: Step 2 (graph clustering scalability) failed"; exit 1; }
 
 echo ""
 echo "=== Task $SLURM_ARRAY_TASK_ID Completed ==="
