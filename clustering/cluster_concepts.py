@@ -199,8 +199,10 @@ class ConceptClusterer:
         logging.info("Coalescing relationships between clusters...")
         with self.conn.cursor() as cursor:
             # The projection hash-joins all relations against the clusters table twice; at the
-            # default work_mem the hash spills to temp (the I/O cost reviewers flagged, R1-D3).
-            # Raising it for this transaction keeps the build to a single in-memory batch.
+            # default work_mem the hash spills to temp across hundreds of batches (the I/O cost
+            # reviewers flagged, R1-D3). Raising it for this transaction cuts the spill by two
+            # orders of magnitude (512 batches -> 8 on the full graph); a single in-memory
+            # partition would need ~1GB, which is unsafe per-connection under concurrent builds.
             cursor.execute("SET LOCAL work_mem = '256MB'")
             cursor.execute(f"TRUNCATE TABLE {AsIs(self.tables['cluster_relations'])};")
             cursor.execute(f"""
