@@ -7,7 +7,7 @@ import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from rdflib import Graph, Namespace, URIRef, RDF
+from rdflib import Graph, Namespace, URIRef, RDF, RDFS
 from rdflib import Literal as RDFLiteral
 from pyoxigraph import Store, NamedNode, Quad, DefaultGraph
 from pyoxigraph import Literal as OxiLiteral
@@ -24,13 +24,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 TEST_FRACTIONS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 _OXI_RDF_TYPE = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+_OXI_RDFS_LABEL = NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
 
 
 class MockGraphManager:
-    """Stand-in for the real graph managers, exposing what the graph clusterers use:
-    the reified-relation base-name lookup and the structural relation set behind the
-    reflexive self-loop filter."""
+    """Stand-in for the real graph managers, exposing exactly what the graph clusterers
+    use: the reified-relation base-name lookup, the structural relation set, and the
+    same-label test behind the reflexive self-loop filter."""
     STRUCTURAL_IRREFLEXIVE_RELS = GraphManager.STRUCTURAL_IRREFLEXIVE_RELS
+    _normalise_label = staticmethod(GraphManager._normalise_label)
 
     def __init__(self, graph, ns, backend):
         self.g = graph
@@ -39,6 +41,7 @@ class MockGraphManager:
         self.cross_pos_hints = []   # Required by OxiConceptGraphClusterer
         self.node_supersense = {}   # sampled subgraphs carry no sense discriminators
         self._rel_base_cache = {}
+        self._label_index = None
 
     def rel_base_of(self, rel_uri):
         """Base relation name for a reified relation-instance URI, via its rdf:type."""
@@ -55,6 +58,23 @@ class MockGraphManager:
                     base = str(t).rsplit('#', 1)[-1].rsplit('/', 1)[-1]
             self._rel_base_cache[key] = base
         return self._rel_base_cache[key]
+
+    def _ensure_label_index(self):
+        if self._label_index is None:
+            idx = {}
+            if self.backend == "oxi":
+                for q in self.g.quads_for_pattern(None, _OXI_RDFS_LABEL, None):
+                    idx[q.subject.value] = self._normalise_label(q.object.value)
+            else:
+                for s, o in self.g.subject_objects(RDFS.label):
+                    idx[str(s)] = self._normalise_label(str(o))
+            self._label_index = idx
+        return self._label_index
+
+    def _same_label(self, a_value, b_value):
+        idx = self._ensure_label_index()
+        la = idx.get(a_value)
+        return la is not None and la == idx.get(b_value)
 
 
 class MockBuilder:
