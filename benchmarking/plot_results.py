@@ -35,12 +35,21 @@ class ResultsPlotter:
             'Clean up graph'
         ]
 
-        # Font setup - fallback if files don't exist
-        try:
-            self.font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=14)
-            self.bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=14)
-            self.title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=18)
-        except:
+        # Font setup - resolve Satoshi from the working dir or the repo-adjacent fonts
+        # directory (../../fonts relative to this file), falling back to matplotlib's
+        # default if neither is present. FontProperties(fname=...) fails lazily at render
+        # time, so an existence check is needed rather than a try/except here.
+        medium = 'fonts/Satoshi-Medium.ttf'
+        bold = 'fonts/Satoshi-Bold.ttf'
+        if not os.path.exists(medium):
+            here = os.path.dirname(os.path.abspath(__file__))
+            medium = os.path.join(here, '../../fonts/Satoshi-Medium.ttf')
+            bold = os.path.join(here, '../../fonts/Satoshi-Bold.ttf')
+        if os.path.exists(medium) and os.path.exists(bold):
+            self.font = fm.FontProperties(fname=medium, size=14)
+            self.bold_font = fm.FontProperties(fname=bold, size=14)
+            self.title_font = fm.FontProperties(fname=bold, size=18)
+        else:
             self.font = fm.FontProperties(size=14)
             self.bold_font = fm.FontProperties(weight='bold', size=14)
             self.title_font = fm.FontProperties(weight='bold', size=18)
