@@ -1,0 +1,173 @@
+[
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "db_oxi_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": false
+      },
+      "turtle_export": {
+        "output_file": "db_oxi_unclustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "sources": ["conceptnet"],
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "db_CN_oxi_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "sources": ["conceptnet", "wiktionary", "wordnet"],
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "output_file": "db_CN+WK+WN_oxi_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": false
+      },
+      "turtle_export": {
+        "normalise_pos": false,
+        "output_file": "db_oxi_unnormalised_unclustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "normalise_pos": false,
+        "output_file": "db_oxi_unnormalised_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "normalise_pos": true,
+        "output_file": "db_oxi_direct_to_turtle_clustered_final.ttl"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "rdf"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "convert": true,
+        "normalise_pos": true,
+        "output_file": "db_rdf_turtle_converted_clustered_final.nt"
+      }
+    }
+  },
+  {
+    "config_overrides": {
+      "general": {
+        "mode": "db",
+        "should_cache": false,
+        "show_stats": false
+      },
+      "graph": {
+        "type": "oxigraph"
+      },
+      "clustering": {
+        "enabled": true
+      },
+      "turtle_export": {
+        "convert": true,
+        "normalise_pos": true,
+        "output_file": "db_oxi_turtle_converted_clustered_final.nt"
+      }
+    }
+  }
+]

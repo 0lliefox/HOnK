@@ -1,0 +1,751 @@
+database:
+  dbname: ontology_db
+  user: fox
+  password: drowssap
+  host: localhost
+  port: '5432'
+general:
+  language: en
+  sources:
+  - parmenides
+  - conceptnet
+  - wiktionary
+  - wordnet
+  - geonames
+  mapping_sources:
+  - wordnet
+  - conceptnet
+  - wiktionary
+  mode: db
+  normalisation: full
+  should_cache: true
+  show_stats: true
+  verbose: true
+db_config:
+  tables_to_delete:
+  - relations
+  - properties
+  - urls
+  - concepts
+  source_to_delete: []
+  clear_db_on_start: true
+  confirm_clear_db: false
+  unique_source: false
+  bulk_insert: false
+  batch_size: 10000
+graph:
+  type: oxigraph
+local_files:
+  supporting_files: supporting_files
+  cache: .cache
+  wordnet: supporting_files/kb/WordNet.nt
+  wordnet_edge_mappings_file: supporting_files/mappings/wn_edge_mappings.json
+  wordnet_pos_mappings_file: supporting_files/mappings/wn_pos_mappings.json
+  conceptnet: supporting_files/kb/ConceptNet.csv
+  conceptnet_edge_mappings_file: supporting_files/mappings/cn_edge_mappings.json
+  conceptnet_pos_mappings_file: supporting_files/mappings/cn_pos_mappings.json
+  wiktionary: supporting_files/kb/Wiktionary.json
+  wiktionary_edge_mappings_file: supporting_files/mappings/wk_edge_mappings.json
+  wiktionary_pos_mappings_file: supporting_files/mappings/wk_pos_mappings.json
+  parmenides: supporting_files/parmenides
+  geonames: supporting_files/kb/GeoNames/all_countries.csv
+  geonames_hierarchy: supporting_files/kb/GeoNames/hierarchy.json
+  geonames_alternates: supporting_files/kb/GeoNames/alternates_map.json
+  geonames_ignore: supporting_files/kb/GeoNames/ignored_places.txt
+  geonames_feature_codes: supporting_files/kb/GeoNames/feature_map.json
+  geonames_links: supporting_files/kb/GeoNames/geo_links.json
+  dbpedia_labels: supporting_files/kb/dbpedia/dbpedia_labels_en_filtered.ttl
+  dbpedia_types: supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=rdf_props=type.ttl
+  dbpedia_ignored_uris: supporting_files/kb/dbpedia/ignored_uris.txt
+  dbpedia_properties: supporting_files/kb/dbpedia/endbpedia-enriched_subjectns=dbpedia-org_vocab=wdt_props=all.ttl
+  wikidata_property_labels: supporting_files/kb/dbpedia/dbpedia_props.csv
+  wikidata_labels: supporting_files/kb/dbpedia/latest-truthy-en-labels-only.nt
+  wikidata_allowed_ids: supporting_files/kb/dbpedia/allowed_wiki_ids.txt
+  ontology_classes: supporting_files/mappings/ontology_classes.json
+  rejected_classes: supporting_files/mappings/ignored_classes.json
+  pos_tag_classes: supporting_files/mappings/pos_tag_mappings.json
+turtle_export:
+  convert: false
+  normalise_pos: true
+  output_file: HOnK-v1-5-0.ttl
+  base_uri: https://ofox.co.uk/honk#
+  base_prefix: honk
+clustering:
+  enabled: true
+  keep_url_triples: false
+evaluator:
+  output_csv: evaluation_results.csv
+  run_deterministic_evaluation: true
+  run_semantic_evaluation: true
+  embedding_models:
+  - all-MiniLM-L6-v2
+  - sentence-transformers/all-mpnet-base-v2
+  - BAAI/bge-m3
+  run_llm_evaluation: true
+  max_parallel_queries: 8
+  max_extraction_workers: 8
+  llms:
+  - llama3.2:3b
+  - qwen2.5:7b
+  - mistral:7b
+  bridging_limit: 100
+  summary_table_output: evaluator/summary_table.txt
+  max_context_triples: 100
+  max_bridge_triples: 20
+  embedding_top_k: 5
+  ontologies:
+    baseline: ../ontologies/ablation_a_conceptnet_raw.nt
+    honk: ../ontologies/HOnK-v1-5-0.nt
+  test_cases:
+  - sentence: The parasitic mite belongs to the order Acarina
+    keywords:
+    - mite
+    - Acarina
+    - arachnid
+    label: sent:mite
+    provenance: hand
+  - sentence: Caenogenesis, also called kenogenesis, involves novel developmental
+      structures
+    keywords:
+    - caenogenesis
+    - kenogenesis
+    - ontogeny
+    - embryology
+    label: sent:caenogenesis
+    provenance: hand
+  - sentence: The specialist treated the hematopathy, also described as a hemopathy
+    keywords:
+    - hematopathy
+    - hemopathy
+    - blood disorder
+    label: sent:hematopathy
+    provenance: hand
+  - sentence: The paediatrician treats sick children
+    keywords:
+    - paediatrician
+    - pediatrician
+    - illness
+    - children
+    label: sent:paediatrician
+    provenance: hand
+  - sentence: The wadi runs completely dry for most of the year in this arid region
+    keywords:
+    - wadi
+    - dry
+    - stream
+    - intermittent
+    label: sent:wadi
+    provenance: hand
+  - sentence: The harbour set dockage charges, known as moorage fees, for overnight
+      berths
+    keywords:
+    - dockage
+    - moorage
+    - harbour
+    - berth
+    label: sent:harbour
+    provenance: hand
+  - sentence: The car bonnet is open
+    keywords:
+    - bonnet
+    - car
+    - hood
+    label: sent:bonnet
+    provenance: hand
+  - sentence: Basketry is another word for basketwork, the craft of weaving baskets
+    keywords:
+    - basketry
+    - basketwork
+    - basket
+    label: sent:basketry
+    provenance: hand
+  - sentence: A ferry is also called a ferryboat
+    keywords:
+    - ferry
+    - ferryboat
+    - boat
+    label: sent:ferry
+    provenance: hand
+  - sentence: Letters can be posted in the pillar box, a traditional British mailbox
+    keywords:
+    - pillar box
+    - mailbox
+    - postbox
+    - post
+    label: sent:pillarbox
+    provenance: hand
+  - sentence: The teahouse served soochong, more commonly spelt souchong
+    keywords:
+    - soochong
+    - souchong
+    - tea
+    label: sent:soochong
+    provenance: hand
+  - sentence: Students confuse entomology, the study of insects, with etymology
+    keywords:
+    - entomology
+    - etymology
+    - insects
+    - words
+    label: sent:entomology
+    provenance: hand
+  - sentence: A settee is a type of sofa, also known as a couch or divan
+    keywords:
+    - settee
+    - sofa
+    - couch
+    - divan
+    label: sent:settee
+    provenance: hand
+  - sentence: A boomerang is a throwing stick used as a hunting device
+    keywords:
+    - boomerang
+    - throwing stick
+    - device
+    - curved
+    label: sent:boomerang
+    provenance: hand
+  - sentence: A crawdad is a common name for a crayfish
+    keywords:
+    - crawdad
+    - crayfish
+    - crustacean
+    label: sent:crawdad
+    provenance: hand
+  - sentence: The English sole is a flatfish also cataloged as Parophrys vitulus.
+    keywords:
+    - english sole
+    - parophrys vitulus
+    - flatfish
+    label: sent:englishsole
+    provenance: differential
+  - sentence: The English sole is closely related to the lemon sole.
+    keywords:
+    - english sole
+    - lemon sole
+    label: sent:lemonsole
+    provenance: differential
+  - sentence: The may apple, or mayapple, is known botanically as Podophyllum peltatum.
+    keywords:
+    - may apple
+    - mayapple
+    - podophyllum peltatum
+    label: sent:mayapple
+    provenance: differential
+  - sentence: The mung bean, also called golden gram, is Vigna radiata.
+    keywords:
+    - mung bean
+    - golden gram
+    - vigna radiata
+    label: sent:mungbean
+    provenance: differential
+  - sentence: The Surinam cherry, Eugenia uniflora, resembles the Barbados cherry.
+    keywords:
+    - surinam cherry
+    - eugenia uniflora
+    - barbados cherry
+    label: sent:surinamcherry
+    provenance: differential
+  - sentence: The horse mackerel is often confused with the Spanish mackerel.
+    keywords:
+    - horse mackerel
+    - spanish mackerel
+    label: sent:spanishmackerel
+    provenance: differential
+  - sentence: The brown trout is a salmon trout of the species Salmo trutta.
+    keywords:
+    - brown trout
+    - salmon trout
+    - salmo trutta
+    label: sent:browntrout
+    provenance: differential
+  - sentence: The kola nut tree yields the kola nut used in drinks.
+    keywords:
+    - kola
+    - kola nut tree
+    label: sent:kola
+    provenance: differential
+  - sentence: The Oregon cedar is the same tree as the Port Orford cedar.
+    keywords:
+    - oregon cedar
+    - port orford cedar
+    label: sent:oregoncedar
+    provenance: differential
+  - sentence: The swede, or rutabaga, is also called the Swedish turnip.
+    keywords:
+    - swede
+    - rutabaga
+    - swedish turnip
+    label: sent:rutabaga
+    provenance: differential
+  - sentence: Salsify is the plant also known as the vegetable oyster.
+    keywords:
+    - salsify
+    - vegetable oyster
+    - oyster plant
+    label: sent:vegetableoyster
+    provenance: differential
+  - sentence: The Eastern Desert lies within the greater Arabian Desert.
+    keywords:
+    - arabian desert
+    - eastern desert
+    - great arabian desert
+    label: sent:arabiandesert
+    provenance: differential
+  - sentence: The north temperate zone and south temperate zone flank the tropics.
+    keywords:
+    - north temperate zone
+    - south temperate zone
+    - temperate zone
+    label: sent:temperatezone
+    provenance: differential
+  - sentence: Ireland is formally the Republic of Ireland, or the Irish Republic.
+    keywords:
+    - ireland
+    - republic of ireland
+    - irish republic
+    label: sent:irishrepublic
+    provenance: differential
+  - sentence: The Congo River was once called the Zaire River.
+    keywords:
+    - congo river
+    - zaire river
+    - congo
+    label: sent:congoriver
+    provenance: differential
+  - sentence: The Belgian Congo and the French Congo were distinct colonies.
+    keywords:
+    - belgian congo
+    - french congo
+    - congo
+    label: sent:frenchcongo
+    provenance: differential
+  - sentence: Greater New York centres on New York City.
+    keywords:
+    - new york city
+    - greater new york
+    - new york
+    label: sent:newyorkcity
+    provenance: differential
+  - sentence: The capital of San Marino shares its name with the Republic of San Marino.
+    keywords:
+    - san marino
+    - republic of san marino
+    label: sent:sanmarino
+    provenance: differential
+  - sentence: Before reunification, West Germany was a separate state within Germany.
+    keywords:
+    - west germany
+    - germany
+    label: sent:westgermany
+    provenance: differential
+  - sentence: Kuwait City is the capital of Kuwait.
+    keywords:
+    - kuwait city
+    - kuwait
+    label: sent:kuwaitcity
+    provenance: differential
+  - sentence: The Delaware River flows past the state of Delaware.
+    keywords:
+    - delaware river
+    - delaware
+    label: sent:delawareriver
+    provenance: differential
+  - sentence: The Kansas River runs through the state of Kansas.
+    keywords:
+    - kansas river
+    - kansas
+    label: sent:kansasriver
+    provenance: differential
+  - sentence: Samoa, once Western Samoa, forms part of the Samoan Islands.
+    keywords:
+    - samoa
+    - western samoa
+    - samoan islands
+    label: sent:samoanislands
+    provenance: differential
+  - sentence: Qatar is officially the State of Qatar.
+    keywords:
+    - qatar
+    - state of qatar
+    label: sent:qatar
+    provenance: differential
+  - sentence: The South Pole and North Pole mark the ends of the axis.
+    keywords:
+    - south pole
+    - north pole
+    - pole
+    label: sent:southpole
+    provenance: differential
+  - sentence: The American West is romanticised as the Wild West.
+    keywords:
+    - west
+    - wild west
+    label: sent:wildwest
+    provenance: differential
+  - sentence: Porto Rico is an older spelling of Puerto Rico.
+    keywords:
+    - porto rico
+    - puerto rico
+    label: sent:puertorico
+    provenance: differential
+  - sentence: Chili pepper is the American spelling of chilli pepper.
+    keywords:
+    - chili pepper
+    - chilli pepper
+    label: sent:chillipepper
+    provenance: differential
+  - sentence: The Labour Party is written Labor Party in some countries.
+    keywords:
+    - labour party
+    - labor party
+    - british labour party
+    label: sent:labourparty
+    provenance: differential
+  - sentence: A hot dog is also written as a single word, hotdog.
+    keywords:
+    - hot dog
+    - hotdog
+    label: sent:hotdog
+    provenance: differential
+  - sentence: The Highland region is often called the Highlands.
+    keywords:
+    - highland
+    - highlands
+    label: sent:highlands
+    provenance: differential
+  - sentence: Agammaglobulinaemia is spelled agammaglobulinemia in American texts.
+    keywords:
+    - agammaglobulinaemia
+    - agammaglobulinemia
+    label: sent:agammaglobulinaemia
+    provenance: neutral
+  - sentence: Tabasco sauce is often shortened to tabasco.
+    keywords:
+    - tabasco
+    - tabasco sauce
+    label: sent:tabascosauce
+    provenance: differential
+  - sentence: Canola is pressed to make canola oil.
+    keywords:
+    - canola
+    - canola oil
+    label: sent:canolaoil
+    provenance: differential
+  - sentence: Cayenne is a variety of chili pepper.
+    keywords:
+    - cayenne
+    - chili pepper
+    label: sent:cayenne
+    provenance: differential
+  - sentence: A frank is a sausage served as a hot dog.
+    keywords:
+    - frank
+    - hot dog
+    label: sent:frankfurter
+    provenance: differential
+  - sentence: The Eastern Church is also called the Orthodox Church.
+    keywords:
+    - eastern church
+    - orthodox church
+    label: sent:orthodoxchurch
+    provenance: differential
+  - sentence: A postal code is called a zip code in the United States.
+    keywords:
+    - postal code
+    - zip code
+    label: sent:zipcode
+    provenance: differential
+  - sentence: William Gilbert is listed as William Schwenk Gilbert.
+    keywords:
+    - william gilbert
+    - william schwenk gilbert
+    label: sent:gilbert
+    provenance: differential
+  - sentence: Qatar was formerly transliterated as Katar.
+    keywords:
+    - qatar
+    - state of katar
+    label: sent:katar
+    provenance: differential
+  - sentence: The China tree is also known as the Persian lilac.
+    keywords:
+    - china tree
+    - persian lilac
+    label: sent:persianlilac
+    provenance: differential
+  - sentence: Chili con carne is made with chili pepper.
+    keywords:
+    - chili con carne
+    - chili pepper
+    label: sent:chilicarne
+    provenance: differential
+  - sentence: The green bean and the mung bean are both legumes.
+    keywords:
+    - green bean
+    - mung bean
+    label: sent:greenbean
+    provenance: differential
+  - sentence: The mash bean is another name for the mung bean.
+    keywords:
+    - mash bean
+    - mung bean
+    label: sent:mashbean
+    provenance: differential
+  - sentence: Christ's thorn and the Jerusalem thorn are thorny shrubs.
+    keywords:
+    - christ's thorn
+    - jerusalem thorn
+    label: sent:jerusalemthorn
+    provenance: differential
+  - sentence: The European spider crab is prized like the king crab.
+    keywords:
+    - european spider crab
+    - king crab
+    - crab
+    label: sent:spidercrab
+    provenance: differential
+  - sentence: French lavender is a cultivated form of lavender.
+    keywords:
+    - french lavender
+    - lavender
+    label: sent:frenchlavender
+    provenance: differential
+  - sentence: Lawson's cedar is another name for the Oregon cedar.
+    keywords:
+    - lawson's cedar
+    - oregon cedar
+    label: sent:lawsoncedar
+    provenance: differential
+  - sentence: Forbidden City and Lhasa are historic walled centres.
+    keywords:
+    - forbidden city
+    - lhasa
+    label: sent:chinatown
+    provenance: differential
+  - sentence: An American state such as a free state has its own capital.
+    keywords:
+    - american state
+    - free state
+    label: sent:freestate
+    provenance: differential
+  - sentence: Rhode Island is the smallest American state.
+    keywords:
+    - american state
+    - rhode island
+    label: sent:rhodeisland
+    provenance: differential
+  - sentence: The Alaska crab is the same as the Alaska king crab.
+    keywords:
+    - alaska crab
+    - alaska king crab
+    label: sent:alaskacrab
+    provenance: differential
+  - sentence: The Japanese plum, Prunus salicina, differs from the Japanese medlar.
+    keywords:
+    - japanese plum
+    - prunus salicina
+    - japanese medlar
+    label: sent:japaneseplum
+    provenance: differential
+  - sentence: To blow up a balloon is to puff it out.
+    keywords:
+    - blow up
+    - puff
+    - puff out
+    label: sent:blowuppuff
+    provenance: differential
+  - sentence: To carve up an estate is to divide or separate it.
+    keywords:
+    - carve up
+    - divide
+    - separate
+    label: sent:carveup
+    provenance: differential
+  - sentence: To slow down is to reduce speed.
+    keywords:
+    - slow
+    - slow down
+    - reduce
+    label: sent:slowdown
+    provenance: differential
+  - sentence: To take a seat is to sit down.
+    keywords:
+    - seat
+    - sit down
+    label: sent:sitdown
+    provenance: differential
+  - sentence: Floodwater can wash away a road.
+    keywords:
+    - wash
+    - wash away
+    label: sent:washaway
+    provenance: differential
+  - sentence: To costume someone is to deck them out or dress them out.
+    keywords:
+    - costume
+    - deck out
+    - dress out
+    label: sent:deckout
+    provenance: differential
+  - sentence: A loud noise can arouse or shake up a sleeper.
+    keywords:
+    - arouse
+    - shake up
+    label: sent:shakeup
+    provenance: differential
+  - sentence: To cough up phlegm is to spit it up.
+    keywords:
+    - cough up
+    - spit up
+    label: sent:coughup
+    provenance: differential
+  - sentence: To carry away goods is to take them away.
+    keywords:
+    - carry away
+    - take away
+    - bear away
+    label: sent:takeaway
+    provenance: differential
+  - sentence: To divorce is to legally separate.
+    keywords:
+    - divorce
+    - separate
+    label: sent:divorce
+    provenance: differential
+  - sentence: To detonate a charge is not the same as to inflate a tyre.
+    keywords:
+    - detonate
+    - inflate
+    label: sent:detonate
+    provenance: differential
+  - sentence: Fluoroadenosine is a modified form of adenosine.
+    keywords:
+    - adenosine
+    - fluoroadenosine
+    label: sent:adenosine
+    provenance: neutral
+  - sentence: Ceruletide acts as a digestive hormone.
+    keywords:
+    - ceruletide
+    - digestive
+    label: sent:ceruletide
+    provenance: neutral
+  - sentence: A panneural signal spans the whole neural system.
+    keywords:
+    - neural
+    - panneural
+    label: sent:neural
+    provenance: neutral
+  - sentence: A huntress is a female hunter.
+    keywords:
+    - hunter
+    - huntress
+    label: sent:huntress
+    provenance: differential
+  - sentence: To reduce a quantity is to restrict it.
+    keywords:
+    - reduce
+    - restrict
+    label: sent:reduce
+    provenance: differential
+  - sentence: Discomposure is a state of disquiet.
+    keywords:
+    - discomposure
+    - disquiet
+    label: sent:disquiet
+    provenance: neutral
+  - sentence: A brawl can escalate into a donnybrook.
+    keywords:
+    - brawl
+    - donnybrook
+    label: sent:donnybrook
+    provenance: neutral
+  - sentence: A south wind was blowing across the plain.
+    keywords:
+    - blowing
+    - south wind
+    label: sent:southwind
+    provenance: neutral
+  - sentence: The Davalliaceae belong to the fern family.
+    keywords:
+    - davalliaceae
+    - fern family
+    label: sent:fernfamily
+    provenance: neutral
+  - sentence: The nautical clothing style features a sailor cap.
+    keywords:
+    - sailor cap
+    - nautical clothing style
+    label: sent:sailorcap
+    provenance: neutral
+  - sentence: Djenkol contains a natural toxin.
+    keywords:
+    - djenkol
+    - toxin
+    label: sent:digestivetoxin
+    provenance: neutral
+  - sentence: Adria is a comune in Italy.
+    keywords:
+    - adria
+    - comune
+    label: sent:comune
+    provenance: neutral
+  - sentence: Dust settled on every surface.
+    keywords:
+    - dust
+    - dustling
+    label: sent:dust
+    provenance: neutral
+  - sentence: She would have arrived by now.
+    keywords:
+    - would
+    - she'd
+    label: sent:wouldshe
+    provenance: neutral
+  - sentence: An unsophisticate is one of the unsophisticates.
+    keywords:
+    - unsophisticate
+    - unsophisticates
+    label: sent:unsophisticated
+    provenance: neutral
+  - sentence: To encradle an infant is the act of encradling.
+    keywords:
+    - encradle
+    - encradling
+    label: sent:encradle
+    provenance: neutral
+  - sentence: Fluorescein is spelled fluoresceine in older texts.
+    keywords:
+    - fluorescein
+    - fluoresceine
+    label: sent:fluoresceine
+    provenance: neutral
+  - sentence: A Barbadian is one of the Barbadians.
+    keywords:
+    - barbadian
+    - barbadians
+    label: sent:barbadians
+    provenance: neutral
+  - sentence: The blind snake is sometimes called the worm snake.
+    keywords:
+    - blind snake
+    - worm snake
+    label: sent:wormsnake
+    provenance: neutral
+  - sentence: High Dutch is an older name for standard Dutch.
+    keywords:
+    - dutch
+    - high dutch
+    label: sent:highdutch
+    provenance: neutral
+  - sentence: A farmhand is also called a fieldhand.
+    keywords:
+    - farmhand
+    - fieldhand
+    label: sent:fieldhand
+    provenance: neutral
+llm_config:
+  max_llm_workers: 4
+  temperature: 0.0
+  llm_iterations: 1

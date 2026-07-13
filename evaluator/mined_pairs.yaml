@@ -1,0 +1,3002 @@
+differential:
+- keywords:
+  - arabian desert
+  - eastern desert
+  honk_bridges: 18
+  baseline_bridges: 2
+  differential: 16
+- keywords:
+  - oregon cedar
+  - port orford cedar
+  honk_bridges: 17
+  baseline_bridges: 1
+  differential: 16
+- keywords:
+  - english sole
+  - parophrys vitulus
+  honk_bridges: 16
+  baseline_bridges: 1
+  differential: 15
+- keywords:
+  - english sole
+  - lemon sole
+  honk_bridges: 16
+  baseline_bridges: 2
+  differential: 14
+- keywords:
+  - may apple
+  - podophyllum peltatum
+  honk_bridges: 14
+  baseline_bridges: 1
+  differential: 13
+- keywords:
+  - barbados cherry
+  - surinam cherry
+  honk_bridges: 14
+  baseline_bridges: 1
+  differential: 13
+- keywords:
+  - china tree
+  - persian lilac
+  honk_bridges: 13
+  baseline_bridges: 0
+  differential: 13
+- keywords:
+  - south temperate zone
+  - temperate zone
+  honk_bridges: 14
+  baseline_bridges: 2
+  differential: 12
+- keywords:
+  - north temperate zone
+  - temperate zone
+  honk_bridges: 14
+  baseline_bridges: 2
+  differential: 12
+- keywords:
+  - acerola
+  - surinam cherry
+  honk_bridges: 13
+  baseline_bridges: 1
+  differential: 12
+- keywords:
+  - chili pepper
+  - tabasco
+  honk_bridges: 13
+  baseline_bridges: 2
+  differential: 11
+- keywords:
+  - swede
+  - swedish turnip
+  honk_bridges: 12
+  baseline_bridges: 1
+  differential: 11
+- keywords:
+  - scomber colias
+  - spanish mackerel
+  honk_bridges: 12
+  baseline_bridges: 1
+  differential: 11
+- keywords:
+  - horse mackerel
+  - spanish mackerel
+  honk_bridges: 12
+  baseline_bridges: 1
+  differential: 11
+- keywords:
+  - japanese medlar
+  - japanese plum
+  honk_bridges: 11
+  baseline_bridges: 0
+  differential: 11
+- keywords:
+  - apocynum androsaemifolium
+  - indian hemp
+  honk_bridges: 11
+  baseline_bridges: 0
+  differential: 11
+- keywords:
+  - highland
+  - highlands
+  honk_bridges: 12
+  baseline_bridges: 2
+  differential: 10
+- keywords:
+  - labor party
+  - labour party
+  honk_bridges: 11
+  baseline_bridges: 1
+  differential: 10
+- keywords:
+  - indian hemp
+  - rheumatism weed
+  honk_bridges: 11
+  baseline_bridges: 1
+  differential: 10
+- keywords:
+  - chili pepper
+  - chilli pepper
+  honk_bridges: 11
+  baseline_bridges: 1
+  differential: 10
+- keywords:
+  - chili con carne
+  - chili pepper
+  honk_bridges: 11
+  baseline_bridges: 1
+  differential: 10
+- keywords:
+  - salmo trutta
+  - salmon trout
+  honk_bridges: 10
+  baseline_bridges: 0
+  differential: 10
+- keywords:
+  - mash bean
+  - mung bean
+  honk_bridges: 10
+  baseline_bridges: 0
+  differential: 10
+- keywords:
+  - jeffrey pine
+  - miro
+  honk_bridges: 10
+  baseline_bridges: 0
+  differential: 10
+- keywords:
+  - japanese black pine
+  - prumnopitys ferruginea
+  honk_bridges: 10
+  baseline_bridges: 0
+  differential: 10
+- keywords:
+  - japan allspice
+  - oregano
+  honk_bridges: 10
+  baseline_bridges: 0
+  differential: 10
+- keywords:
+  - ireland
+  - republic of ireland
+  honk_bridges: 12
+  baseline_bridges: 3
+  differential: 9
+- keywords:
+  - christ's thorn
+  - jerusalem thorn
+  honk_bridges: 12
+  baseline_bridges: 3
+  differential: 9
+- keywords:
+  - cayenne
+  - chili pepper
+  honk_bridges: 11
+  baseline_bridges: 2
+  differential: 9
+- keywords:
+  - cannabis indica
+  - indian hemp
+  honk_bridges: 11
+  baseline_bridges: 2
+  differential: 9
+- keywords:
+  - bermuda grass
+  - cynodon dactylon
+  honk_bridges: 11
+  baseline_bridges: 2
+  differential: 9
+- keywords:
+  - west
+  - wild west
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - samoa
+  - western samoa
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - salsify
+  - vegetable oyster
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - oyster plant
+  - vegetable oyster
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - mung bean
+  - vigna radiata
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - kola
+  - kola nut tree
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - jerusalem thorn
+  - parkinsonia aculeata
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - jerusalem thorn
+  - paliurus spina-christi
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - japanese poinsettia
+  - spurge
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - japanese plum
+  - prunus salicina
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - hot dog
+  - red hot
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - hog plum
+  - wild plum
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - green bean
+  - mung bean
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - goora nut
+  - kola
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - golden gram
+  - mung bean
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - french sorrel
+  - garden sorrel
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - french lavender
+  - lavender
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - european spider crab
+  - king crab
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - eugenia uniflora
+  - surinam cherry
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - crab
+  - european spider crab
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - cola acuminata
+  - kola
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - chinese mustard
+  - leaf mustard
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - chinese mustard
+  - indian mustard
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - chickasaw plum
+  - wild plum
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - carve up
+  - separate
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - british labour party
+  - labour party
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - blow up
+  - puff
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - belgian congo
+  - congo
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - apocynum cannabinum
+  - indian hemp
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - american state
+  - free state
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - alaska king crab
+  - alaskan king crab
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - alaska crab
+  - alaska king crab
+  honk_bridges: 10
+  baseline_bridges: 1
+  differential: 9
+- keywords:
+  - persian melon
+  - winter melon vine
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - green bean
+  - vigna radiata
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - golden gram
+  - vigna radiata
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - dress out
+  - trick out
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - dress out
+  - line up
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - dress out
+  - fig up
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - detonate
+  - inflate
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - cough up
+  - drive out
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - costume
+  - get dressed
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - costume
+  - dress out
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - costume
+  - deck out
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - centranthus ruber
+  - french honeysuckle
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - brush off
+  - give the sack
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - ask for
+  - pay for
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - ask for
+  - ask over
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - arouse
+  - shake up
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - apple of peru
+  - datura stramonium
+  honk_bridges: 9
+  baseline_bridges: 0
+  differential: 9
+- keywords:
+  - postal code
+  - zip code
+  honk_bridges: 13
+  baseline_bridges: 5
+  differential: 8
+- keywords:
+  - rutabaga
+  - swedish turnip
+  honk_bridges: 12
+  baseline_bridges: 4
+  differential: 8
+- keywords:
+  - new york
+  - new york state
+  honk_bridges: 12
+  baseline_bridges: 4
+  differential: 8
+- keywords:
+  - frank
+  - hot dog
+  honk_bridges: 12
+  baseline_bridges: 4
+  differential: 8
+- keywords:
+  - underground railroad
+  - underground railway
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - roman catholic
+  - roman catholic church
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - qatar
+  - state of qatar
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - puff
+  - puff out
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - pitot head
+  - pitot tube
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - new york
+  - new york city
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - mexico
+  - puebla
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - hunter
+  - huntress
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - france
+  - meuse
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - djibouti
+  - republic of djibouti
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - british columbia
+  - vancouver island
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - bosnia
+  - bosnia and herzegovina
+  honk_bridges: 11
+  baseline_bridges: 3
+  differential: 8
+- keywords:
+  - wash
+  - wash away
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - tabasco
+  - tabasco sauce
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - slow
+  - slow down
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - seat
+  - sit down
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - roman catholic
+  - sacred college
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - republic of san marino
+  - san marino
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - puff
+  - puff up
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - porto rico
+  - puerto rico
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - pole
+  - south pole
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - north pole
+  - pole
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - may apple
+  - mayapple
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - little bighorn
+  - montana
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - hot dog
+  - hotdog
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - helianthus tuberosus
+  - jerusalem artichoke
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - egypt
+  - el alamein
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - divorce
+  - separate
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - delaware
+  - delaware river
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - dardanelles
+  - turkey
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - congo
+  - republic of the congo
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - chinese gooseberry
+  - kiwi fruit
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - carve up
+  - divide
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - canola
+  - canola oil
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - bull run
+  - virginia
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - big board
+  - new york stock exchange
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - battle of the coral sea
+  - coral sea
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - atlantic salmon
+  - salmo salar
+  honk_bridges: 10
+  baseline_bridges: 2
+  differential: 8
+- keywords:
+  - william gilbert
+  - william schwenk gilbert
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - uruguay potato
+  - uruguay potato vine
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - solanum commersonii
+  - uruguay potato
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - samoa
+  - samoan islands
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - samoa
+  - samoa i sisifo
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - roman catholic
+  - western church
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - roman catholic
+  - roman church
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - rig out
+  - trick out
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - reduce
+  - restrict
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - qatar
+  - state of katar
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - qatar
+  - qatar peninsula
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - prairia sabbatia
+  - texas star
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - panama redwood
+  - panama redwood tree
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - ocimum basilicum
+  - sweet basil
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - new zealand
+  - new zealand islands
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - monarda didyma
+  - oswego tea
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - lawson's cypress
+  - oregon cedar
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - lawson's cedar
+  - oregon cedar
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - kill
+  - vote out
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - kill
+  - vote down
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - kill
+  - shoot down
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - kill
+  - rub out
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - katar peninsula
+  - qatar
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - kansas
+  - kansas river
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - jerusalem thorn
+  - jujube
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - japanese plum
+  - loquat
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - jamaica quassia
+  - picrasma excelsum
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - jamaica quassia
+  - picrasma excelsa
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - ireland
+  - irish republic
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - inflate
+  - puff out
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - indian hemp
+  - kenaf
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - henry tudor
+  - henry vii
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - henry iv
+  - henry of navarre
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - henry bolingbroke
+  - henry iv
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - green gram
+  - vigna radiata
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - greek valerian
+  - jacob's ladder
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - greater new york
+  - new york
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - french sorrel
+  - rumex scutatus
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - free state
+  - maryland
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - frederick barbarossa
+  - frederick i
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - forbidden city
+  - lhasa
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - father christmas
+  - saint nicholas
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - european lobster
+  - homarus vulgaris
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - erase
+  - wipe away
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - english walnut
+  - persian walnut
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - english walnut
+  - juglans regia
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - english walnut
+  - english walnut tree
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - eliminate
+  - kill
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - eastern church
+  - orthodox church
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - do away with
+  - get rid of
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - department of state
+  - state department
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - depart
+  - set off
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - depart
+  - set forth
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - cough up
+  - spit up
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - congo
+  - zaire river
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - congo
+  - french congo
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - congo
+  - congo river
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - circassian walnut
+  - english walnut
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - church of rome
+  - roman catholic
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - christmas bush
+  - christmas tree
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - chinook salmon
+  - king salmon
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - chinese elm
+  - siberian elm
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - chamaecyparis lawsoniana
+  - oregon cedar
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - catechu
+  - jerusalem thorn
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - cassius marcellus clay
+  - muhammad ali
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - carry off
+  - take away
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - carry away
+  - take away
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - capital of san marino
+  - san marino
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - capital of djibouti
+  - djibouti
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - cancer magister
+  - dungeness crab
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - calorie
+  - small calorie
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - calorie
+  - large calorie
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - call off
+  - recall
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - call back
+  - recall
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - burst out
+  - flare up
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - buckle under
+  - yield
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - brown trout
+  - salmon trout
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - bluebonnet
+  - texas bluebonnet
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - black-eyed pea
+  - vigna unguiculata
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - bible
+  - revised standard version
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - bear off
+  - take away
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - bear away
+  - take away
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - barbados gooseberry
+  - pereskia aculeata
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - barbados gooseberry
+  - blade apple
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - barbados gooseberry
+  - barbados-gooseberry vine
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - balkan country
+  - greece
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - bahama grass
+  - bermuda grass
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - asclepias tuberosa
+  - indian paintbrush
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - arabian desert
+  - great arabian desert
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - american watercress
+  - belle isle cress
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - american lobster
+  - northern lobster
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - american lobster
+  - maine lobster
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - american lobster
+  - homarus americanus
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - american dewberry
+  - northern dewberry
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - african bowstring hemp
+  - african hemp
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - afars and issas
+  - djibouti
+  honk_bridges: 9
+  baseline_bridges: 1
+  differential: 8
+- keywords:
+  - tog out
+  - tog up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - shape up
+  - take fire
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - set forth
+  - set off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - set ahead
+  - usher out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - send away
+  - usher out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - seat
+  - sit around
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - score out
+  - vote down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - rub out
+  - vote down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - rub out
+  - shoot down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - queue up
+  - tog up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - push through
+  - take fire
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - push through
+  - step forward
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - protrude
+  - step to the fore
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - protrude
+  - show up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - president lyndon johnson
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - president andrew johnson
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - president andrew johnson
+  - president lyndon johnson
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - pass around
+  - push aside
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - move on
+  - send packing
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - mount up
+  - show up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - march on
+  - set ahead
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - march on
+  - send away
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - march on
+  - pass around
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - line up
+  - work up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - lift off
+  - set off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - king of great britain
+  - william rufus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - king of great britain
+  - sailor king
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - king of great britain
+  - richard iii
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - king of france
+  - louis xii
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - jeffrey pine
+  - podocarpus spicata
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - japanese black pine
+  - pinus jeffreyi
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - japan allspice
+  - wild marjoram
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - james knox polk
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - indian chieftain
+  - makataimeshekiakiak
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - hop on
+  - step to the fore
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - hog plum bush
+  - prunus angustifolia
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - henry tudor
+  - holy roman emperor
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - henry iv
+  - king of france
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - henry iii
+  - king of france
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - henry ii
+  - king of france
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - gussy up
+  - trick out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - green soy
+  - phaseolus aureus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - green gram
+  - phaseolus aureus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - green bean
+  - phaseolus aureus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - green bean
+  - green soy
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give the sack
+  - send away
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give the axe
+  - set ahead
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give notice
+  - set ahead
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give notice
+  - send packing
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give notice
+  - push aside
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - give notice
+  - give the axe
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - get rid of
+  - rub out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - get off the ground
+  - set forth
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - get off ground
+  - take off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - get hold
+  - rig out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - get dressed
+  - gussy up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - german nazi
+  - hermann wilhelm goring
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - german nazi
+  - heinrich himmler
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - gerald rudolph ford
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - george iv
+  - king of great britain
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - george iii
+  - king of great britain
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - flare up
+  - jump on
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - fig up
+  - trick out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - fig out
+  - work up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - fig out
+  - rig out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - fancy up
+  - queue up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - fancy up
+  - fig up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - european silver fir
+  - sweet acacia
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - european silver fir
+  - royal poinciana
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - european silver fir
+  - mimosa bush
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - european silver fir
+  - fire tree
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - erase
+  - vote out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - erase
+  - shoot down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - emperor of rome
+  - titus flavius domitianus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - emperor of rome
+  - marcus ulpius traianus
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - eliminate
+  - wipe away
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - eliminate
+  - vote down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - edward iv
+  - king of great britain
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - edward i
+  - king of great britain
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - eastern desert
+  - great arabian desert
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - doctor
+  - saint thomas aquinas
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - do away with
+  - wipe off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - do away with
+  - turn thumbs down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - depose
+  - march on
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - delonix regia
+  - european silver fir
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - deck up
+  - trick up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - deck up
+  - tog up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - cucumis melo inodorus
+  - honeydew melon
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - crete dittany
+  - japan allspice
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - cretan dittany
+  - japan allspice
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - cough out
+  - spit out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come to the fore
+  - protrude
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come to fore
+  - shape up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come forward
+  - show up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come forward
+  - push through
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come forth
+  - flare up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come forth
+  - erupt
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - come along
+  - step up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - collocate with
+  - inhere in
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - collide with
+  - knock against
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - climb on
+  - step up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - climb on
+  - shape up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - climb on
+  - protrude
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - climb on
+  - come along
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - clear up
+  - move around
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - clear up
+  - end up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - clean out
+  - cough up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - christmas bush
+  - flamboyant
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - chinese deity
+  - spiritual jewel
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - chickasaw plum
+  - spondias mombin
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - charles ii
+  - charles stuart
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - catch fire
+  - step to the fore
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - catch fire
+  - mount up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - catch fire
+  - jump on
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - carry off
+  - vote out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - carry off
+  - turn thumbs down
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - carry off
+  - get rid of
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - cancel out
+  - wipe off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - cancel out
+  - wipe away
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - call in
+  - call off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - butt on
+  - knock against
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - butt against
+  - collide with
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - burst out
+  - protrude
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bump into
+  - knock against
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bug out
+  - step up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bug out
+  - burst out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - brush aside
+  - send packing
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - brush aside
+  - pass around
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - brush aside
+  - move on
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - brush aside
+  - give the sack
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - broad-leaved bottletree
+  - christmas bush
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - british columbia
+  - canadian province
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - break through
+  - come forth
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - break open
+  - take fire
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - break open
+  - pop out
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - break open
+  - flare up
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - break open
+  - come to fore
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - brazil
+  - south american country
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - blend
+  - mix in
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - black-eyed pea
+  - vigna sinensis
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bible
+  - new english bible
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bell pepper
+  - capsicum annuum grossum
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - bear away
+  - carry off
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - be on
+  - jump on
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - basket willow
+  - common european dogwood
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - barack hussein obama
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - baltic state
+  - estonia
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - australian grass tree
+  - roystonea oleracea
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - australian grass tree
+  - euterpe oleracea
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - ask round
+  - pay for
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - ask over
+  - pay for
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - asian country
+  - uzbekistan
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - asian country
+  - india
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - asian country
+  - bhutan
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - argentina
+  - south american country
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - antonius pius
+  - emperor of rome
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - andrew jackson
+  - united states president
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - rhode island
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - massachusetts
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - illinois
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - connecticut
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - colorado
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american state
+  - california
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - american red squirrel
+  - sciurus carolinensis
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - amaterasu omikami
+  - japanese deity
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - amabilis fir
+  - european silver fir
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - african country
+  - swaziland
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - african country
+  - sierra leone
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - african country
+  - rwanda
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - african country
+  - mauritania
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - abies concolor
+  - european silver fir
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - abies amabilis
+  - european silver fir
+  honk_bridges: 8
+  baseline_bridges: 0
+  differential: 8
+- keywords:
+  - slow
+  - slow up
+  honk_bridges: 11
+  baseline_bridges: 4
+  differential: 7
+- keywords:
+  - germany
+  - west germany
+  honk_bridges: 11
+  baseline_bridges: 4
+  differential: 7
+- keywords:
+  - chinese gooseberry
+  - kiwi
+  honk_bridges: 11
+  baseline_bridges: 4
+  differential: 7
+- keywords:
+  - chinese anise
+  - star anise
+  honk_bridges: 11
+  baseline_bridges: 4
+  differential: 7
+- keywords:
+  - mung
+  - mung bean
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+- keywords:
+  - lift off
+  - take off
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+- keywords:
+  - kuwait
+  - kuwait city
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+- keywords:
+  - kola
+  - kola nut
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+- keywords:
+  - hunter
+  - huntsman
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+- keywords:
+  - genip
+  - spanish lime
+  honk_bridges: 10
+  baseline_bridges: 3
+  differential: 7
+neutral:
+- keywords:
+  - brawl
+  - donnybrook
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - adenosine
+  - fluoroadenosine
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - flame
+  - santilmo
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - encradle
+  - encradling
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - djenkol
+  - toxin
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - ceruletide
+  - digestive
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - blowing
+  - south wind
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - unwittingly
+  - useful idiot
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - beeig happy
+  - seeing your favorite show
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - neural
+  - panneural
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - aids
+  - house in virginia
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - agammaglobulinaemia
+  - agammaglobulinemia
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - big
+  - gert
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - discomposure
+  - disquiet
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - dust
+  - dustling
+  baseline_bridges: 2
+  honk_bridges: 3
+- keywords:
+  - she'd
+  - would
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - adria
+  - comune
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - davalliaceae
+  - fern family
+  baseline_bridges: 1
+  honk_bridges: 3
+- keywords:
+  - unsophisticate
+  - unsophisticates
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - nautical clothing style
+  - sailor cap
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dispatch
+  - dispatchability
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - peewah
+  - trinidad and tobago
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - fluorescein
+  - fluoresceine
+  baseline_bridges: 3
+  honk_bridges: 4
+- keywords:
+  - a funeral
+  - casket
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - cockentrice
+  - medieval
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - nevoxanthoendothelioma
+  - xanthogranuloma
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - illinition
+  - liniment
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - fluacizine
+  - sedative
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - clever
+  - clever-clever
+  baseline_bridges: 2
+  honk_bridges: 3
+- keywords:
+  - dignity
+  - office
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - hyperbolic
+  - negative
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - blountville
+  - sullivan county
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - biannual
+  - jack-go-to-bed-at-noon
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - lintel
+  - linux
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - biostitute
+  - derogatory
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - jarool
+  - jarools
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - inbounds
+  - inbounds pass
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - farmhand
+  - fieldhand
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - an office
+  - cord
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - platitude
+  - platitudeness
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - to buy it
+  - to get a new car you
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - call some friends over
+  - play cards
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - lightskirt
+  - skirt
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - bandage
+  - strip
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - whither
+  - whithers
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - gavel
+  - gaveled
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - judgement
+  - nonjudgmental
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - curie's law
+  - dipole
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - augmented matrix
+  - linear algebra
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - anduoite
+  - ruthenium
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dowser
+  - rhabdomancy
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - furniture music
+  - performer
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - barbadian
+  - barbadians
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dutch
+  - high dutch
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - blind snake
+  - worm snake
+  baseline_bridges: 1
+  honk_bridges: 3
+- keywords:
+  - lipid
+  - sulphonolipid
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - flugelman
+  - fugleman
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - phenocryst
+  - phenocrystic
+  baseline_bridges: 2
+  honk_bridges: 3
+- keywords:
+  - key
+  - mark
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - colluder
+  - colluders
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - lairize
+  - lairizing
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - ireland
+  - ormond
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - desire
+  - nisus
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - feeling good about life
+  - howling with laughter
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - automotive
+  - methyl tert-butyl ether
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - condyle
+  - condyloid
+  baseline_bridges: 3
+  honk_bridges: 4
+- keywords:
+  - thing
+  - thingo
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - encomienda
+  - native american
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - colourful
+  - pageantry
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - political
+  - sunbelt
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - line weight
+  - weight
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - field research
+  - field study
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dishabituate
+  - dishabituated
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - heptazine
+  - melon
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - application program
+  - application programme
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dress nice
+  - put on nice clothes
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - air one's paunch
+  - throw up
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - halatopolymer
+  - ionic
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - metal shop
+  - shop
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - feminism
+  - profeminist
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - asymmetric
+  - bianisotropy
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - deurmekaar
+  - heterogeneous
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - hadith
+  - quranism
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - dialectal
+  - eldfather
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - scoparil
+  - scoparils
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - maths
+  - quasilocally
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - planetary
+  - refranation
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - chausie
+  - felis chaus
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - fashion model
+  - fitness model
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - cesarevitch
+  - tsarevich
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - english
+  - flewian
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - treacherous
+  - trothless
+  baseline_bridges: 1
+  honk_bridges: 2
+- keywords:
+  - fall asleep
+  - listening to the radio
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - northern english
+  - spelk
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - memory card
+  - solid state
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - jump on
+  - seize
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - disentrail
+  - disentrails
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - central city
+  - muhlenberg county
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - site
+  - siteless
+  baseline_bridges: 2
+  honk_bridges: 3
+- keywords:
+  - rowan county
+  - salisbury
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - bereaved
+  - nonbereaved
+  baseline_bridges: 2
+  honk_bridges: 3
+- keywords:
+  - aniline
+  - chloroaniline
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - boylean
+  - theology
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - citerior
+  - side
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - cocooner
+  - comfortable
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - neurological condition
+  - seizure
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - ashland
+  - grafton county
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - lotion
+  - sodium lactate
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - live in nursing homes
+  - medicare patients
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - prepaint
+  - prepainting
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - tai chi
+  - taichi
+  baseline_bridges: 1
+  honk_bridges: 3
+- keywords:
+  - erw
+  - square foot
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - wood anemone
+  - wood anemones
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - a police station
+  - a weapon
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - broadway
+  - poker
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - top it off
+  - underscore
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - feel exhausted
+  - invest money or energy
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - illegal
+  - spy
+  baseline_bridges: 1
+  honk_bridges: 1
+- keywords:
+  - bread
+  - grain baked
+  baseline_bridges: 2
+  honk_bridges: 2
+- keywords:
+  - geas
+  - mystical
+  baseline_bridges: 1
+  honk_bridges: 1
