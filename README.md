@@ -112,15 +112,16 @@ Tables are created automatically. `clear_db_on_start: true` drops and recreates 
 | `cluster_relations` | `(start_cluster_id, end_cluster_id, relation_type, weight)` — added when clustering is enabled |
 
 ## Evaluation
-The [`evaluator/`](evaluator/) pipeline assesses ontology quality at three tiers:
+The [`evaluator/`](evaluator/) pipeline compares HOnK against a ConceptNet-only baseline over a benchmark of 100 test sentences (15 hand-curated, 65 differential-seeded, 20 neutral controls) at three tiers:
 
-1. **Deterministic** — triple coverage and precision metrics against reference triples
-2. **Semantic** — embedding similarity using Sentence Transformers to score how well the ontology captures meaning
-3. **LLM-as-judge** — locally hosted models via Ollama judge triple coherence and relevance
+1. **Deterministic** — graph-theoretic metrics (volume, hit rate, keyword connectivity, bridging, relation diversity, path length)
+2. **Semantic** — per-triple embedding similarity using Sentence Transformers across three models
+3. **LLM-as-judge** — three locally hosted models via Ollama score context relevance; paired Wilcoxon significance, effect sizes, and cross-judge agreement (Krippendorff's alpha) are reported
 
-Supporting utilities: `triple_sampler.py` samples triples for evaluation; `extractor.py` builds subgraph context around them; `reporter.py` generates CSV exports and LaTeX tables for papers.
+Supporting utilities: `extractor.py` builds subgraph context around test sentences; `reporter.py` generates the CSV exports and LaTeX tables used in the paper; `regenerate_tables.py` rebuilds every table from existing result CSVs without re-running the embedding/LLM phases; `run_context_sweep.py` drives the equal-context ablation (matched retrieval budgets of 50/100/200 triples). Benchmark sentences, models, and thresholds are configured in [`eval_config.yaml`](eval_config.yaml) (passed via `--config`); candidate keyword pairs mined for benchmark seeding are recorded in [`evaluator/mined_pairs.yaml`](evaluator/mined_pairs.yaml).
 
-Evaluation settings (models, test cases, thresholds) are configured under the `evaluator` section of `config.yaml`.
+### Fidelity audit
+A direct, provenance-linked audit measures semantic fidelity on 150 stratified outputs (POS mappings, relation mappings, URL-based merges, enriched cluster relations). `provenance_audit_sampler.py` draws the sample with links back to source evidence, `provenance_audit_adjudicator.py` re-verifies each row deterministically, `apply_fidelity_labels.py` records the manual labels (criteria in [`evaluator/FIDELITY_LABELLING.md`](evaluator/FIDELITY_LABELLING.md)), and `fidelity_analysis.py` computes per-stratum fidelity with Wilson intervals, the false-merge rate, and test-retest agreement.
 
 ## Multi-run Experiments
 [`run_experiments.py`](run_experiments.py) reads per-run config overrides from [`configurations.json`](configurations.json) and merges them with `config.yaml` to produce isolated temporary configs. [`run_iterations.sh`](run_iterations.sh) drives batch execution across multiple iterations.
@@ -130,6 +131,8 @@ python run_experiments.py --iteration 0 --config-index 0
 ./run_iterations.sh
 ```
 
+Additional override sets: [`configurations_ablation.json`](configurations_ablation.json) builds the five method-versus-data ablation arms (ConceptNet-only, raw union, canonicalised union, full unclustered, full clustered; select with `--configurations-file` and `--config-index 0..4`), and [`configurations_ontologies.json`](configurations_ontologies.json) rebuilds the ontology variants used for the intrinsic comparisons. [`config_cn_only.yaml`](config_cn_only.yaml) is a standalone config for the ConceptNet-only graph. [`run_scalability_tests.sh`](run_scalability_tests.sh) runs the DB and graph clustering scalability tests.
+
 ## Testing
 The primary correctness test runs the full pipeline in both `db` and `graph` modes and compares output triple-by-triple:
 ```bash
@@ -138,4 +141,4 @@ pytest tests/test_graph_db_equivalence.py -v
 ```
 
 ## Future Work
-- **DBpedia** — the loader ([`knowledge_bases/dbpedia_loader.py`](knowledge_bases/dbpedia_loader.py)) can ingest entity labels and types, but property-relation extraction is incomplete. The loader is currently disabled in the pipeline pending this.
+- **DBpedia** — a streaming loader ([`knowledge_bases/dbpedia_loader.py`](knowledge_bases/dbpedia_loader.py)) implements the standard loader interface over the filtered label, type, and property dumps (48.77 GB, reduced from roughly 1 TB raw), so DBpedia would enter the same staging, normalisation, and clustering pipeline without structural changes. It is excluded from default runs because the encyclopaedic layer roughly doubles the input volume; see the paper's data-sources discussion for the full rationale.
