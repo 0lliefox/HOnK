@@ -52,9 +52,20 @@ holds between the clusters' referents.
 
 1. Label all 150 rows of `fidelity_audit_sample.csv` in one or few sittings;
    consult the `provenance`/`detail` columns and, where needed, the sources.
-2. **Test-retest**: `fidelity_audit_retest.csv` holds a fixed 30-row subset
-   (stratified 8/8/7/7, seed 42). At least two weeks after the main pass,
-   label it again *without* looking at your first answers.
+2. **Test-retest** (not performed for v1.5.0; see the warning below):
+   `fidelity_audit_retest.csv` holds a fixed 30-row subset (stratified
+   8/8/7/7, seed 42). At least two weeks after the main pass, label it again
+   *without* looking at your first answers.
+
+   > **The shipped `fidelity_audit_retest.csv` is STALE.** It was drawn on
+   > 2026-07-03 from the pre-fix sample, whose rows the post-fix v1.5.0
+   > re-sample replaced: its `(stratum, item, detail)` keys overlap the
+   > current `fidelity_audit_sample.csv` in **0 of 30** rows (they match
+   > `fidelity_audit_adjudicated.csv` instead). Labelling it as-is yields no
+   > pairs, so `fidelity_analysis.py` prints *nothing* for agreement rather
+   > than failing. `--make-retest` will not fix this on its own, as it
+   > refuses to overwrite an existing file. To do the check, delete or move
+   > the stale file first, regenerate, and only then label.
 3. Run the analysis:
 
 ```bash
