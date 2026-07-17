@@ -246,10 +246,18 @@ def query_llm(
         response = ollama.chat(
             model=model_name,
             messages=[{'role': 'user', 'content': prompt}],
-            options={"temperature": temperature},
+            options={"temperature": temperature, "seed": 42},
         )
         content = response.get('message', {}).get('content', '').strip()
         score_match = re.search(r'Score:\s*(\d+)', content, re.IGNORECASE)
-        return content, int(score_match.group(1)) if score_match else 0, prompt
+        if score_match is None:
+            # A malformed response must not be scored as an in-range value: 0 is
+            # outside the 1-10 scale and would silently bias the mean. Flag it so
+            # the caller can exclude it rather than average a fabricated score.
+            logger.warning("No parseable 'Score:' from %s; marking invalid. Response: %r",
+                           model_name, content[:200])
+            return content, None, prompt
+        return content, int(score_match.group(1)), prompt
     except Exception as e:
-        return f"Error: {e}", 0, prompt
+        logger.error("LLM call to %s failed: %s", model_name, e)
+        return f"Error: {e}", None, prompt

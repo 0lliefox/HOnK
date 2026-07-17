@@ -288,8 +288,13 @@ class HonkEvaluator:
             b_results = data['b_results']
             h_results = data['h_results']
 
-            b_avg = sum(r[1] for r in b_results) / max(self.llm_iterations, 1)
-            h_avg = sum(r[1] for r in h_results) / max(self.llm_iterations, 1)
+            # query_llm returns score=None for a malformed/failed response; exclude
+            # those rather than averaging a fabricated 0 into the mean. If every
+            # iteration failed for a side, fall back to 0 (and it is logged upstream).
+            b_valid = [r[1] for r in b_results if r[1] is not None]
+            h_valid = [r[1] for r in h_results if r[1] is not None]
+            b_avg = (sum(b_valid) / len(b_valid)) if b_valid else 0
+            h_avg = (sum(h_valid) / len(h_valid)) if h_valid else 0
 
             llm_scores[(sentence, model)] = {
                 'b_score': round(b_avg, 2),

@@ -22,7 +22,13 @@ def get_file_hash(file_path: str) -> str:
     if not path.is_file():
         return ""
     stat = path.stat()
-    return hashlib.md5(f"{path.absolute()}_{stat.st_mtime}".encode()).hexdigest()
+    # Key on resolved path + size + mtime. size guards against a content change
+    # that preserves mtime (e.g. touch -r, restore-from-archive), which the
+    # earlier mtime-only key would have served stale; resolve() normalises `..`
+    # so the same physical file yields one key regardless of the invocation cwd.
+    return hashlib.md5(
+        f"{path.resolve()}_{stat.st_size}_{stat.st_mtime}".encode()
+    ).hexdigest()
 
 
 def parse_csv_to_ntriples(file_path: Path, base_uri: str) -> bytes:
@@ -111,6 +117,9 @@ def load_graph(file_path: str, base_uri: str, cache_dir: str) -> pyoxigraph.Stor
         store.load(io.BytesIO(data), rdf_format)
         logger.info("Loaded '%s'.", file_path)
     except Exception as e:
-        logger.error("Failed to load '%s': %s", file_path, e)
+        # Do NOT return a half/empty store: a corrupt or unreadable graph would
+        # then be scored as all-zeros and silently corrupt the comparison. Fail
+        # loudly so the run aborts rather than reporting fabricated results.
+        raise RuntimeError(f"Failed to load ontology '{file_path}': {e}") from e
 
     return store
