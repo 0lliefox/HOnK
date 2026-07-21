@@ -27,7 +27,7 @@ class ResultsPlotter:
         self.plot_object = None
         self.phase_columns = [
             'Build adjacency list',
-            'Transitive closure',
+            'Connected components',
             'Build clusters from adjacency list',
             'Add unclustered concepts',
             'Store clusters in DB',
@@ -142,7 +142,7 @@ class ResultsPlotter:
         suffix_mapping = {
             'build_adj_list': 'Build adjacency list',
             'build_clusters_from_adj': 'Build clusters from adjacency list',
-            'transitive_closure': 'Transitive closure',
+            'transitive_closure': 'Connected components',
             'add_unclustered_concepts': 'Add unclustered concepts',
             'store_clusters_in_db': 'Store clusters in DB',
             'coalesce_relationships': 'Coalesce relationships',
@@ -218,6 +218,18 @@ class ResultsPlotter:
 
     def create_plot(self):
         markers = ['o', 's', 'v', '^', 'D', 'P', 'X']
+
+        # Preserve the published figure's phase -> colour/marker mapping. Colours and
+        # markers are assigned in the categorical order of Phase (alphabetical by
+        # default). The clustering phase was previously labelled 'Transitive closure';
+        # sorting it under that old key keeps every series' colour, marker, and legend
+        # position identical to the released figure so only the label text changes.
+        def _phase_order_key(name):
+            return 'Transitive closure' if name == 'Connected components' else name
+        phase_order = sorted(self.melted_data['Phase'].unique(), key=_phase_order_key)
+        self.melted_data['Phase'] = pd.Categorical(
+            self.melted_data['Phase'], categories=phase_order, ordered=True
+        )
 
         # Breaks at every integer power of 10, with extra headroom so the top bound is visible
         def even_log_breaks(limits):
